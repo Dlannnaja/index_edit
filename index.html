@@ -6,131 +6,293 @@
 <title>POS Sembako (Kode Barang & Barcode)</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-<style>
-:root{
-  --bg:#f6f8fb;
-  --card:#fff;
-  --accent:#0b74da;
-  --accent-hover:#095cb0;
-  --muted:#6b7280;
-  --shadow:0 6px 20px rgba(11,116,218,0.08);
-  --border:#e6e9ef;
+:root {
+  --bg: #f7f9fc;
+  --card: #ffffff;
+  --accent: #0b74da;
+  --accent-dark: #094fa1;
+  --muted: #6b7280;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --radius: 10px;
+  --font: "Poppins", system-ui, sans-serif;
 }
-*{box-sizing:border-box;font-family:"Poppins",system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
-body{background:var(--bg);margin:0;color:#111;overflow-x:hidden}
-header{
-  background:linear-gradient(90deg,var(--accent),#0b5fcc);
-  color:#fff;
-  padding:14px 16px;
-  box-shadow:var(--shadow);
-  position:sticky;
-  top:0;
-  z-index:10;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
-header h2{margin:0;font-size:1.4rem}
-header .muted{color:rgba(255,255,255,0.8)}
-.container{max-width:1100px;margin:18px auto;padding:16px;width:100%}
-h2,h3{margin:6px 0}
-.grid{display:grid;grid-template-columns:1fr 360px;gap:18px;}
-@media(max-width:900px){ .grid{grid-template-columns:1fr;gap:12px;} }
-.card{
-  background:var(--card);
-  border-radius:12px;
-  padding:16px;
-  box-shadow:var(--shadow);
-  width:100%;
-  overflow-x:auto;
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  background-color: var(--bg);
+  color: #111;
+  overflow-x: hidden;
 }
-form .row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
-form .row .col{flex:1;min-width:120px}
-input[type="text"], input[type="number"], input[type="date"], select{
-  width:100%;
-  padding:10px;
-  border:1px solid var(--border);
-  border-radius:8px;
-  outline:none;
-  font-size:14px;
+
+header {
+  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+  color: #fff;
+  padding: 16px;
+  box-shadow: var(--shadow);
 }
-input:focus, select:focus{
-  box-shadow:0 0 0 3px rgba(11,116,218,0.08);
-  border-color:var(--accent);
+
+.container {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 16px;
 }
-button{
-  background:var(--accent);
-  color:#fff;
-  padding:8px 12px;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
-  font-weight:600;
-  transition:0.2s;
+
+h2, h3 {
+  margin: 10px 0;
 }
-button:hover{background:var(--accent-hover)}
-button.ghost{
-  background:transparent;
-  color:var(--accent);
-  border:1px solid rgba(11,116,218,0.5);
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 20px;
 }
-button.small{padding:6px 8px;font-size:13px;border-radius:6px}
-button:disabled{opacity:.6;cursor:not-allowed}
-.muted{color:var(--muted);font-size:13px}
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
-  font-size:14px;
-  table-layout:auto;
-  word-wrap:break-word;
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
 }
-th,td{padding:8px;border-bottom:1px solid #f0f0f3;text-align:left}
-th{font-weight:600;color:#333}
-.actions button{margin-right:6px}
-#cart{
-  min-height:36px;
-  padding:8px;
-  background:#fafbfd;
-  border:1px dashed #e6eefc;
-  border-radius:8px;
-  overflow-x:auto;
+
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
 }
-#reader{width:100%;height:auto;border-radius:8px;overflow:hidden;background:#000;max-width:100%}
-.tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
-.tab-btn{
-  padding:8px 12px;
-  border-radius:8px;
-  background:#f1f5f9;
-  border:none;
-  cursor:pointer;
-  font-weight:600;
-  transition:0.2s;
+
+.row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
 }
-.tab-btn:hover{background:#e2e8f0;}
-.tab-btn.active{background:var(--accent);color:#fff;}
-.flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.stack{display:flex;flex-direction:column;gap:8px}
-.right{text-align:right}
-.badge{
-  background:#eef6ff;
-  color:var(--accent);
-  padding:6px 8px;
-  border-radius:999px;
-  font-weight:600;
-  font-size:13px;
+
+.col {
+  flex: 1;
+  min-width: 120px;
 }
-.note{font-size:13px;color:var(--muted)}
-#guideOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;justify-content:center;align-items:center;z-index:999;display:none}
-#guideBox{
-  background:#fff;
-  padding:20px;
-  border-radius:12px;
-  max-width:400px;
-  text-align:center;
-  box-shadow:0 0 20px rgba(0,0,0,0.2);
+
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #dee2e6;
+  border-radius: var(--radius);
+  font-size: 14px;
+  outline: none;
+  transition: 0.2s ease;
 }
-#guideBox button{margin:10px 5px}
-.printer-row{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
-.printer-row select{min-width:100%;max-width:100%}
-.info-small{font-size:12px;color:var(--muted);margin-top:6px}
+
+input:focus,
+select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(11, 116, 218, 0.15);
+}
+
+button {
+  background: var(--accent);
+  color: #fff;
+  padding: 10px 14px;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+button:hover {
+  background: var(--accent-dark);
+}
+
+button.ghost {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid rgba(11, 116, 218, 0.2);
+}
+
+button.small {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 100%;
+  overflow-x: auto;
+}
+
+th,
+td {
+  padding: 10px;
+  border-bottom: 1px solid #f1f3f5;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+th {
+  font-weight: 600;
+  color: #333;
+  background: #f9fbfd;
+}
+
+.actions button {
+  margin-right: 6px;
+}
+
+#cart {
+  min-height: 36px;
+  padding: 10px;
+  background: #f1f5fb;
+  border: 1px dashed #cce1ff;
+  border-radius: var(--radius);
+  overflow-x: auto;
+}
+
+#reader {
+  width: 100%;
+  max-width: 100%;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #000;
+  min-height: 180px;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.tab-btn {
+  padding: 8px 16px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.tab-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.flex {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.right {
+  text-align: right;
+}
+
+.badge {
+  background: #eef6ff;
+  color: var(--accent);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.note {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.info-small {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.printer-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+#guideOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+#guideBox {
+  background: #fff;
+  padding: 24px;
+  border-radius: var(--radius);
+  max-width: 90%;
+  width: 360px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+#guideBox button {
+  margin: 10px 6px;
+}
+
+@media (max-width: 600px) {
+  header h2 {
+    font-size: 18px;
+  }
+  .container {
+    padding: 12px;
+  }
+  table th, table td {
+    font-size: 13px;
+    padding: 8px;
+  }
+}
 </style>
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>

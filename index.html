@@ -1,138 +1,435 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aplikasi POS</title>
-  <style>
-    body{font-family:Arial, sans-serif;padding:20px;}
-    table{border-collapse:collapse;width:100%;margin-top:10px;}
-    th,td{border:1px solid #ccc;padding:6px;text-align:left;font-size:14px;}
-    th{background:#eee;}
-    .filters,.actions{margin:10px 0;}
-    .small{padding:4px 8px;font-size:12px;}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>POS Sembako (Kode Barang & Barcode)</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+<style>
+:root{
+  --bg:#f6f8fb; --card:#ffffff; --accent:#0b74da; --muted:#6b7280; --shadow:0 6px 20px rgba(11,116,218,0.08);
+}
+*{box-sizing:border-box;font-family:"Poppins",system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+body{background:var(--bg);margin:0;color:#111;overflow-x:hidden} /* disable horizontal scroll */
+header{background:linear-gradient(90deg,var(--accent),#0b5fcc);color:#fff;padding:14px 16px;box-shadow:var(--shadow)}
+.container{max-width:1100px;margin:18px auto;padding:16px;width:100%}
+h2,h3{margin:6px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+/* responsive grid untuk layar kecil */
+@media(max-width:900px){ 
+  .grid{grid-template-columns:1fr;gap:12px} 
+}
+.card{background:var(--card);border-radius:12px;padding:14px;box-shadow:var(--shadow);width:100%;overflow-x:auto}
+form .row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+form .row .col{flex:1;min-width:120px}
+input[type="text"], input[type="number"], input[type="date"], select{
+  width:100%;padding:10px;border:1px solid #e6e9ef;border-radius:8px;outline:none;font-size:14px;
+}
+input:focus, select:focus{box-shadow:0 0 0 3px rgba(11,116,218,0.08);border-color:var(--accent)}
+button{background:var(--accent);color:#fff;padding:8px 10px;border:none;border-radius:8px;cursor:pointer;font-weight:600}
+button.ghost{background:transparent;color:var(--accent);border:1px solid rgba(11,116,218,0.12)}
+button.small{padding:6px 8px;font-size:13px;border-radius:6px}
+button:disabled{opacity:.6;cursor:not-allowed}
+.muted{color:var(--muted);font-size:13px}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px;table-layout:auto;word-wrap:break-word;}
+th,td{padding:8px;border-bottom:1px solid #f0f0f3;text-align:left}
+th{font-weight:600;color:#333}
+.actions button{margin-right:6px}
+#cart{min-height:36px;padding:8px;background:#fafbfd;border:1px dashed #e6eefc;border-radius:8px;overflow-x:auto}
+#reader{width:100%;height:auto;border-radius:8px;overflow:hidden;background:#000;max-width:100%}
+.tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.tab-btn{padding:8px 12px;border-radius:8px;background:#f1f5f9;border:none;cursor:pointer;font-weight:600;}
+.tab-btn.active{background:var(--accent);color:#fff;}
+.flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.stack{display:flex;flex-direction:column;gap:8px}
+.right{text-align:right}
+.badge{background:#eef6ff;color:var(--accent);padding:6px 8px;border-radius:999px;font-weight:600}
+.note{font-size:13px;color:var(--muted)}
+#guideOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;justify-content:center;align-items:center;z-index:999;display:none}
+#guideBox{background:#fff;padding:20px;border-radius:12px;max-width:400px;text-align:center;box-shadow:0 0 20px rgba(0,0,0,0.2);}
+#guideBox button{margin:10px 5px;}
+.printer-row{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.printer-row select{min-width:100%;max-width:100%}
+.info-small{font-size:12px;color:var(--muted);margin-top:6px}
+</style>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
-
-  <h2>Checkout</h2>
-  <label><input type="checkbox" id="autoPrint"> Cetak otomatis</label>
-  <select id="printerSelect">
-    <option value="">-- Pilih Printer --</option>
-    <option value="printer1">Printer Kasir</option>
-    <option value="printer2">Printer PDF</option>
-  </select>
-  <button onclick="checkout()">Selesaikan Penjualan</button>
-
-  <hr>
-
-  <h2>Laporan Penjualan</h2>
-  <div class="filters">
-    <label>Dari: <input type="date" id="filterFrom"></label>
-    <label>Sampai: <input type="date" id="filterTo"></label>
-    <button onclick="loadSales()" class="small">Terapkan</button>
+<header>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+    <h2 style="margin:0">POS Toko Sembako</h2>
+    <div style="display:flex;gap:12px;align-items:center">
+      <div class="muted">Keranjang: <span id="cartCount">0</span> barang</div>
+      <div class="badge" id="shopStatus">Offline</div>
+    </div>
   </div>
-  <div class="actions">
-    <button onclick="exportSales()" class="small">Export CSV</button>
-    <label style="margin-left:6px;font-size:13px;color:#555;">
-      <input type="checkbox" id="showTimeCsv" onchange="loadSales()"> Tampilkan Jam
-    </label>
-  </div>
-  <table id="salesTbl">
-    <thead>
-      <tr>
-        <th>No</th>
-        <th>Tanggal</th>
-        <th>Invoice</th>
-        <th>Item</th>
-        <th>Total</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+</header>
 
-  <hr>
+<main class="container">
+  <div class="grid">
+    <div class="card">
+      <section>
+        <h3>Tambah / Edit Produk</h3>
+        <form id="formProduct" onsubmit="submitProduct();return false" style="margin-bottom:6px">
+          <div class="row">
+            <div class="col">
+              <label class="muted">Kode Barang / SKU</label>
+              <div style="display:flex;gap:8px">
+                <input id="sku" placeholder="Kode Barang" type="text" required pattern="\d*" />
+                <button type="button" class="small" onclick="scanSku()" title="Scan Kode Barang">Scan</button>
+              </div>
+            </div>
+            <div class="col">
+              <label class="muted">Nama Produk</label>
+              <input id="name" placeholder="Nama Produk" type="text" required />
+            </div>
+          </div>
+          <div class="row">
+            <div class="col">
+              <label class="muted">Harga Jual (Rp)</label>
+              <input id="price" placeholder="Harga Jual (Rp)" type="number" required />
+            </div>
+            <div class="col">
+              <label class="muted">Stok (angka)</label>
+              <input id="qty" placeholder="Stok (angka)" type="number" required />
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+            <button type="submit" id="formSubmitBtn">Tambah</button>
+            <button type="button" class="ghost" onclick="resetForm()">Reset</button>
+            <div class="muted" style="margin-left:auto">Jika nama sudah ada, stok akan <strong>dijumlahkan</strong>.</div>
+          </div>
+        </form>
 
-  <h2>Laporan Restock</h2>
-  <div class="filters">
-    <label>Dari: <input type="date" id="filterFromRestock"></label>
-    <label>Sampai: <input type="date" id="filterToRestock"></label>
-    <button onclick="loadRestock()" class="small">Terapkan</button>
+        <h3 style="margin-top:16px">Restock Produk</h3>
+        <form id="formRestock" onsubmit="restockProduct();return false" class="flex" style="gap:8px;align-items:center">
+          <select id="restockName" required>
+            <option value="">Pilih Produk...</option>
+          </select>
+          <input id="restockQty" placeholder="Jumlah Restock" type="number" required />
+          <button type="submit">Tambah Stok</button>
+        </form>
+
+        <h3 style="margin-top:16px">Daftar Produk</h3>
+        <input id="search" placeholder="Cari produk (Kode/Nama)..." oninput="render()" style="margin-bottom:10px;width:100%;padding:8px;border-radius:8px;border:1px solid #e8eef8" />
+        <div style="overflow:auto;max-height:360px">
+          <table id="tbl">
+            <thead><tr><th>SKU</th><th>Nama</th><th>Stok</th><th>Harga</th><th>Aksi</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div class="card">
+        <h3>Keranjang <small class="muted">(<span id="cartCount2">0</span>)</small></h3>
+        <div id="cart"><i class="muted">Keranjang kosong</i></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+          <div class="note">Total: <strong id="total">Rp 0</strong></div>
+          <div>
+            <!-- autoPrint default: NOT checked -->
+            <label><input type="checkbox" id="autoPrint" /> Cetak struk otomatis</label>
+            <div class="printer-row">
+              <select id="printerSelect">
+                <option value="">Pilih printer (belum tersimpan)</option>
+                <!-- user can set a friendly name; browsers can't enumerate printers -->
+                <option value="Printer Lokal">Printer Lokal</option>
+                <option value="Printer Bluetooth">Printer Bluetooth</option>
+                <option value="Printer Jaringan">Printer Jaringan</option>
+              </select>
+              <button class="small ghost" onclick="savePrinterPreference()">Simpan</button>
+            </div>
+            <div class="info-small">Jika auto print aktif: pastikan pilih & simpan printer. Jika tidak, proses cetak akan diblokir dan muncul peringatan.</div>
+            <div style="margin-top:6px">
+              <button id="checkoutBtn" onclick="checkout()" disabled>Selesaikan Penjualan</button>
+              <button class="ghost" onclick="clearCart()">Kosongkan</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Scan Produk</h3>
+        <div class="flex" style="margin-bottom:8px">
+          <button id="btnStartScan" onclick="startScan('sell')" class="small">Mulai Scan Jual</button>
+          <button id="btnStopScan" onclick="stopScan()" class="small ghost">Stop Scan</button>
+          <label class="muted" style="margin-left:auto">Mode:
+            <select id="scanMode" style="margin-left:6px">
+              <option value="single">1x auto-stop</option>
+              <option value="continuous">Multi-scan</option>
+            </select>
+          </label>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <label><input type="checkbox" id="autoSell" /> <span class="muted">Auto-sell on scan</span></label>
+        </div>
+        <div id="reader" style="min-height:160px"></div>
+        <div class="muted note" style="margin-top:8px">Gunakan kamera ponsel. Pilih mode single jika ingin berhenti setelah 1 scan.</div>
+      </div>
+
+      <div class="card">
+        <h2>📊 Dashboard Laporan</h2>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="openTab('penjualan')">Laporan Penjualan</button>
+          <button class="tab-btn" onclick="openTab('restock')">Laporan Restock</button>
+          <button class="tab-btn" onclick="openTab('stok')">Laporan Stok Akhir</button>
+        </div>
+
+        <div id="penjualan" class="tab-content active">
+          <h3>Laporan Penjualan</h3>
+          <div class="flex" style="gap:8px;flex-wrap:wrap">
+            <label class="muted">From <input id="filterFrom" type="date" /></label>
+            <label class="muted">To <input id="filterTo" type="date" /></label>
+            <button onclick="loadSales()" class="small">Tampilkan</button>
+            <button onclick="exportSales()" class="small ghost">Export CSV</button>
+            <button onclick="printSales()" class="small ghost">Cetak</button>
+          </div>
+          <div style="overflow:auto;max-height:160px;margin-top:8px">
+            <table id="salesTbl"><thead><tr><th>No</th><th>Tanggal</th><th>Invoice</th><th>Item</th><th>Total</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+
+        <div id="restock" class="tab-content">
+          <h3>Laporan Restock (Barang Masuk)</h3>
+          <div class="flex" style="gap:8px;flex-wrap:wrap">
+            <button onclick="loadRestock()" class="small">Tampilkan</button>
+            <button onclick="exportRestock()" class="small ghost">Export CSV</button>
+            <button onclick="printRestock()" class="small ghost">Cetak</button>
+          </div>
+          <div style="overflow:auto;max-height:160px;margin-top:8px">
+            <table id="restockTbl"><thead><tr><th>No</th><th>Tanggal</th><th>SKU</th><th>Nama</th><th>Jumlah</th><th>Stok Akhir</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+
+        <div id="stok" class="tab-content">
+          <h3>Stok Akhir Produk</h3>
+          <div style="overflow:auto;max-height:180px">
+            <table id="finalStockTbl"><thead><tr><th>No</th><th>SKU</th><th>Nama</th><th>Stok</th><th>Harga</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="actions">
-    <button onclick="exportRestock()" class="small">Export CSV</button>
-    <label style="margin-left:6px;font-size:13px;color:#555;">
-      <input type="checkbox" id="showTimeCsvRestock" onchange="loadRestock()"> Tampilkan Jam
-    </label>
+</main>
+
+<div id="guideOverlay">
+  <div id="guideBox">
+    <h3>Selamat Datang di POS Toko Sembako</h3>
+    <p>Klik mulai untuk tutorial singkat semua fitur, atau skip jika sudah hafal.</p>
+    <button onclick="startGuide()">Mulai</button>
+    <button onclick="skipGuide()">Skip</button>
   </div>
-  <table id="restockTbl">
-    <thead>
-      <tr>
-        <th>No</th>
-        <th>Tanggal</th>
-        <th>Produk</th>
-        <th>Jumlah</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+</div>
+
+<!-- receipt area template (hidden) -->
+<div id="receiptTemplate" style="display:none">
+  <div id="receiptArea"></div>
+</div>
 
 <script>
-let products=JSON.parse(localStorage.getItem("products")||"[]")
-let sales=JSON.parse(localStorage.getItem("sales")||"[]")
-let restocks=JSON.parse(localStorage.getItem("restocks")||"[]")
-let cart=[]
+/* ---------- data ---------- */
+let products = JSON.parse(localStorage.getItem('products')||'[]')
+let sales = JSON.parse(localStorage.getItem('sales')||'[]')
+let restocks = JSON.parse(localStorage.getItem('restocks')||'[]')
+let cart = []
 
-// ✅ Konversi data lama agar punya dateDisplay
-function normalizeSales(){
-  let changed=false
-  sales.forEach(s=>{
-    if(!s.dateDisplay){
-      let dObj=parseStoredDate(s.date)
-      if(dObj && !isNaN(dObj)){
-        s.dateDisplay=dObj.toLocaleString("id-ID")
-        changed=true
-      }
-    }
-  })
-  if(changed) localStorage.setItem("sales",JSON.stringify(sales))
-}
-function normalizeRestocks(){
-  let changed=false
-  restocks.forEach(r=>{
-    if(!r.dateDisplay){
-      let dObj=parseStoredDate(r.date)
-      if(dObj && !isNaN(dObj)){
-        r.dateDisplay=dObj.toLocaleString("id-ID")
-        changed=true
-      }
-    }
-  })
-  if(changed) localStorage.setItem("restocks",JSON.stringify(restocks))
-}
-normalizeSales()
-normalizeRestocks()
-
-// ✅ Helper date parser
-function parseStoredDate(val){
-  if(!val) return null
-  let d=new Date(val)
-  if(!isNaN(d)) return d
-  if(typeof val==="string" && val.includes("/")){
-    let [dd,mm,yy]=val.split(/[/-]/)
-    return new Date(`${yy}-${mm}-${dd}`)
-  }
-  return null
-}
+/* ---------- utility: reliable local datetime string ---------- */
 function getLocalDateTime(){
-  return new Date().toISOString()
+  const d=new Date();
+  const yyyy=d.getFullYear();
+  const mm=String(d.getMonth()+1).padStart(2,"0");
+  const dd=String(d.getDate()).padStart(2,"0");
+  const hh=String(d.getHours()).padStart(2,"0");
+  const mi=String(d.getMinutes()).padStart(2,"0");
+  const ss=String(d.getSeconds()).padStart(2,"0");
+  // format yang mudah di-parse kembali: "YYYY-MM-DD HH:mm:ss"
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
 }
 
-// ✅ Checkout
+function parseStoredDate(dStr){
+  // dStr diharapkan format "YYYY-MM-DD HH:mm:ss"
+  if(!dStr) return null;
+  let iso = dStr;
+  if(dStr.indexOf(' ') !== -1 && dStr.indexOf('T') === -1){
+    iso = dStr.replace(' ', 'T');
+  }
+  // beberapa fallback: jika masih invalid, coba Date.parse direct
+  const d = new Date(iso);
+  if(isNaN(d.getTime())){
+    // try replace slashes with hyphen
+    const alt = dStr.replace(/\//g,'-').replace(' ', 'T');
+    const d2 = new Date(alt);
+    if(isNaN(d2.getTime())) return null;
+    return d2;
+  }
+  return d;
+}
+
+/* ---------- render product list ---------- */
+function render(){
+  const tbl=document.querySelector("#tbl tbody")
+  const search=document.querySelector("#search").value.toLowerCase()
+  tbl.innerHTML=""
+  products.forEach((p,i)=>{
+    if(p.name.toLowerCase().includes(search)||p.sku.includes(search)){
+      const tr=document.createElement("tr")
+      tr.innerHTML=`
+        <td>${p.sku}</td>
+        <td>${p.name}</td>
+        <td>${p.qty}</td>
+        <td>Rp ${p.price.toLocaleString()}</td>
+        <td class="actions">
+          <button class="small" onclick="editProduct('${p.sku}')">Edit</button>
+          <button class="small ghost" onclick="deleteProduct('${p.sku}')">Hapus</button>
+        </td>`
+      tbl.appendChild(tr)
+    }
+  })
+  updateRestockDropdown()
+}
+
+/* ---------- product CRUD ---------- */
+function submitProduct(){
+  const sku=document.getElementById("sku").value.trim()
+  const name=document.getElementById("name").value.trim()
+  const price=parseInt(document.getElementById("price").value)
+  const qty=parseInt(document.getElementById("qty").value)
+  if(!sku || !name || !price || !qty) return alert("Lengkapi data!")
+  const exist=products.find(p=>p.sku===sku)
+  if(exist){
+    exist.qty += qty
+    exist.price = price
+  }else{
+    products.push({sku,name,price,qty})
+  }
+  localStorage.setItem("products",JSON.stringify(products))
+  render(); resetForm()
+}
+
+function resetForm(){
+  document.getElementById("sku").value=""
+  document.getElementById("name").value=""
+  document.getElementById("price").value=""
+  document.getElementById("qty").value=""
+  document.getElementById("formSubmitBtn").textContent="Tambah"
+}
+
+function editProduct(sku){
+  const p=products.find(x=>x.sku===sku)
+  if(!p) return
+  document.getElementById("sku").value=p.sku
+  document.getElementById("name").value=p.name
+  document.getElementById("price").value=p.price
+  document.getElementById("qty").value=p.qty
+  document.getElementById("formSubmitBtn").textContent="Update"
+}
+
+function deleteProduct(sku){
+  if(!confirm("Hapus produk ini?")) return
+  products=products.filter(p=>p.sku!==sku)
+  localStorage.setItem("products",JSON.stringify(products))
+  render()
+}
+
+function updateRestockDropdown(){
+  const sel=document.getElementById("restockName")
+  if(!sel) return
+  sel.innerHTML='<option value="">Pilih Produk...</option>'
+  products.forEach(p=>{
+    const opt=document.createElement("option")
+    opt.value=p.sku; opt.textContent=p.name
+    sel.appendChild(opt)
+  })
+}
+
+/* ---------- restock (simpan dengan format dapat diparse) ---------- */
+function restockProduct(){
+  const sku=document.getElementById("restockName").value
+  const qty=parseInt(document.getElementById("restockQty").value)
+  if(!sku||!qty) return alert("Pilih produk & jumlah!")
+  const p=products.find(x=>x.sku===sku)
+  if(!p) return alert("Produk tidak ditemukan")
+
+  p.qty+=qty
+  localStorage.setItem("products",JSON.stringify(products))
+
+  restocks.push({
+    date:getLocalDateTime(), // simpan format "YYYY-MM-DD HH:mm:ss"
+    sku:p.sku,
+    name:p.name,
+    qty,
+    stockAfter:p.qty
+  })
+  localStorage.setItem("restocks",JSON.stringify(restocks))
+
+  render(); document.getElementById("restockQty").value=""
+}
+
+/* ---------- CART & CHECKOUT ---------- */
+function addToCart(sku){
+  const p=products.find(x=>x.sku===sku)
+  if(!p) return alert("Produk tidak ditemukan")
+  const cartItem=cart.find(c=>c.sku===sku)
+  if(cartItem){
+    if(cartItem.qty>=p.qty) return alert("Stok tidak cukup")
+    cartItem.qty+=1
+  }else{
+    cart.push({sku:p.sku,name:p.name,price:p.price,qty:1})
+  }
+  renderCart()
+}
+
+function renderCart(){
+  const el=document.getElementById("cart")
+  const count=document.getElementById("cartCount")
+  const count2=document.getElementById("cartCount2")
+  const checkoutBtn=document.getElementById("checkoutBtn")
+  if(cart.length===0){
+    el.innerHTML='<i class="muted">Keranjang kosong</i>';count.textContent="0";count2.textContent="0"; checkoutBtn.disabled=true;document.getElementById("total").textContent="Rp 0"; return
+  }
+  let html="<table style='width:100%'>", total=0
+  cart.forEach((c,i)=>{
+    total+=c.price*c.qty
+    html+=`<tr>
+      <td>${c.name} x${c.qty}</td>
+      <td class="right">Rp ${(c.price*c.qty).toLocaleString()}</td>
+      <td class="actions"><button class="small" onclick="removeFromCart('${c.sku}')">-</button></td>
+    </tr>`
+  })
+  html+="</table>"
+  el.innerHTML=html
+  count.textContent=cart.length
+  count2.textContent=cart.length
+  checkoutBtn.disabled=false
+  document.getElementById("total").textContent="Rp "+total.toLocaleString()
+}
+
+function removeFromCart(sku){cart=cart.filter(c=>c.sku!==sku); renderCart()}
+function clearCart(){cart=[]; renderCart()}
+
+/* ---------- printer preference helpers ---------- */
+function loadPrinterPreference(){
+  const p = localStorage.getItem('preferredPrinter') || ''
+  const sel = document.getElementById('printerSelect')
+  if(sel) sel.value = p
+}
+function savePrinterPreference(){
+  const sel = document.getElementById('printerSelect')
+  if(!sel) return
+  localStorage.setItem('preferredPrinter', sel.value)
+  alert(sel.value ? 'Preferensi printer disimpan: ' + sel.value : 'Preferensi printer dikosongkan')
+}
+
+/* ---------- checkout with robust date + printer check ---------- */
 function checkout(){
   if(cart.length===0) return alert("Keranjang kosong")
   const invoice="INV"+Date.now()
-  const date=getLocalDateTime()
+
+  const now = new Date()
+  const date = now.toISOString()                // untuk filter & simpan aman
+  const dateDisplay = now.toLocaleString()      // untuk tampilan laporan
 
   let total=0
   cart.forEach(c=>{
@@ -141,72 +438,124 @@ function checkout(){
     if(p) p.qty-=c.qty
   })
 
-  const transaction={invoice,date,dateDisplay:new Date(date).toLocaleString("id-ID"),items:[...cart],total}
+  const transaction={invoice,date,dateDisplay,items:[...cart],total}
   sales.push(transaction)
   localStorage.setItem("sales",JSON.stringify(sales))
   localStorage.setItem("products",JSON.stringify(products))
 
-  const auto=document.getElementById("autoPrint").checked
-  const printer=document.getElementById("printerSelect").value
+  // cek auto print & preferensi printer
+  const auto = document.getElementById("autoPrint").checked
+  const preferred = localStorage.getItem('preferredPrinter') || ''
   if(auto){
-    if(!printer){
-      alert("Cetak otomatis aktif tetapi tidak ada printer yang dipilih.")
+    if(!preferred){
+      alert("Cetak otomatis aktif tetapi tidak ada printer yang dipilih. Silahkan pilih & simpan printer terlebih dahulu.")
     }else{
-      try{ printReceipt(transaction) }
-      catch(e){ alert("Silahkan hubungkan printer terlebih dahulu.") }
+      try{
+        printReceipt(transaction)
+      }catch(e){
+        console.error(e)
+        alert("Terjadi kesalahan saat mencoba mencetak. Silahkan hubungkan printer terlebih dahulu.")
+      }
     }
   }
 
   cart=[]
+  renderCart(); render(); renderFinalStock()
   alert("Transaksi berhasil! Invoice: "+invoice)
 }
 
-// ✅ Tambah Produk ke Keranjang (contoh)
-function addToCart(sku){
-  const p=products.find(x=>x.sku===sku)
-  if(!p) return alert("Produk tidak ditemukan")
-  const exist=cart.find(c=>c.sku===sku)
-  if(exist) exist.qty++
-  else cart.push({sku:p.sku,name:p.name,price:p.price,qty:1})
+/* ---------- print receipt (opens print dialog) ---------- */
+function printReceipt(t){
+  // buat konten struk
+  let html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;padding:8px">`
+  html += `<h3 style="margin:4px 0">Struk Pembelian</h3>`
+  html += `<div>Invoice: ${t.invoice}</div>`
+  html += `<div>Tanggal: ${t.date}</div>`
+  html += `<hr/>`
+  html += `<table style="width:100%;border-collapse:collapse;font-size:12px">`
+  html += `<tr><th align="left">Nama</th><th>Qty</th><th align="right">Subtotal</th></tr>`
+  t.items.forEach(i=>{
+    html += `<tr><td>${i.name}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">Rp ${(i.price*i.qty).toLocaleString()}</td></tr>`
+  })
+  html += `</table><hr/>`
+  html += `<h4 style="text-align:right;margin:6px 0">Total: Rp ${t.total.toLocaleString()}</h4>`
+  html += `</div>`
 
-  // 🎵 Efek suara kawaii
-  speakKawaii("data produk baru berhasil ditambahkan")
-}
-
-// ✅ Text-to-Speech kawaii
-function speakKawaii(text){
-  if("speechSynthesis" in window){
-    const u=new SpeechSynthesisUtterance(text)
-    u.lang="id-ID"
-    u.pitch=1.4
-    u.rate=1.1
-    speechSynthesis.speak(u)
+  const w = window.open("","_blank","width=400,height=600")
+  if(!w) {
+    throw new Error("Popup blocked")
+  }
+  w.document.write(html)
+  w.document.close()
+  // fokus & print
+  w.focus()
+  // window.print usually doesn't throw, but wrap in try/catch anyway
+  try{
+    w.print()
+    // don't auto-close — some printers need selection; close after small timeout
+    setTimeout(()=>{ try{ w.close() }catch(e){} }, 1200)
+  }catch(e){
+    try{ w.close() }catch(_) {}
+    throw e
   }
 }
 
-// ✅ Laporan Penjualan
+/* ---------- SCAN ---------- */
+let html5QrcodeScanner=null, scanTarget=null
+function startScan(target){
+  scanTarget=target
+  if(html5QrcodeScanner) return
+  const reader=document.getElementById("reader")
+  html5QrcodeScanner=new Html5Qrcode("reader")
+  const config={fps:10, qrbox:250}
+  html5QrcodeScanner.start({facingMode:"environment"}, config, qrCodeMessage=>{
+    handleScan(qrCodeMessage)
+    if(document.getElementById("scanMode").value==="single" && document.getElementById("autoSell").checked) stopScan()
+  }).catch(err=>{
+    console.error(err)
+    alert("Gagal mengakses kamera: " + err)
+  })
+}
+function stopScan(){if(html5QrcodeScanner){html5QrcodeScanner.stop().catch(()=>{});html5QrcodeScanner=null}}
+function handleScan(msg){
+  if(scanTarget==="sell" || document.getElementById("autoSell").checked){
+    addToCart(msg)
+  }else{
+    document.getElementById("sku").value=msg
+    alert("Kode Barang terdeteksi: "+msg)
+  }
+}
+function scanSku(){startScan('sku')}
+
+/* ---------- TABS ---------- */
+function openTab(id){
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"))
+  document.querySelectorAll(".tab-content").forEach(c=>c.classList.remove("active"))
+  document.querySelector(`[onclick="openTab('${id}')"]`).classList.add("active")
+  document.getElementById(id).classList.add("active")
+}
+
+/* ---------- REPORTS with robust parsing & date filter ---------- */
 function loadSales(){
   const from=document.getElementById("filterFrom").value
   const to=document.getElementById("filterTo").value
   const tbl=document.querySelector("#salesTbl tbody")
   tbl.innerHTML=""
-  let counter=1
-  const showTime=document.getElementById("showTimeCsv")?.checked
+
+  let counter = 1
   sales.forEach((s)=>{
-    let dObj=parseStoredDate(s.date)||parseStoredDate(s.dateDisplay)
+    const dObj = new Date(s.date)                         // selalu ISO
+    const d = s.dateDisplay || dObj.toLocaleString()      // tampilan lokal
+
     let valid=true
-    if(from && dObj<new Date(from)) valid=false
-    if(to && dObj>new Date(to)) valid=false
+    if(from && dObj < new Date(from)) valid=false
+    if(to && dObj > new Date(to)) valid=false
+
     if(valid){
-      let dateStr=s.dateDisplay||""
-      if(dObj && !isNaN(dObj)){
-        dateStr=showTime? dObj.toLocaleString("id-ID",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit"})
-                         : dObj.toLocaleDateString("id-ID")
-      }
       tbl.innerHTML+=`
         <tr>
           <td>${counter}</td>
-          <td>${dateStr}</td>
+          <td>${d}</td>
           <td>${s.invoice}</td>
           <td>${s.items.map(x=>x.name+" x"+x.qty).join(", ")}</td>
           <td>Rp ${s.total.toLocaleString()}</td>
@@ -215,80 +564,144 @@ function loadSales(){
     }
   })
 }
-function exportSales(){
-  let csv="No;Tanggal;Invoice;Item;Total\n"
-  let counter=1
-  sales.forEach(s=>{
-    let dStr=getCsvDateFromRecord(s,document.getElementById("showTimeCsv")?.checked)
-    let items=s.items.map(x=>`${x.name} x${x.qty}`).join(", ")
-    csv+=`${counter};"${dStr}";"${s.invoice}";"${items}";"${s.total}"\n`
-    counter++
-  })
-  downloadCsv(csv,"laporan_penjualan.csv")
-}
 
-// ✅ Laporan Restock
 function loadRestock(){
-  const from=document.getElementById("filterFromRestock").value
-  const to=document.getElementById("filterToRestock").value
   const tbl=document.querySelector("#restockTbl tbody")
   tbl.innerHTML=""
-  let counter=1
-  const showTime=document.getElementById("showTimeCsvRestock")?.checked
-  restocks.forEach((r)=>{
-    let dObj=parseStoredDate(r.date)||parseStoredDate(r.dateDisplay)
-    let valid=true
-    if(from && dObj<new Date(from)) valid=false
-    if(to && dObj>new Date(to)) valid=false
-    if(valid){
-      let dateStr=r.dateDisplay||""
-      if(dObj && !isNaN(dObj)){
-        dateStr=showTime? dObj.toLocaleString("id-ID",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit"})
-                         : dObj.toLocaleDateString("id-ID")
+
+  restocks.forEach((r,i)=>{
+    const dObj = parseStoredDate(r.date)
+    const dDisplay = dObj ? dObj.toLocaleDateString('id-ID') : 'Invalid Date'
+    tbl.innerHTML+=`
+      <tr>
+        <td>${i+1}</td>
+        <td>${dDisplay}</td>
+        <td>${r.sku}</td>
+        <td>${r.name}</td>
+        <td>${r.qty}</td>
+        <td>${r.stockAfter}</td>
+      </tr>`
+  })
+}
+
+/* ---------- CSV export (safely parse date) ---------- */
+// helper untuk ambil tanggal CSV
+function getCsvDateFromRecord(rec){
+  let dObj = null;
+
+  if(rec && rec.date){
+    dObj = parseStoredDate(rec.date);
+  }
+  if((!dObj || isNaN(dObj)) && rec && rec.dateDisplay){
+    dObj = parseStoredDate(rec.dateDisplay);
+  }
+
+  if(dObj && !isNaN(dObj)){
+    // format lengkap: YYYY-MM-DD HH:mm:ss
+    const yyyy = dObj.getFullYear();
+    const mm = String(dObj.getMonth()+1).padStart(2,"0");
+    const dd = String(dObj.getDate()).padStart(2,"0");
+    const hh = String(dObj.getHours()).padStart(2,"0");
+    const mi = String(dObj.getMinutes()).padStart(2,"0");
+    const ss = String(dObj.getSeconds()).padStart(2,"0");
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+  }
+
+  return rec.dateDisplay || "";
+}
+
+function exportSales(){
+  if(sales.length === 0) return alert("Tidak ada data penjualan");
+
+  // pakai titik koma (;) biar aman di Excel / Google Sheets Indonesia
+  let csv = "No;Tanggal;Invoice;Item;Total\n";
+  let counter = 1;
+
+  sales.forEach((s) => {
+    const d = getCsvDateFromRecord(s); // ambil tanggal yang aman
+    const items = s.items.map(x => `${x.name} x${x.qty}`).join(" | ");
+
+    // bungkus kolom teks dengan "..." supaya tidak pecah
+    csv += `${counter};"${d}";"${s.invoice}";"${items}";"${s.total}"\n`;
+    counter++;
+  });
+
+  downloadCSV(csv, "laporan_penjualan.csv");
+}
+function printRestock(){ window.print() }
+
+function downloadCSV(content, filename){
+  const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+/* ---------- final stock ---------- */
+function renderFinalStock(){
+  const tbl=document.querySelector("#finalStockTbl tbody")
+  tbl.innerHTML=""
+  products.forEach((p,i)=>{
+    tbl.innerHTML+=`<tr><td>${i+1}</td><td>${p.sku}</td><td>${p.name}</td><td>${p.qty}</td><td>Rp ${p.price.toLocaleString()}</td></tr>`
+  })
+}
+
+/* ---------- GUIDE ---------- */
+function startGuide(){alert("Guide: 1. Tambah produk, 2. Restock, 3. Scan, 4. Keranjang, 5. Checkout & cetak"); skipGuide()}
+function skipGuide(){document.getElementById("guideOverlay").style.display="none"}
+
+/* ---------- INIT ---------- */
+/* ---------- INIT ---------- */
+function init(){
+  // ensure autoPrint is NOT checked on load (safety)
+  const autoPrintEl = document.getElementById('autoPrint')
+  if(autoPrintEl) autoPrintEl.checked = false
+
+  // load saved printer preference
+  loadPrinterPreference()
+
+  // 🔄 migrasi data sales lama biar selalu ada dateDisplay
+  let updated = false
+  sales.forEach(s => {
+    if(s.date && !s.dateDisplay){
+      let dObj = new Date(s.date)
+
+      // kalau hasilnya Invalid Date, coba parse manual format lama: DD-MM-YYYY HH:mm:ss
+      if(isNaN(dObj)){
+        const parts = s.date.split(" ")
+        if(parts.length === 2){
+          const [d,m,y] = parts[0].split("-")  // DD-MM-YYYY
+          const [hh,mm,ss] = parts[1].split(":")
+          if(d && m && y){
+            dObj = new Date(y, parseInt(m)-1, d, hh||0, mm||0, ss||0)
+          }
+        }
       }
-      tbl.innerHTML+=`
-        <tr>
-          <td>${counter}</td>
-          <td>${dateStr}</td>
-          <td>${r.name}</td>
-          <td>${r.qty}</td>
-        </tr>`
-      counter++
+
+      // kalau sukses diparse, buat dateDisplay
+      if(dObj && !isNaN(dObj)){
+        s.dateDisplay = dObj.toLocaleString()
+        updated = true
+      } else {
+        // fallback kalau tetap gagal → pakai string aslinya
+        s.dateDisplay = s.date
+        updated = true
+      }
     }
   })
-}
-function exportRestock(){
-  let csv="No;Tanggal;Produk;Jumlah\n"
-  let counter=1
-  restocks.forEach(r=>{
-    let dStr=getCsvDateFromRecord(r,document.getElementById("showTimeCsvRestock")?.checked)
-    csv+=`${counter};"${dStr}";"${r.name}";"${r.qty}"\n`
-    counter++
-  })
-  downloadCsv(csv,"laporan_restock.csv")
-}
-
-// ✅ Helper CSV
-function getCsvDateFromRecord(rec,showTime){
-  let dObj=parseStoredDate(rec.date)||parseStoredDate(rec.dateDisplay)
-  if(dObj && !isNaN(dObj)){
-    return showTime? dObj.toLocaleString("id-ID",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit"})
-                   : dObj.toLocaleDateString("id-ID")
+  if(updated){
+    localStorage.setItem("sales", JSON.stringify(sales))
   }
-  return rec.dateDisplay||""
-}
-function downloadCsv(content,filename){
-  const blob=new Blob([content],{type:"text/csv;charset=utf-8;"})
-  const url=URL.createObjectURL(blob)
-  const a=document.createElement("a")
-  a.href=url; a.download=filename; a.click()
-  URL.revokeObjectURL(url)
+
+  render(); renderFinalStock(); setInterval(renderFinalStock,5000)
+  document.getElementById("guideOverlay").style.display="flex"
 }
 
-// dummy print
-function printReceipt(t){
-  console.log("Cetak struk:",t)
-}
+init()
 </script>
 </body>
 </html>

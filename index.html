@@ -917,11 +917,19 @@ function downloadCSV(content, filename){
 
   function clearSales(){
   if(!confirm("Hapus semua laporan penjualan?")) return;
-  sales = []; // kosongkan semua data penjualan
+
+  // kosongkan seluruh data sales, termasuk data lama dengan format tanggal berbeda
+  sales = [];
+
+  // simpan ke localStorage
   localStorage.setItem("sales", JSON.stringify(sales));
-  loadSales(); // refresh tampilan tabel
+
+  // refresh tabel penjualan
+  loadSales();
+
   alert("Semua laporan penjualan berhasil dihapus.");
 }
+
 
 
 /* ---------- final stock ---------- */

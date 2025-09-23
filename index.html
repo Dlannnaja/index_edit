@@ -916,17 +916,13 @@ function downloadCSV(content, filename){
 }
 
   function clearSales(){
-  if(!confirm("Hapus semua laporan penjualan hari ini?")) return;
-  const from = new Date().setHours(0,0,0,0); // mulai hari ini
-  const to = new Date().setHours(23,59,59,999); // akhir hari ini
-  sales = sales.filter(s => {
-    const d = new Date(s.date);
-    return d < from || d > to; // simpan yang bukan hari ini
-  });
+  if(!confirm("Hapus semua laporan penjualan?")) return;
+  sales = []; // kosongkan semua data penjualan
   localStorage.setItem("sales", JSON.stringify(sales));
-  loadSales();
-  alert("Laporan penjualan hari ini berhasil dihapus.");
+  loadSales(); // refresh tampilan tabel
+  alert("Semua laporan penjualan berhasil dihapus.");
 }
+
 
 /* ---------- final stock ---------- */
 function renderFinalStock(){

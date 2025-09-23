@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aplikasi POS</title>
+  <style>
+    body{font-family:Arial, sans-serif;padding:20px;}
+    table{border-collapse:collapse;width:100%;margin-top:10px;}
+    th,td{border:1px solid #ccc;padding:6px;text-align:left;font-size:14px;}
+    th{background:#eee;}
+    .filters,.actions{margin:10px 0;}
+    .small{padding:4px 8px;font-size:12px;}
+  </style>
+</head>
+<body>
+
+  <h2>Checkout</h2>
+  <label><input type="checkbox" id="autoPrint"> Cetak otomatis</label>
+  <select id="printerSelect">
+    <option value="">-- Pilih Printer --</option>
+    <option value="printer1">Printer Kasir</option>
+    <option value="printer2">Printer PDF</option>
+  </select>
+  <button onclick="checkout()">Selesaikan Penjualan</button>
+
+  <hr>
+
+  <h2>Laporan Penjualan</h2>
+  <div class="filters">
+    <label>Dari: <input type="date" id="filterFrom"></label>
+    <label>Sampai: <input type="date" id="filterTo"></label>
+    <button onclick="loadSales()" class="small">Terapkan</button>
+  </div>
+  <div class="actions">
+    <button onclick="exportSales()" class="small">Export CSV</button>
+    <label style="margin-left:6px;font-size:13px;color:#555;">
+      <input type="checkbox" id="showTimeCsv" onchange="loadSales()"> Tampilkan Jam
+    </label>
+  </div>
+  <table id="salesTbl">
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Tanggal</th>
+        <th>Invoice</th>
+        <th>Item</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <hr>
+
+  <h2>Laporan Restock</h2>
+  <div class="filters">
+    <label>Dari: <input type="date" id="filterFromRestock"></label>
+    <label>Sampai: <input type="date" id="filterToRestock"></label>
+    <button onclick="loadRestock()" class="small">Terapkan</button>
+  </div>
+  <div class="actions">
+    <button onclick="exportRestock()" class="small">Export CSV</button>
+    <label style="margin-left:6px;font-size:13px;color:#555;">
+      <input type="checkbox" id="showTimeCsvRestock" onchange="loadRestock()"> Tampilkan Jam
+    </label>
+  </div>
+  <table id="restockTbl">
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Tanggal</th>
+        <th>Produk</th>
+        <th>Jumlah</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+<script>
+let products=JSON.parse(localStorage.getItem("products")||"[]")
+let sales=JSON.parse(localStorage.getItem("sales")||"[]")
+let restocks=JSON.parse(localStorage.getItem("restocks")||"[]")
+let cart=[]
+
+// ✅ Konversi data lama agar punya dateDisplay
+function normalizeSales(){
+  let changed=false
+  sales.forEach(s=>{
+    if(!s.dateDisplay){
+      let dObj=parseStoredDate(s.date)
+      if(dObj && !isNaN(dObj)){
+        s.dateDisplay=dObj.toLocaleString("id-ID")
+        changed=true
+      }
+    }
+  })
+  if(changed) localStorage.setItem("sales",JSON.stringify(sales))
+}
+function normalizeRestocks(){
+  let changed=false
+  restocks.forEach(r=>{
+    if(!r.dateDisplay){
+      let dObj=parseStoredDate(r.date)
+      if(dObj && !isNaN(dObj)){
+        r.dateDisplay=dObj.toLocaleString("id-ID")
+        changed=true
+      }
+    }
+  })
+  if(changed) localStorage.setItem("restocks",JSON.stringify(restocks))
+}
+normalizeSales()
+normalizeRestocks()
+
+// ✅ Helper date parser
+function parseStoredDate(val){
+  if(!val) return null
+  let d=new Date(val)
+  if(!isNaN(d)) return d
+  if(typeof val==="string" && val.includes("/")){
+    let [dd,mm,yy]=val.split(/[/-]/)
+    return new Date(`${yy}-${mm}-${dd}`)
+  }
+  return null
+}
+function getLocalDateTime(){
+  return new Date().toISOString()
+}
+
+// ✅ Checkout
+function checkout(){
+  if(cart.length===0) return alert("Keranjang kosong")
+  const invoice="INV"+Date.now()
+  const date=getLocalDateTime()
+
+  let total=0
+  cart.forEach(c=>{
+    total+=c.price*c.qty
+    const p=products.find(x=>x.sku===c.sku)
+    if(p) p.qty-=c.qty
+  })
+
+  const transaction={invoice,date,dateDisplay:new Date(date).toLocaleString("id-ID"),items:[...cart],total}
+  sales.push(transaction)
+  localStorage.setItem("sales",JSON.stringify(sales))
+  localStorage.setItem("products",JSON.stringify(products))
+
+  const auto=document.getElementById("autoPrint").checked
+  const printer=document.getElementById("printerSelect").value
+  if(auto){
+    if(!printer){
+      alert("Cetak otomatis aktif tetapi tidak ada printer yang dipilih.")
+    }else{
+      try{ printReceipt(transaction) }
+      catch(e){ alert("Silahkan hubungkan printer terlebih dahulu.") }
+    }
+  }
+
+  cart=[]
+  alert("Transaksi berhasil! Invoice: "+invoice)
+}
+
+// ✅ Tambah Produk ke Keranjang (contoh)
+function addToCart(sku){
+  const p=products.find(x=>x.sku===sku)
+  if(!p) return alert("Produk tidak ditemukan")
+  const exist=cart.find(c=>c.sku===sku)
+  if(exist) exist.qty++
+  else cart.push({sku:p.sku,name:p.name,price:p.price,qty:1})
+
+  // 🎵 Efek suara kawaii
+  speakKawaii("data produk baru berhasil ditambahkan")
+}
+
+// ✅ Text-to-Speech kawaii
+function speakKawaii(text){
+  if("speechSynthesis" in window){
+    const u=new SpeechSynthesisUtterance(text)
+    u.lang="id-ID"
+    u.pitch=1.4
+    u.rate=1.1
+    speechSynthesis.speak(u)
+  }
+}
+
+// ✅ Laporan Penjualan
+function loadSales(){
+  const from=document.getElementById("filterFrom").value
+  const to=document.getElementById("filterTo").value
+  const tbl=document.querySelector("#salesTbl tbody")
+  tbl.innerHTML=""
+  let counter=1
+  const showTime=document.getElementById("showTimeCsv")?.checked
+  sales.forEach((s)=>{
+    let dObj=parseStoredDate(s.date)||parseStoredDate(s.dateDisplay)
+    let valid=true
+    if(from && dObj<new Date(from)) valid=false
+    if(to && dObj>new Date(to)) valid=false
+    if(valid){
+      let dateStr=s.dateDisplay||""
+      if(dObj && !isNaN(dObj)){
+        dateStr=showTime? dObj.toLocaleString("id-ID",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit"})
+                         : dObj.toLocaleDateString("id-ID")
+      }
+      tbl.innerHTML+=`
+        <tr>
+          <td>${counter}</td>
+          <td>${dateStr}</td>
+          <td>${s.invoice}</td>
+          <td>${s.items.map(x=>x.name+" x"+x.qty).join(", ")}</td>
+          <td>Rp ${s.total.toLocaleString()}</td>
+        </tr>`
+      counter++
+    }
+  })
+}
+function exportSales(){
+  let csv="No;Tanggal;Invoice;Item;Total\n"
+  let counter=1
+  sales.forEach(s=>{
+    let dStr=getCsvDateFromRecord(s,document.getElementById("showTimeCsv")?.checked)
+    let items=s.items.map(x=>`${x.name} x${x.qty}`).join(", ")
+    csv+=`${counter};"${dStr}";"${s.invoice}";"${items}";"${s.total}"\n`
+    counter++
+  })
+  downloadCsv(csv,"laporan_penjualan.csv")
+}
+
+// ✅ Laporan Restock
+function loadRestock(){
+  const from=document.getElementById("filterFromRestock").value
+  const to=document.getElementById("filterToRestock").value
+  const tbl=document.querySelector("#restockTbl tbody")
+  tbl.innerHTML=""
+  let counter=1
+  const showTime=document.getElementById("showTimeCsvRestock")?.checked
+  restocks.forEach((r)=>{
+    let dObj=parseStoredDate(r.date)||parseStoredDate(r.dateDisplay)
+    let valid=true
+    if(from && dObj<new Date(from)) valid=false
+    if(to && dObj>new Date(to)) valid=false
+    if(valid){
+      let dateStr=r.dateDisplay||""
+      if(dObj && !isNaN(dObj)){
+        dateStr=showTime? dObj.toLocaleString("id-ID",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit"})
+                         : dObj.toLocaleDateString("id-ID")
+      }
+      tbl.innerHTML+=`
+        <tr>
+          <td>${counter}</td>
+          <td>${dateStr}</td>
+          <td>${r.name}</td>
+          <td>${r.qty}</td>
+        </tr>`
+      counter++
+    }
+  })
+}
+function exportRestock(){
+  let csv="No;Tanggal;Produk;Jumlah\n"
+  let counter=1
+  restocks.forEach(r=>{
+    let dStr=getCsvDateFromRecord(r,document.getElementById("showTimeCsvRestock")?.checked)
+    csv+=`${counter};"${dStr}";"${r.name}";"${r.qty}"\n`
+    counter++
+  })
+  downloadCsv(csv,"laporan_restock.csv")
+}
+
+// ✅ Helper CSV
+function getCsvDateFromRecord(rec,showTime){
+  let dObj=parseStoredDate(rec.date)||parseStoredDate(rec.dateDisplay)
+  if(dObj && !isNaN(dObj)){
+    return showTime? dObj.toLocaleString("id-ID",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit"})
+                   : dObj.toLocaleDateString("id-ID")
+  }
+  return rec.dateDisplay||""
+}
+function downloadCsv(content,filename){
+  const blob=new Blob([content],{type:"text/csv;charset=utf-8;"})
+  const url=URL.createObjectURL(blob)
+  const a=document.createElement("a")
+  a.href=url; a.download=filename; a.click()
+  URL.revokeObjectURL(url)
+}
+
+// dummy print
+function printReceipt(t){
+  console.log("Cetak struk:",t)
+}
+</script>
+</body>
+</html>

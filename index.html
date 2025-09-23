@@ -1,381 +1,458 @@
 <!doctype html>
 <html lang="id">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>POS Sembako (Kode Barang & Barcode)</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-<style>
-:root {
-  --bg: #f7f9fc;
-  --card: #ffffff;
-  --accent: #0b74da;
-  --accent-dark: #094fa1;
-  --muted: #6b7280;
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  --radius: 10px;
-  --font: "Poppins", system-ui, sans-serif;
-}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>POS Sembako Mobile-Friendly</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #f7f9fc;
+      --card: #ffffff;
+      --accent: #0b74da;
+      --accent-dark: #094fa1;
+      --muted: #6b7280;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      --radius: 10px;
+      --font: "Poppins", system-ui, sans-serif;
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+      /* Mobile base sizes */
+      --font-size-base: 14px;
+      --font-size-small: 12px;
+      --spacing-sm: 8px;
+      --spacing-md: 12px;
+      --spacing-lg: 16px;
+    }
 
-body {
-  margin: 0;
-  font-family: var(--font);
-  background-color: var(--bg);
-  color: #111;
-  overflow-x: hidden;
-}
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
 
-header {
-  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
-  color: #fff;
-  padding: 16px;
-  box-shadow: var(--shadow);
-}
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background-color: var(--bg);
+      color: #111;
+      overflow-x: hidden;
+      font-size: var(--font-size-base);
+    }
 
-.container {
-  max-width: 1200px;
-  margin: 20px auto;
-  padding: 16px;
-}
+    header {
+      background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+      color: #fff;
+      padding: var(--spacing-lg) var(--spacing-md);
+      box-shadow: var(--shadow);
+    }
 
-h2, h3 {
-  margin: 10px 0;
-}
+    .container {
+      max-width: 100%;
+      margin: 0 auto;
+      padding: var(--spacing-md);
+    }
 
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 360px;
-  gap: 20px;
-}
+    h2, h3 {
+      margin: var(--spacing-md) 0;
+      font-weight: 600;
+    }
 
-@media (max-width: 900px) {
-  .grid {
-    grid-template-columns: 1fr;
-  }
-}
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--spacing-lg);
+    }
 
-.card {
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 16px;
-  box-shadow: var(--shadow);
-}
+    @media (min-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr 360px;
+      }
+    }
 
-.row {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-}
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
 
-.col {
-  flex: 1;
-  min-width: 120px;
-}
+    .row {
+      display: flex;
+      gap: var(--spacing-md);
+      flex-wrap: wrap;
+      margin-bottom: var(--spacing-lg);
+    }
 
-input[type="text"],
-input[type="number"],
-input[type="date"],
-select {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #dee2e6;
-  border-radius: var(--radius);
-  font-size: 14px;
-  outline: none;
-  transition: 0.2s ease;
-}
+    .col {
+      flex: 1;
+      min-width: 120px;
+    }
 
-input:focus,
-select:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(11, 116, 218, 0.15);
-}
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select {
+      width: 100%;
+      padding: var(--spacing-sm);
+      border: 1px solid #dee2e6;
+      border-radius: var(--radius);
+      font-size: var(--font-size-base);
+      outline: none;
+      transition: 0.2s ease;
+    }
 
-button {
-  background: var(--accent);
-  color: #fff;
-  padding: 10px 14px;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(11, 116, 218, 0.15);
+    }
 
-button:hover {
-  background: var(--accent-dark);
-}
+    button {
+      background: var(--accent);
+      color: #fff;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: none;
+      border-radius: var(--radius);
+      font-weight: 600;
+      font-size: var(--font-size-base);
+      cursor: pointer;
+      transition: background 0.2s ease;
+      width: 100%; /* Full-width tombol di mobile agar mudah disentuh */
+      box-sizing: border-box;
+    }
 
-button.ghost {
-  background: transparent;
-  color: var(--accent);
-  border: 1px solid rgba(11, 116, 218, 0.2);
-}
+    button:hover {
+      background: var(--accent-dark);
+    }
 
-button.small {
-  padding: 6px 10px;
-  font-size: 13px;
-}
+    button.ghost {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid rgba(11, 116, 218, 0.2);
+    }
 
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+    button.small {
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: var(--font-size-small);
+    }
 
-.muted {
-  color: var(--muted);
-  font-size: 13px;
-}
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-  min-width: 100%;
-  overflow-x: auto;
-}
+    .muted {
+      color: var(--muted);
+      font-size: var(--font-size-small);
+    }
 
-th,
-td {
-  padding: 10px;
-  border-bottom: 1px solid #f1f3f5;
-  text-align: left;
-  vertical-align: top;
-  word-break: break-word;
-}
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--font-size-base);
+      min-width: 100%;
+    }
 
-th {
-  font-weight: 600;
-  color: #333;
-  background: #f9fbfd;
-}
+    th, td {
+      padding: var(--spacing-sm);
+      border-bottom: 1px solid #f1f3f5;
+      text-align: left;
+      vertical-align: top;
+      word-break: break-word;
+    }
 
-.actions button {
-  margin-right: 6px;
-}
+    th {
+      font-weight: 600;
+      color: #333;
+      background: #f9fbfd;
+    }
 
-#cart {
-  min-height: 36px;
-  padding: 10px;
-  background: #f1f5fb;
-  border: 1px dashed #cce1ff;
-  border-radius: var(--radius);
-  overflow-x: auto;
-}
+    .actions button {
+      margin-right: var(--spacing-sm);
+      /* tombol aksi lebih kecil dan inline */
+      width: auto;
+    }
 
-#reader {
-  width: 100%;
-  max-width: 100%;
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: #000;
-  min-height: 180px;
-}
+    #cart {
+      min-height: 36px;
+      padding: var(--spacing-sm);
+      background: #f1f5fb;
+      border: 1px dashed #cce1ff;
+      border-radius: var(--radius);
+      overflow-x: auto;
+    }
 
-.tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 16px;
-}
+    #reader {
+      width: 100%;
+      max-width: 100%;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #000;
+      min-height: 200px; /* agak lebih tinggi untuk view kamera */
+    }
 
-.tab-btn {
-  padding: 8px 16px;
-  background: #f1f5f9;
-  border: none;
-  border-radius: var(--radius);
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
 
-.tab-btn.active {
-  background: var(--accent);
-  color: #fff;
-}
+    .tab-btn {
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: #f1f5f9;
+      border: none;
+      border-radius: var(--radius);
+      font-weight: 600;
+      font-size: var(--font-size-base);
+      cursor: pointer;
+      flex: 1; /* agar tombol tab ikut mengisi */
+      text-align: center;
+    }
 
-.flex {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
 
-.stack {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+    .flex {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      flex-wrap: wrap;
+    }
 
-.right {
-  text-align: right;
-}
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
 
-.badge {
-  background: #eef6ff;
-  color: var(--accent);
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 12px;
-}
+    .right {
+      text-align: right;
+      width: 100%;
+    }
 
-.note {
-  font-size: 13px;
-  color: var(--muted);
-}
+    .badge {
+      background: #eef6ff;
+      color: var(--accent);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: var(--font-size-small);
+    }
 
-.info-small {
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 6px;
-}
+    .note, .info-small {
+      font-size: var(--font-size-small);
+      color: var(--muted);
+    }
 
-.printer-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-top: 8px;
-  flex-wrap: wrap;
-}
+    .printer-row {
+      display: flex;
+      gap: var(--spacing-md);
+      align-items: center;
+      margin-top: var(--spacing-sm);
+      flex-wrap: wrap;
+    }
 
-.tab-content {
-  display: none;
-}
+    .tab-content {
+      display: none;
+    }
 
-.tab-content.active {
-  display: block;
-}
+    .tab-content.active {
+      display: block;
+    }
 
-#guideOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.65);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-}
+    #guideOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.65);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
 
-#guideBox {
-  background: #fff;
-  padding: 24px;
-  border-radius: var(--radius);
-  max-width: 90%;
-  width: 360px;
-  box-shadow: var(--shadow);
-  text-align: center;
-}
+    #guideBox {
+      background: #fff;
+      padding: var(--spacing-lg);
+      border-radius: var(--radius);
+      max-width: 90%;
+      width: 320px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
 
-#guideBox button {
-  margin: 10px 6px;
-}
+    #guideBox button {
+      margin: var(--spacing-sm) var(--spacing-md);
+      width: 120px;
+    }
 
-@media (max-width: 600px) {
-  header h2 {
-    font-size: 18px;
-  }
-  .container {
-    padding: 12px;
-  }
-  table th, table td {
-    font-size: 13px;
-    padding: 8px;
-  }
-}
-</style>
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    @media (min-width: 600px) {
+      body {
+        font-size: 15px;
+      }
+      button {
+        width: auto;
+      }
+      .actions button {
+        margin-right: var(--spacing-sm);
+      }
+    }
+
+    @media (min-width: 900px) {
+      body {
+        font-size: 16px;
+      }
+      /* kartu kanan-kiri layout kembali */
+      .grid {
+        grid-template-columns: 1fr 360px;
+      }
+    }
+  </style>
+
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
-<body>
-<header>
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
-    <h2 style="margin:0">POS Toko Sembako</h2>
-    <div style="display:flex;gap:12px;align-items:center">
-      <div class="muted">Keranjang: <span id="cartCount">0</span> barang</div>
-      <div class="badge" id="shopStatus">Offline</div>
-    </div>
-  </div>
-</header>
 
-<main class="container">
-  <div class="grid">
-    <div class="card">
-      <section>
-        <h3>Tambah / Edit Produk</h3>
-        <form id="formProduct" onsubmit="submitProduct();return false" style="margin-bottom:6px">
-          <div class="row">
-            <div class="col">
-              <label class="muted">Kode Barang / SKU</label>
-              <div style="display:flex;gap:8px">
-                <input id="sku" placeholder="Kode Barang" type="text" required pattern="\d*" />
-                <button type="button" class="small" onclick="scanSku()" title="Scan Kode Barang">Scan</button>
+<body>
+  <header>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--spacing-md);flex-wrap:wrap">
+      <h2 style="margin:0;font-size:1.25rem">POS Toko Sembako</h2>
+      <div style="display:flex;gap:var(--spacing-md);align-items:center">
+        <div class="muted">Keranjang: <span id="cartCount">0</span> barang</div>
+        <div class="badge" id="shopStatus">Offline</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="grid">
+
+      <!-- Dashboard Laporan -->
+      <div class="card">
+        <h2 style="font-size:1.5rem; margin-bottom: var(--spacing-md)">📊 Dashboard Laporan</h2>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="openTab('penjualan')">Penjualan</button>
+          <button class="tab-btn" onclick="openTab('restock')">Restock</button>
+          <button class="tab-btn" onclick="openTab('stok')">Stok Akhir</button>
+        </div>
+
+        <div id="penjualan" class="tab-content active">
+          <h3>Laporan Penjualan</h3>
+          <div class="flex">
+            <label class="muted">From <input id="filterFrom" type="date" /></label>
+            <label class="muted">To <input id="filterTo" type="date" /></label>
+            <button onclick="loadSales()" class="small">Tampilkan</button>
+            <button onclick="exportSales()" class="small ghost">Export CSV</button>
+            <button onclick="printSales()" class="small ghost">Cetak</button>
+          </div>
+          <div style="overflow:auto; max-height:200px; margin-top: var(--spacing-sm)">
+            <table id="salesTbl">
+              <thead><tr><th>No</th><th>Tanggal</th><th>Invoice</th><th>Item</th><th>Total</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="restock" class="tab-content">
+          <h3>Laporan Restock (Barang Masuk)</h3>
+          <div class="flex">
+            <button onclick="loadRestock()" class="small">Tampilkan</button>
+            <button onclick="exportRestock()" class="small ghost">Export CSV</button>
+            <button onclick="printRestock()" class="small ghost">Cetak</button>
+          </div>
+          <div style="overflow:auto; max-height:200px; margin-top: var(--spacing-sm)">
+            <table id="restockTbl">
+              <thead><tr><th>No</th><th>Tanggal</th><th>SKU</th><th>Nama</th><th>Jumlah</th><th>Stok Akhir</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="stok" class="tab-content">
+          <h3>Stok Akhir Produk</h3>
+          <div style="overflow:auto; max-height:200px; margin-top: var(--spacing-sm)">
+            <table id="finalStockTbl">
+              <thead><tr><th>No</th><th>SKU</th><th>Nama</th><th>Stok</th><th>Harga</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tambah / Edit Produk -->
+      <div class="card">
+        <section>
+          <h3>Tambah / Edit Produk</h3>
+          <form id="formProduct" onsubmit="submitProduct();return false" style="margin-bottom: var(--spacing-lg)">
+            <div class="row">
+              <div class="col">
+                <label class="muted">Kode Barang / SKU</label>
+                <div style="display:flex;gap:var(--spacing-sm)">
+                  <input id="sku" placeholder="Kode Barang" type="text" required pattern="\d*" />
+                  <button type="button" class="small" onclick="scanSku()" title="Scan Kode Barang">Scan</button>
+                </div>
+              </div>
+              <div class="col">
+                <label class="muted">Nama Produk</label>
+                <input id="name" placeholder="Nama Produk" type="text" required />
               </div>
             </div>
-            <div class="col">
-              <label class="muted">Nama Produk</label>
-              <input id="name" placeholder="Nama Produk" type="text" required />
+            <div class="row">
+              <div class="col">
+                <label class="muted">Harga Jual (Rp)</label>
+                <input id="price" placeholder="Harga Jual (Rp)" type="number" required />
+              </div>
+              <div class="col">
+                <label class="muted">Stok (angka)</label>
+                <input id="qty" placeholder="Stok (angka)" type="number" required />
+              </div>
             </div>
-          </div>
-          <div class="row">
-            <div class="col">
-              <label class="muted">Harga Jual (Rp)</label>
-              <input id="price" placeholder="Harga Jual (Rp)" type="number" required />
+            <div style="display:flex;gap:var(--spacing-sm);flex-wrap:wrap;align-items:center">
+              <button type="submit" id="formSubmitBtn">Tambah</button>
+              <button type="button" class="ghost" onclick="resetForm()">Reset</button>
+              <div class="muted" style="margin-left: auto; font-size: var(--font-size-small)">
+                Jika nama sudah ada, stok akan <strong>dijumlahkan</strong>.
+              </div>
             </div>
-            <div class="col">
-              <label class="muted">Stok (angka)</label>
-              <input id="qty" placeholder="Stok (angka)" type="number" required />
-            </div>
+          </form>
+
+          <h3>Restock Produk</h3>
+          <form id="formRestock" onsubmit="restockProduct();return false" class="flex" style="gap:var(--spacing-sm); flex-wrap:wrap; align-items:center">
+            <select id="restockName" required>
+              <option value="">Pilih Produk...</option>
+            </select>
+            <input id="restockQty" placeholder="Jumlah Restock" type="number" required />
+            <button type="submit">Tambah Stok</button>
+          </form>
+
+          <h3>Daftar Produk</h3>
+          <input id="search" placeholder="Cari produk (Kode/Nama)..." oninput="render()"
+                 style="margin-bottom: var(--spacing-lg); width: 100%; padding: var(--spacing-sm);
+                        border-radius: var(--radius); border:1px solid #e8eef8" />
+          <div style="overflow:auto; max-height: 300px;">
+            <table id="tbl">
+              <thead><tr><th>SKU</th><th>Nama</th><th>Stok</th><th>Harga</th><th>Aksi</th></tr></thead>
+              <tbody></tbody>
+            </table>
           </div>
-          <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
-            <button type="submit" id="formSubmitBtn">Tambah</button>
-            <button type="button" class="ghost" onclick="resetForm()">Reset</button>
-            <div class="muted" style="margin-left:auto">Jika nama sudah ada, stok akan <strong>dijumlahkan</strong>.</div>
-          </div>
-        </form>
+        </section>
+      </div>
 
-        <h3 style="margin-top:16px">Restock Produk</h3>
-        <form id="formRestock" onsubmit="restockProduct();return false" class="flex" style="gap:8px;align-items:center">
-          <select id="restockName" required>
-            <option value="">Pilih Produk...</option>
-          </select>
-          <input id="restockQty" placeholder="Jumlah Restock" type="number" required />
-          <button type="submit">Tambah Stok</button>
-        </form>
-
-        <h3 style="margin-top:16px">Daftar Produk</h3>
-        <input id="search" placeholder="Cari produk (Kode/Nama)..." oninput="render()" style="margin-bottom:10px;width:100%;padding:8px;border-radius:8px;border:1px solid #e8eef8" />
-        <div style="overflow:auto;max-height:360px">
-          <table id="tbl">
-            <thead><tr><th>SKU</th><th>Nama</th><th>Stok</th><th>Harga</th><th>Aksi</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </section>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:18px">
+      <!-- Sisi Kanan: Keranjang dan Scan Produk -->
       <div class="card">
-        <h3>Keranjang <small class="muted">(<span id="cartCount2">0</span>)</small></h3>
+        <h3>Keranjang (<span id="cartCount2">0</span>)</h3>
         <div id="cart"><i class="muted">Keranjang kosong</i></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+        <div class="flex" style="margin-top: var(--spacing-md); flex-direction: column; gap: var(--spacing-sm)">
           <div class="note">Total: <strong id="total">Rp 0</strong></div>
-          <div>
-            <!-- autoPrint default: NOT checked -->
+          <div style="width: 100%">
             <label><input type="checkbox" id="autoPrint" /> Cetak struk otomatis</label>
             <div class="printer-row">
               <select id="printerSelect">
                 <option value="">Pilih printer (belum tersimpan)</option>
-                <!-- user can set a friendly name; browsers can't enumerate printers -->
                 <option value="Printer Lokal">Printer Lokal</option>
                 <option value="Printer Bluetooth">Printer Bluetooth</option>
                 <option value="Printer Jaringan">Printer Jaringan</option>
@@ -383,92 +460,49 @@ th {
               <button class="small ghost" onclick="savePrinterPreference()">Simpan</button>
             </div>
             <div class="info-small">Jika auto print aktif: pastikan pilih & simpan printer. Jika tidak, proses cetak akan diblokir dan muncul peringatan.</div>
-            <div style="margin-top:6px">
-              <button id="checkoutBtn" onclick="checkout()" disabled>Selesaikan Penjualan</button>
-              <button class="ghost" onclick="clearCart()">Kosongkan</button>
-            </div>
+          </div>
+          <div style="width: 100%; margin-top: var(--spacing-md)">
+            <button id="checkoutBtn" onclick="checkout()" disabled>Selesaikan Penjualan</button>
+            <button class="ghost" onclick="clearCart()">Kosongkan</button>
           </div>
         </div>
       </div>
 
       <div class="card">
         <h3>Scan Produk</h3>
-        <div class="flex" style="margin-bottom:8px">
+        <div class="flex" style="gap: var(--spacing-sm); flex-wrap: wrap; margin-bottom: var(--spacing-sm)">
           <button id="btnStartScan" onclick="startScan('sell')" class="small">Mulai Scan Jual</button>
           <button id="btnStopScan" onclick="stopScan()" class="small ghost">Stop Scan</button>
-          <label class="muted" style="margin-left:auto">Mode:
-            <select id="scanMode" style="margin-left:6px">
+          <label class="muted" style="margin-left: auto">Mode:
+            <select id="scanMode" style="margin-left: var(--spacing-sm)">
               <option value="single">1x auto-stop</option>
               <option value="continuous">Multi-scan</option>
             </select>
           </label>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <div style="display:flex; gap: var(--spacing-sm); align-items:center; margin-bottom: var(--spacing-sm)">
           <label><input type="checkbox" id="autoSell" /> <span class="muted">Auto-sell on scan</span></label>
         </div>
-        <div id="reader" style="min-height:160px"></div>
-        <div class="muted note" style="margin-top:8px">Gunakan kamera ponsel. Pilih mode single jika ingin berhenti setelah 1 scan.</div>
+        <div id="reader"></div>
+        <div class="muted note" style="margin-top: var(--spacing-sm)">Gunakan kamera ponsel. Pilih mode single jika ingin berhenti setelah 1 scan.</div>
       </div>
+      
+    </div>
+  </main>
 
-      <div class="card">
-        <h2>📊 Dashboard Laporan</h2>
-        <div class="tabs">
-          <button class="tab-btn active" onclick="openTab('penjualan')">Laporan Penjualan</button>
-          <button class="tab-btn" onclick="openTab('restock')">Laporan Restock</button>
-          <button class="tab-btn" onclick="openTab('stok')">Laporan Stok Akhir</button>
-        </div>
-
-        <div id="penjualan" class="tab-content active">
-          <h3>Laporan Penjualan</h3>
-          <div class="flex" style="gap:8px;flex-wrap:wrap">
-            <label class="muted">From <input id="filterFrom" type="date" /></label>
-            <label class="muted">To <input id="filterTo" type="date" /></label>
-            <button onclick="loadSales()" class="small">Tampilkan</button>
-            <button onclick="exportSales()" class="small ghost">Export CSV</button>
-            <button onclick="printSales()" class="small ghost">Cetak</button>
-          </div>
-          <div style="overflow:auto;max-height:160px;margin-top:8px">
-            <table id="salesTbl"><thead><tr><th>No</th><th>Tanggal</th><th>Invoice</th><th>Item</th><th>Total</th></tr></thead><tbody></tbody></table>
-          </div>
-        </div>
-
-        <div id="restock" class="tab-content">
-          <h3>Laporan Restock (Barang Masuk)</h3>
-          <div class="flex" style="gap:8px;flex-wrap:wrap">
-            <button onclick="loadRestock()" class="small">Tampilkan</button>
-            <button onclick="exportRestock()" class="small ghost">Export CSV</button>
-            <button onclick="printRestock()" class="small ghost">Cetak</button>
-          </div>
-          <div style="overflow:auto;max-height:160px;margin-top:8px">
-            <table id="restockTbl"><thead><tr><th>No</th><th>Tanggal</th><th>SKU</th><th>Nama</th><th>Jumlah</th><th>Stok Akhir</th></tr></thead><tbody></tbody></table>
-          </div>
-        </div>
-
-        <div id="stok" class="tab-content">
-          <h3>Stok Akhir Produk</h3>
-          <div style="overflow:auto;max-height:180px">
-            <table id="finalStockTbl"><thead><tr><th>No</th><th>SKU</th><th>Nama</th><th>Stok</th><th>Harga</th></tr></thead><tbody></tbody></table>
-          </div>
-        </div>
-      </div>
+  <div id="guideOverlay">
+    <div id="guideBox">
+      <h3>Selamat Datang di POS Toko Sembako</h3>
+      <p>Klik mulai untuk tutorial singkat semua fitur, atau skip jika sudah hafal.</p>
+      <button onclick="startGuide()">Mulai</button>
+      <button onclick="skipGuide()">Skip</button>
     </div>
   </div>
-</main>
 
-<div id="guideOverlay">
-  <div id="guideBox">
-    <h3>Selamat Datang di POS Toko Sembako</h3>
-    <p>Klik mulai untuk tutorial singkat semua fitur, atau skip jika sudah hafal.</p>
-    <button onclick="startGuide()">Mulai</button>
-    <button onclick="skipGuide()">Skip</button>
+  <!-- receipt area template (hidden) -->
+  <div id="receiptTemplate" style="display:none">
+    <div id="receiptArea"></div>
   </div>
-</div>
-
-<!-- receipt area template (hidden) -->
-<div id="receiptTemplate" style="display:none">
-  <div id="receiptArea"></div>
-</div>
-
 <script>
 /* ---------- data ---------- */
 let products = JSON.parse(localStorage.getItem('products')||'[]')

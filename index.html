@@ -543,10 +543,36 @@ let sales = JSON.parse(localStorage.getItem('sales')||'[]')
 let restocks = JSON.parse(localStorage.getItem('restocks')||'[]')
 let cart = []
 
-/* ---------- utility date ---------- */
+/* ---------- utility: reliable local datetime string ---------- */
 function getLocalDateTime(){
   const d=new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`;
+  const yyyy=d.getFullYear();
+  const mm=String(d.getMonth()+1).padStart(2,"0");
+  const dd=String(d.getDate()).padStart(2,"0");
+  const hh=String(d.getHours()).padStart(2,"0");
+  const mi=String(d.getMinutes()).padStart(2,"0");
+  const ss=String(d.getSeconds()).padStart(2,"0");
+  // format yang mudah di-parse kembali: "YYYY-MM-DD HH:mm:ss"
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+}
+
+function parseStoredDate(dStr){
+  // dStr diharapkan format "YYYY-MM-DD HH:mm:ss"
+  if(!dStr) return null;
+  let iso = dStr;
+  if(dStr.indexOf(' ') !== -1 && dStr.indexOf('T') === -1){
+    iso = dStr.replace(' ', 'T');
+  }
+  // beberapa fallback: jika masih invalid, coba Date.parse direct
+  const d = new Date(iso);
+  if(isNaN(d.getTime())){
+    // try replace slashes with hyphen
+    const alt = dStr.replace(/\//g,'-').replace(' ', 'T');
+    const d2 = new Date(alt);
+    if(isNaN(d2.getTime())) return null;
+    return d2;
+  }
+  return d;
 }
 
 /* ---------- render product list ---------- */
@@ -554,7 +580,7 @@ function render(){
   const tbl=document.querySelector("#tbl tbody")
   const search=document.querySelector("#search").value.toLowerCase()
   tbl.innerHTML=""
-  products.forEach(p=>{
+  products.forEach((p,i)=>{
     if(p.name.toLowerCase().includes(search)||p.sku.includes(search)){
       const tr=document.createElement("tr")
       tr.innerHTML=`
@@ -572,18 +598,17 @@ function render(){
   updateRestockDropdown()
 }
 
-/* ---------- CRUD Produk ---------- */
+/* ---------- product CRUD ---------- */
 function submitProduct(){
   const sku=document.getElementById("sku").value.trim()
   const name=document.getElementById("name").value.trim()
   const price=parseInt(document.getElementById("price").value)
   const qty=parseInt(document.getElementById("qty").value)
-  if(!sku||!name||!price||!qty) return alert("Lengkapi data!")
-
+  if(!sku || !name || !price || !qty) return alert("Lengkapi data!")
   const exist=products.find(p=>p.sku===sku)
   if(exist){
-    exist.qty+=qty
-    exist.price=price
+    exist.qty += qty
+    exist.price = price
   }else{
     products.push({sku,name,price,qty})
   }
@@ -592,7 +617,10 @@ function submitProduct(){
 }
 
 function resetForm(){
-  sku.value=""; name.value=""; price.value=""; qty.value="";
+  document.getElementById("sku").value=""
+  document.getElementById("name").value=""
+  document.getElementById("price").value=""
+  document.getElementById("qty").value=""
   document.getElementById("formSubmitBtn").textContent="Tambah"
 }
 
@@ -615,6 +643,7 @@ function deleteProduct(sku){
 
 function updateRestockDropdown(){
   const sel=document.getElementById("restockName")
+  if(!sel) return
   sel.innerHTML='<option value="">Pilih Produk...</option>'
   products.forEach(p=>{
     const opt=document.createElement("option")
@@ -623,28 +652,37 @@ function updateRestockDropdown(){
   })
 }
 
-/* ---------- Restock ---------- */
+/* ---------- restock (simpan dengan format dapat diparse) ---------- */
 function restockProduct(){
   const sku=document.getElementById("restockName").value
   const qty=parseInt(document.getElementById("restockQty").value)
   if(!sku||!qty) return alert("Pilih produk & jumlah!")
   const p=products.find(x=>x.sku===sku)
   if(!p) return alert("Produk tidak ditemukan")
+
   p.qty+=qty
   localStorage.setItem("products",JSON.stringify(products))
-  restocks.push({date:getLocalDateTime(),sku:p.sku,name:p.name,qty,stockAfter:p.qty})
+
+  restocks.push({
+    date:getLocalDateTime(), // simpan format "YYYY-MM-DD HH:mm:ss"
+    sku:p.sku,
+    name:p.name,
+    qty,
+    stockAfter:p.qty
+  })
   localStorage.setItem("restocks",JSON.stringify(restocks))
+
   render(); document.getElementById("restockQty").value=""
 }
 
-/* ---------- Cart ---------- */
+/* ---------- CART & CHECKOUT ---------- */
 function addToCart(sku){
   const p=products.find(x=>x.sku===sku)
   if(!p) return alert("Produk tidak ditemukan")
   const cartItem=cart.find(c=>c.sku===sku)
   if(cartItem){
     if(cartItem.qty>=p.qty) return alert("Stok tidak cukup")
-    cartItem.qty++
+    cartItem.qty+=1
   }else{
     cart.push({sku:p.sku,name:p.name,price:p.price,qty:1})
   }
@@ -657,18 +695,15 @@ function renderCart(){
   const count2=document.getElementById("cartCount2")
   const checkoutBtn=document.getElementById("checkoutBtn")
   if(cart.length===0){
-    el.innerHTML='<i class="muted">Keranjang kosong</i>'
-    count.textContent="0"; count2.textContent="0"; checkoutBtn.disabled=true
-    document.getElementById("total").textContent="Rp 0"
-    return
+    el.innerHTML='<i class="muted">Keranjang kosong</i>';count.textContent="0";count2.textContent="0"; checkoutBtn.disabled=true;document.getElementById("total").textContent="Rp 0"; return
   }
-  let total=0, html="<table style='width:100%'>"
-  cart.forEach(c=>{
+  let html="<table style='width:100%'>", total=0
+  cart.forEach((c,i)=>{
     total+=c.price*c.qty
     html+=`<tr>
       <td>${c.name} x${c.qty}</td>
       <td class="right">Rp ${(c.price*c.qty).toLocaleString()}</td>
-      <td><button class="small" onclick="removeFromCart('${c.sku}')">-</button></td>
+      <td class="actions"><button class="small" onclick="removeFromCart('${c.sku}')">-</button></td>
     </tr>`
   })
   html+="</table>"
@@ -678,10 +713,11 @@ function renderCart(){
   checkoutBtn.disabled=false
   document.getElementById("total").textContent="Rp "+total.toLocaleString()
 }
-function removeFromCart(sku){cart=cart.filter(c=>c.sku!==sku);renderCart()}
-function clearCart(){cart=[];renderCart()}
 
-/* ---------- Printer ---------- */
+function removeFromCart(sku){cart=cart.filter(c=>c.sku!==sku); renderCart()}
+function clearCart(){cart=[]; renderCart()}
+
+/* ---------- printer preference helpers ---------- */
 function loadPrinterPreference(){
   const p = localStorage.getItem('preferredPrinter') || ''
   const sel = document.getElementById('printerSelect')
@@ -689,128 +725,178 @@ function loadPrinterPreference(){
 }
 function savePrinterPreference(){
   const sel = document.getElementById('printerSelect')
+  if(!sel) return
   localStorage.setItem('preferredPrinter', sel.value)
-  alert(sel.value ? 'Preferensi printer disimpan: '+sel.value : 'Preferensi printer dikosongkan')
+  alert(sel.value ? 'Preferensi printer disimpan: ' + sel.value : 'Preferensi printer dikosongkan')
 }
 
-/* ---------- Checkout ---------- */
+/* ---------- checkout with robust date + printer check ---------- */
 function checkout(){
   if(cart.length===0) return alert("Keranjang kosong")
   const invoice="INV"+Date.now()
+
   const now = new Date()
-  const date = now.toISOString()
-  const dateDisplay = now.toLocaleString()
+  const date = now.toISOString()                // untuk filter & simpan aman
+  const dateDisplay = now.toLocaleString()      // untuk tampilan laporan
+
   let total=0
   cart.forEach(c=>{
     total+=c.price*c.qty
     const p=products.find(x=>x.sku===c.sku)
     if(p) p.qty-=c.qty
   })
+
   const transaction={invoice,date,dateDisplay,items:[...cart],total}
   sales.push(transaction)
   localStorage.setItem("sales",JSON.stringify(sales))
   localStorage.setItem("products",JSON.stringify(products))
-  if(document.getElementById("autoPrint").checked){
-    const preferred = localStorage.getItem('preferredPrinter') || ''
-    if(!preferred) alert("Auto print aktif, tapi printer belum dipilih")
-    else printReceipt(transaction)
+
+  // cek auto print & preferensi printer
+  const auto = document.getElementById("autoPrint").checked
+  const preferred = localStorage.getItem('preferredPrinter') || ''
+  if(auto){
+    if(!preferred){
+      alert("Cetak otomatis aktif tetapi tidak ada printer yang dipilih. Silahkan pilih & simpan printer terlebih dahulu.")
+    }else{
+      try{
+        printReceipt(transaction)
+      }catch(e){
+        console.error(e)
+        alert("Terjadi kesalahan saat mencoba mencetak. Silahkan hubungkan printer terlebih dahulu.")
+      }
+    }
   }
-  cart=[];renderCart();render();alert("Transaksi Berhasil: "+invoice)
+
+  cart=[]
+  renderCart(); render(); renderFinalStock()
+  alert("Transaksi berhasil! Invoice: "+invoice)
 }
 
+/* ---------- print receipt (opens print dialog) ---------- */
 function printReceipt(t){
-  let html = `<div style="font-family:Arial;font-size:12px;padding:8px">`
-  html += `<h3>Struk Pembelian</h3>`
+  // buat konten struk
+  let html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;padding:8px">`
+  html += `<h3 style="margin:4px 0">Struk Pembelian</h3>`
   html += `<div>Invoice: ${t.invoice}</div>`
-  html += `<div>Tanggal: ${t.dateDisplay}</div><hr/>`
-  html += `<table style="width:100%"><tr><th align="left">Nama</th><th>Qty</th><th align="right">Subtotal</th></tr>`
+  html += `<div>Tanggal: ${t.date}</div>`
+  html += `<hr/>`
+  html += `<table style="width:100%;border-collapse:collapse;font-size:12px">`
+  html += `<tr><th align="left">Nama</th><th>Qty</th><th align="right">Subtotal</th></tr>`
   t.items.forEach(i=>{
     html += `<tr><td>${i.name}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">Rp ${(i.price*i.qty).toLocaleString()}</td></tr>`
   })
-  html += `</table><hr/><h4 style="text-align:right">Total: Rp ${t.total.toLocaleString()}</h4></div>`
-  const w=window.open("","_blank","width=400,height=600")
-  w.document.write(html);w.document.close();w.focus();w.print();setTimeout(()=>w.close(),1200)
-}
+  html += `</table><hr/>`
+  html += `<h4 style="text-align:right;margin:6px 0">Total: Rp ${t.total.toLocaleString()}</h4>`
+  html += `</div>`
 
-/* ---------- SCAN ---------- */
-function startScan(target){
-  const popupGuide = window.open("", "GuidePopup", "width=400,height=300");
-  popupGuide.document.write(`
-    <!doctype html>
-    <html>
-    <head>
-      <meta charset="utf-8" />
-      <title>Panduan Scan</title>
-      <style>
-        body { font-family: Arial; padding:20px; text-align:center; }
-        button { padding:8px 15px; margin:10px; background:#0b74da; color:#fff; border:none; border-radius:4px; cursor:pointer; }
-      </style>
-    </head>
-    <body>
-      <h3>Panduan Scan Produk</h3>
-      <p>Pastikan barcode atau QR code terlihat jelas di kamera.</p>
-      <p>Izinkan akses kamera saat diminta oleh browser.</p>
-      <button onclick="window.opener.openScanWindow('${target}');window.close();">Mulai</button>
-      <button onclick="window.close()">Batal</button>
-    </body>
-    </html>
-  `);
-  popupGuide.document.close();
-}
-
-function openScanWindow(target){
-  const popupWidth = 400;
-  const popupHeight = 500;
-  const left = (screen.width - popupWidth) / 2;
-  const top = (screen.height - popupHeight) / 2;
-
-  const scanPopup = window.open("", "ScanPopup",
-    `width=${popupWidth},height=${popupHeight},top=${top},left=${left}`);
-
-  scanPopup.document.write(`
-    <!doctype html>
-    <html>
-    <head>
-      <meta charset="utf-8" />
-      <title>Scan Produk</title>
-      <script src="https://unpkg.com/html5-qrcode"></script>
-      <style>
-        body { margin:0; background:#000; color:#fff; text-align:center; }
-        #reader { width:100%; height:80vh; }
-        button { background:#0b74da; padding:8px 15px; margin:10px; border:none; color:#fff; border-radius:4px; }
-      </style>
-    </head>
-    <body>
-      <div id="reader"></div>
-      <button onclick="window.close()">Tutup</button>
-      <script>
-        const scanner = new Html5Qrcode("reader");
-        scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
-          (code) => {
-            window.opener.postMessage({ type: 'SCAN_RESULT', value: code, target: '${target}' }, "*");
-            scanner.stop().then(()=>window.close());
-          },
-          (err) => {}
-        ).catch(e => alert("Gagal akses kamera: "+e));
-      </script>
-    </body>
-    </html>
-  `);
-  scanPopup.document.close();
-}
-
-window.addEventListener("message", (e) => {
-  if (e.data && e.data.type === "SCAN_RESULT") {
-    if (e.data.target === "sell" || document.getElementById("autoSell").checked) {
-      addToCart(e.data.value);
-    } else {
-      document.getElementById("sku").value = e.data.value;
-      alert("Kode Barang terdeteksi: " + e.data.value);
-    }
+  const w = window.open("","_blank","width=400,height=600")
+  if(!w) {
+    throw new Error("Popup blocked")
   }
-});
+  w.document.write(html)
+  w.document.close()
+  // fokus & print
+  w.focus()
+  // window.print usually doesn't throw, but wrap in try/catch anyway
+  try{
+    w.print()
+    // don't auto-close — some printers need selection; close after small timeout
+    setTimeout(()=>{ try{ w.close() }catch(e){} }, 1200)
+  }catch(e){
+    try{ w.close() }catch(_) {}
+    throw e
+  }
+}
 
-/* ---------- Tabs ---------- */
+<script>
+let qrScanner = null;
+let scanTarget = null; // "sku" atau "sell"
+let scanMode = "single"; // untuk jual (continuous / single)
+let scanning = false;
+
+/* === Fungsi buka popup scanner === */
+function openScanner(target) {
+  scanTarget = target;
+  document.getElementById("cameraPopup").style.display = "flex";
+  if (qrScanner === null) {
+    qrScanner = new Html5Qrcode("scannerContainer");
+  }
+  startQrScan();
+}
+
+/* === Fungsi tutup popup scanner === */
+function closeScanner() {
+  stopQrScan();
+  document.getElementById("cameraPopup").style.display = "none";
+}
+
+/* === Scan SKU di tambah/edit produk === */
+function scanSku() {
+  openScanner("sku");
+}
+
+/* === Mulai scan jual === */
+function startScan(target) {
+  scanMode = document.getElementById("scanMode").value;
+  openScanner("sell");
+}
+
+/* === Stop scan manual === */
+function stopScan() {
+  closeScanner();
+}
+
+/* === Jalankan scanner === */
+function startQrScan() {
+  if (scanning) return;
+  scanning = true;
+  qrScanner.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    qrCodeMessage => {
+      if (scanTarget === "sku") {
+        // auto isi input SKU & close popup
+        document.getElementById("sku").value = qrCodeMessage;
+        closeScanner();
+      } else if (scanTarget === "sell") {
+        // auto tambah ke keranjang
+        const sku = qrCodeMessage.trim();
+        const autoSell = document.getElementById("autoSell").checked;
+        const mode = document.getElementById("scanMode").value;
+        const product = products.find(p => p.sku === sku);
+        if (product) {
+          addToCart(sku);
+          if (autoSell && mode === "single") closeScanner();
+        } else {
+          alert("Produk tidak ditemukan: " + sku);
+          if (mode === "single") closeScanner();
+        }
+        // jika mode single → tutup popup
+        if (mode === "single") closeScanner();
+      }
+    },
+    errorMessage => {
+      // error scanning diabaikan
+    }
+  ).catch(err => {
+    alert("Gagal membuka kamera: " + err);
+    closeScanner();
+  });
+}
+
+/* === Berhenti scanning === */
+function stopQrScan() {
+  if (qrScanner && scanning) {
+    qrScanner.stop().then(() => {
+      scanning = false;
+    }).catch(() => {
+      scanning = false;
+    });
+  }
+}
+</script>
+
+/* ---------- TABS ---------- */
 function openTab(id){
   document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"))
   document.querySelectorAll(".tab-content").forEach(c=>c.classList.remove("active"))
@@ -818,11 +904,205 @@ function openTab(id){
   document.getElementById(id).classList.add("active")
 }
 
-/* init */
-render()
-loadPrinterPreference()
+/* ---------- REPORTS with robust parsing & date filter ---------- */
+function loadSales(){
+  const from=document.getElementById("filterFrom").value
+  const to=document.getElementById("filterTo").value
+  const tbl=document.querySelector("#salesTbl tbody")
+  tbl.innerHTML=""
+
+  let counter = 1
+  sales.forEach((s)=>{
+    const dObj = new Date(s.date)                         // selalu ISO
+    const d = s.dateDisplay || dObj.toLocaleString()      // tampilan lokal
+
+    let valid=true
+    if(from && dObj < new Date(from)) valid=false
+    if(to && dObj > new Date(to)) valid=false
+
+    if(valid){
+      tbl.innerHTML+=`
+        <tr>
+          <td>${counter}</td>
+          <td>${d}</td>
+          <td>${s.invoice}</td>
+          <td>${s.items.map(x=>x.name+" x"+x.qty).join(", ")}</td>
+          <td>Rp ${s.total.toLocaleString()}</td>
+        </tr>`
+      counter++
+    }
+  })
+}
+
+function loadRestock(){
+  const tbl=document.querySelector("#restockTbl tbody")
+  tbl.innerHTML=""
+
+  restocks.forEach((r,i)=>{
+    const dObj = parseStoredDate(r.date)
+    const dDisplay = dObj ? dObj.toLocaleDateString('id-ID') : 'Invalid Date'
+    tbl.innerHTML+=`
+      <tr>
+        <td>${i+1}</td>
+        <td>${dDisplay}</td>
+        <td>${r.sku}</td>
+        <td>${r.name}</td>
+        <td>${r.qty}</td>
+        <td>${r.stockAfter}</td>
+      </tr>`
+  })
+}
+
+/* ---------- CSV export (safely parse date) ---------- */
+// helper untuk ambil tanggal CSV
+function getCsvDateFromRecord(rec){
+  let dObj = null;
+
+  if(rec && rec.date){
+    dObj = parseStoredDate(rec.date);
+  }
+  if((!dObj || isNaN(dObj)) && rec && rec.dateDisplay){
+    dObj = parseStoredDate(rec.dateDisplay);
+  }
+
+  if(dObj && !isNaN(dObj)){
+    // format lengkap: YYYY-MM-DD HH:mm:ss
+    const yyyy = dObj.getFullYear();
+    const mm = String(dObj.getMonth()+1).padStart(2,"0");
+    const dd = String(dObj.getDate()).padStart(2,"0");
+    const hh = String(dObj.getHours()).padStart(2,"0");
+    const mi = String(dObj.getMinutes()).padStart(2,"0");
+    const ss = String(dObj.getSeconds()).padStart(2,"0");
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+  }
+
+  return rec.dateDisplay || "";
+}
+
+function exportSales(){
+  if(sales.length === 0) return alert("Tidak ada data penjualan");
+
+  // pakai titik koma (;) biar aman di Excel / Google Sheets Indonesia
+  let csv = "No;Tanggal;Invoice;Item;Total\n";
+  let counter = 1;
+
+  sales.forEach((s) => {
+    const d = getCsvDateFromRecord(s); // ambil tanggal yang aman
+    const items = s.items.map(x => `${x.name} x${x.qty}`).join(" | ");
+
+    // bungkus kolom teks dengan "..." supaya tidak pecah
+    csv += `${counter};"${d}";"${s.invoice}";"${items}";"${s.total}"\n`;
+    counter++;
+  });
+
+  downloadCSV(csv, "laporan_penjualan.csv");
+}
+function printRestock(){ window.print() }
+
+function downloadCSV(content, filename){
+  const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+  function clearSales(){
+  if(!confirm("Hapus semua laporan penjualan?")) return;
+
+  // kosongkan seluruh data sales, termasuk data lama dengan format tanggal berbeda
+  sales = [];
+
+  // simpan ke localStorage
+  localStorage.setItem("sales", JSON.stringify(sales));
+
+  // refresh tabel penjualan
+  loadSales();
+
+  alert("Semua laporan penjualan berhasil dihapus.");
+}
+
+
+
+/* ---------- final stock ---------- */
+function renderFinalStock(){
+  const tbl=document.querySelector("#finalStockTbl tbody")
+  tbl.innerHTML=""
+  products.forEach((p,i)=>{
+    tbl.innerHTML+=`<tr><td>${i+1}</td><td>${p.sku}</td><td>${p.name}</td><td>${p.qty}</td><td>Rp ${p.price.toLocaleString()}</td></tr>`
+  })
+}
+
+/* ---------- GUIDE ---------- */
+function startGuide(){alert("Guide: 1. Tambah produk, 2. Restock, 3. Scan, 4. Keranjang, 5. Checkout & cetak"); skipGuide()}
+function skipGuide(){document.getElementById("guideOverlay").style.display="none"}
+
+/* ---------- INIT ---------- */
+/* ---------- INIT ---------- */
+function init(){
+  // ensure autoPrint is NOT checked on load (safety)
+  const autoPrintEl = document.getElementById('autoPrint')
+  if(autoPrintEl) autoPrintEl.checked = false
+
+  // load saved printer preference
+  loadPrinterPreference()
+
+  // 🔄 migrasi data sales lama biar selalu ada dateDisplay
+  let updated = false
+  sales.forEach(s => {
+    if(s.date && !s.dateDisplay){
+      let dObj = new Date(s.date)
+
+      // kalau hasilnya Invalid Date, coba parse manual format lama: DD-MM-YYYY HH:mm:ss
+      if(isNaN(dObj)){
+        const parts = s.date.split(" ")
+        if(parts.length === 2){
+          const [d,m,y] = parts[0].split("-")  // DD-MM-YYYY
+          const [hh,mm,ss] = parts[1].split(":")
+          if(d && m && y){
+            dObj = new Date(y, parseInt(m)-1, d, hh||0, mm||0, ss||0)
+          }
+        }
+      }
+
+      // kalau sukses diparse, buat dateDisplay
+      if(dObj && !isNaN(dObj)){
+        s.dateDisplay = dObj.toLocaleString()
+        updated = true
+      } else {
+        // fallback kalau tetap gagal → pakai string aslinya
+        s.dateDisplay = s.date
+        updated = true
+      }
+    }
+  })
+  if(updated){
+    localStorage.setItem("sales", JSON.stringify(sales))
+  }
+
+  render(); renderFinalStock(); setInterval(renderFinalStock,5000)
+  document.getElementById("guideOverlay").style.display="flex"
+}
+
+init()
 </script>
-
-
+  <div id="cameraPopup" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.8);
+  z-index:1000;
+  justify-content:center;
+  align-items:center;
+  padding:10px;">
+  <div style="background:#fff;border-radius:10px;max-width:500px;width:100%;padding:10px;position:relative">
+    <button onclick="closeScanner()" style="position:absolute;top:6px;right:8px;background:#f44336;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;">✕</button>
+    <div id="scannerContainer" style="width:100%;max-width:100%"></div>
+    <div class="muted note" style="text-align:center;margin-top:6px">Arahkan kamera ke kode barang</div>
+  </div>
+</div>
 </body>
 </html>

@@ -732,16 +732,39 @@ function printReceipt(t){
   w.document.write(html);w.document.close();w.focus();w.print();setTimeout(()=>w.close(),1200)
 }
 
-/* ---------- SCAN: Pindah ke Popup Window ---------- */
-let scanPopup = null;
+/* ---------- SCAN ---------- */
 function startScan(target){
-  if(scanPopup && !scanPopup.closed){ scanPopup.focus(); return; }
+  const popupGuide = window.open("", "GuidePopup", "width=400,height=300");
+  popupGuide.document.write(`
+    <!doctype html>
+    <html>
+    <head>
+      <meta charset="utf-8" />
+      <title>Panduan Scan</title>
+      <style>
+        body { font-family: Arial; padding:20px; text-align:center; }
+        button { padding:8px 15px; margin:10px; background:#0b74da; color:#fff; border:none; border-radius:4px; cursor:pointer; }
+      </style>
+    </head>
+    <body>
+      <h3>Panduan Scan Produk</h3>
+      <p>Pastikan barcode atau QR code terlihat jelas di kamera.</p>
+      <p>Izinkan akses kamera saat diminta oleh browser.</p>
+      <button onclick="window.opener.openScanWindow('${target}');window.close();">Mulai</button>
+      <button onclick="window.close()">Batal</button>
+    </body>
+    </html>
+  `);
+  popupGuide.document.close();
+}
+
+function openScanWindow(target){
   const popupWidth = 400;
   const popupHeight = 500;
   const left = (screen.width - popupWidth) / 2;
   const top = (screen.height - popupHeight) / 2;
 
-  scanPopup = window.open("", "ScanPopup",
+  const scanPopup = window.open("", "ScanPopup",
     `width=${popupWidth},height=${popupHeight},top=${top},left=${left}`);
 
   scanPopup.document.write(`
@@ -750,11 +773,11 @@ function startScan(target){
     <head>
       <meta charset="utf-8" />
       <title>Scan Produk</title>
-      <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+      <script src="https://unpkg.com/html5-qrcode"></script>
       <style>
-        body { font-family: Arial; margin:0; background:#000; color:#fff; }
-        #reader { width:100%; height:100%; }
-        button { padding:8px 12px; margin:10px; background:#0b74da; color:#fff; border:none; }
+        body { margin:0; background:#000; color:#fff; text-align:center; }
+        #reader { width:100%; height:80vh; }
+        button { background:#0b74da; padding:8px 15px; margin:10px; border:none; color:#fff; border-radius:4px; }
       </style>
     </head>
     <body>
@@ -763,11 +786,11 @@ function startScan(target){
       <script>
         const scanner = new Html5Qrcode("reader");
         scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
-          msg => {
-            window.opener.postMessage({ type: 'SCAN_RESULT', value: msg, target: '${target}' }, "*");
+          (code) => {
+            window.opener.postMessage({ type: 'SCAN_RESULT', value: code, target: '${target}' }, "*");
             scanner.stop().then(()=>window.close());
           },
-          err => {}
+          (err) => {}
         ).catch(e => alert("Gagal akses kamera: "+e));
       </script>
     </body>
@@ -776,13 +799,13 @@ function startScan(target){
   scanPopup.document.close();
 }
 
-window.addEventListener("message", e=>{
-  if(e.data && e.data.type==="SCAN_RESULT"){
-    if(e.data.target==="sell" || document.getElementById("autoSell").checked){
-      addToCart(e.data.value)
+window.addEventListener("message", (e) => {
+  if (e.data && e.data.type === "SCAN_RESULT") {
+    if (e.data.target === "sell" || document.getElementById("autoSell").checked) {
+      addToCart(e.data.value);
     } else {
-      document.getElementById("sku").value=e.data.value
-      alert("Kode Barang terdeteksi: "+e.data.value)
+      document.getElementById("sku").value = e.data.value;
+      alert("Kode Barang terdeteksi: " + e.data.value);
     }
   }
 });
@@ -799,6 +822,7 @@ function openTab(id){
 render()
 loadPrinterPreference()
 </script>
+
 
 </body>
 </html>

@@ -110,60 +110,45 @@
         return;
       }
 
-      scanWindow.document.write(`
-        <html>
-          <head>
-            <title>Scan Produk</title>
-            <style>
-              body { margin:0; font-family:sans-serif; background:#000; color:#fff; }
-              #reader { width: 100%; height: 100%; }
-              button { padding:6px 10px; background:#0b74da; color:#fff; border:none; cursor:pointer; margin:10px; }
-            </style>
-            <script src="https://unpkg.com/html5-qrcode"></script>
-          </head>
-          <body>
-            <div id="reader"></div>
-            <div style="text-align:center;">
-              <button onclick="window.close()">Tutup</button>
-            </div>
-          </body>
-        </html>
-      `);
+      // gunakan replaceAll untuk escape karakter backtick
+      const popupHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Scan Produk</title>
+  <style>
+    body { margin:0; font-family:sans-serif; background:#000; color:#fff; }
+    #reader { width: 100%; height: 100%; }
+    button { padding:6px 10px; background:#0b74da; color:#fff; border:none; cursor:pointer; margin:10px; }
+  </style>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+  <div id="reader"></div>
+  <div style="text-align:center;">
+    <button onclick="window.close()">Tutup</button>
+  </div>
+  <script>
+    const scanner = new Html5Qrcode("reader");
+    const config = { fps: 10, qrbox: 250 };
+    scanner.start({ facingMode: "environment" }, config, (msg) => {
+      window.opener.handleScan(msg);
+      const mode = window.opener.document.getElementById('scanMode').value;
+      const auto = window.opener.document.getElementById('autoSell').checked;
+      if (mode === 'single' && auto) {
+        scanner.stop().then(()=>window.close());
+      }
+    }).catch(err=>{
+      alert('Gagal akses kamera: ' + err);
+    });
+  </script>
+</body>
+</html>`;
+
+      scanWindow.document.open();
+      scanWindow.document.write(popupHTML);
       scanWindow.document.close();
-
-      scanWindow.onload = () => {
-        const readerElement = scanWindow.document.getElementById("reader");
-        html5QrcodeScanner = new scanWindow.Html5Qrcode("reader");
-        const config = { fps: 10, qrbox: 250 };
-
-        html5QrcodeScanner.start(
-          { facingMode: "environment" },
-          config,
-          qrCodeMessage => {
-            window.opener.handleScan(qrCodeMessage);
-            if (
-              document.getElementById("scanMode").value === "single" &&
-              document.getElementById("autoSell").checked
-            ) {
-              stopScan();
-            }
-          }
-        ).catch(err => {
-          console.error(err);
-          alert("Gagal mengakses kamera: " + err);
-        });
-      };
-    }
-
-    function stopScan() {
-      if (html5QrcodeScanner) {
-        html5QrcodeScanner.stop().catch(()=>{});
-        html5QrcodeScanner = null;
-      }
-      if (scanWindow && !scanWindow.closed) {
-        scanWindow.close();
-        scanWindow = null;
-      }
     }
 
     function handleScan(msg) {

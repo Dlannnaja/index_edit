@@ -6,58 +6,21 @@
   <title>POS Kasir</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: #f4f4f4;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background: #0b74da;
-      color: #fff;
-      padding: 15px;
-      text-align: center;
-    }
-    .container { padding: 15px; }
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-    input, select, button {
-      padding: 8px;
-      font-size: 14px;
-    }
-    button {
-      background: #0b74da;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    button:hover { background: #095eb3; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-    }
-    th { background: #eee; }
-    @media(max-width:600px){
-      .actions { flex-direction: column; }
-      input, select, button { width: 100%; }
-    }
+    body {font-family:'Poppins',sans-serif;margin:0;padding:0;background:#f4f4f4;}
+    header {background:#0b74da;color:#fff;padding:15px;text-align:center;}
+    .container{padding:15px;}
+    .actions{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:15px;}
+    input,select,button{padding:8px;font-size:14px;}
+    button{background:#0b74da;color:#fff;border:none;cursor:pointer;transition:.2s;}
+    button:hover{background:#095eb3;}
+    table{width:100%;border-collapse:collapse;margin-top:15px;}
+    th,td{border:1px solid #ccc;padding:8px;text-align:left;}
+    th{background:#eee;}
+    @media(max-width:600px){.actions{flex-direction:column;}input,select,button{width:100%;}}
   </style>
 </head>
 <body>
-  <header>
-    <h1>POS Kasir</h1>
-  </header>
+  <header><h1>POS Kasir</h1></header>
 
   <div class="container">
     <div class="actions">
@@ -67,9 +30,7 @@
         <option value="single">Single</option>
         <option value="multi">Multi</option>
       </select>
-      <label>
-        <input type="checkbox" id="autoSell" checked> Auto Tambah ke Keranjang
-      </label>
+      <label><input type="checkbox" id="autoSell" checked> Auto Tambah ke Keranjang</label>
       <button onclick="addToCart(document.getElementById('sku').value)">Tambah Manual</button>
     </div>
 
@@ -95,7 +56,6 @@
     let scanTarget = null;
     let scanWindow = null;
 
-    // --- START POPUP SCANNER ---
     function startScan(target) {
       scanTarget = target;
       scanWindow = window.open("", "scanPopup", "width=400,height=500");
@@ -104,46 +64,31 @@
         return;
       }
 
-      const popupHTML = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Scan Produk</title>
-  <style>
-    body { margin:0; font-family:sans-serif; background:#000; color:#fff; }
-    #reader { width: 100%; height: 100%; }
-    button { padding:6px 10px; background:#0b74da; color:#fff; border:none; cursor:pointer; margin:10px; }
-  </style>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-</head>
-<body>
-  <div id="reader"></div>
-  <div style="text-align:center;">
-    <button onclick="window.close()">Tutup</button>
-  </div>
-  <script>
-    const scanner = new Html5Qrcode("reader");
-    const config = { fps: 10, qrbox: 250 };
-    scanner.start({ facingMode: "environment" }, config, (msg) => {
-      window.opener.handleScan(msg);
-      const mode = window.opener.document.getElementById('scanMode').value;
-      const auto = window.opener.document.getElementById('autoSell').checked;
-      if (mode === 'single' && auto) {
-        scanner.stop().then(()=>window.close());
-      }
-    }).catch(err=>{
-      alert('Gagal akses kamera: ' + err);
-    });
-  </script>
-</body>
-</html>`;
-
       scanWindow.document.open();
-      scanWindow.document.write(popupHTML);
+      scanWindow.document.write(`
+        <style>
+          body{margin:0;font-family:sans-serif;background:#000;color:#fff;text-align:center;}
+          #reader{width:100%;height:calc(100% - 50px);}
+          button{padding:6px 10px;background:#0b74da;color:#fff;border:none;cursor:pointer;margin:10px;}
+        </style>
+        <div id="reader"></div>
+        <button onclick="window.close()">Tutup</button>
+        <script src="https://unpkg.com/html5-qrcode"><\/script>
+        <script>
+          const scanner = new Html5Qrcode("reader");
+          const config = { fps: 10, qrbox: 250 };
+          scanner.start({ facingMode: "environment" }, config, (msg) => {
+            window.opener.handleScan(msg);
+            const mode = window.opener.document.getElementById('scanMode').value;
+            const auto = window.opener.document.getElementById('autoSell').checked;
+            if(mode === 'single' && auto){
+              scanner.stop().then(()=>window.close());
+            }
+          }).catch(err=>alert('Gagal akses kamera: '+err));
+        <\/script>
+      `);
       scanWindow.document.close();
     }
-    // --- END POPUP SCANNER ---
 
     function handleScan(msg) {
       const auto = document.getElementById("autoSell").checked;
@@ -193,9 +138,8 @@
       document.getElementById("total").textContent = total.toLocaleString();
     }
 
-    // Shortcut F2 langsung buka kamera
-    document.addEventListener("keydown", function(e) {
-      if (e.key === "F2") {
+    document.addEventListener("keydown", (e)=>{
+      if(e.key === "F2"){
         e.preventDefault();
         startScan('sell');
       }

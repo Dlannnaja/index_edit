@@ -1,149 +1,313 @@
 <!doctype html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>POS Kasir</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aplikasi Kasir + Scanner</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <style>
-    body {font-family:'Poppins',sans-serif;margin:0;padding:0;background:#f4f4f4;}
-    header {background:#0b74da;color:#fff;padding:15px;text-align:center;}
-    .container{padding:15px;}
-    .actions{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:15px;}
-    input,select,button{padding:8px;font-size:14px;}
-    button{background:#0b74da;color:#fff;border:none;cursor:pointer;transition:.2s;}
-    button:hover{background:#095eb3;}
-    table{width:100%;border-collapse:collapse;margin-top:15px;}
-    th,td{border:1px solid #ccc;padding:8px;text-align:left;}
-    th{background:#eee;}
-    @media(max-width:600px){.actions{flex-direction:column;}input,select,button{width:100%;}}
+    body { font-family:Poppins, sans-serif; margin:0; background:#f8f9fa; }
+    header { background:#2c3e50; color:#fff; padding:10px 15px; display:flex; justify-content:space-between; align-items:center }
+    header h1 { margin:0; font-size:20px }
+    .container { padding:15px; max-width:1200px; margin:auto; }
+    h2 { margin-top:25px; font-size:18px; }
+    input, select, button { padding:8px; font-size:14px; margin:3px 0; }
+    table { width:100%; border-collapse:collapse; margin-top:10px; background:#fff; }
+    th,td { padding:8px; border-bottom:1px solid #ddd; font-size:14px; }
+    th { background:#f0f0f0; text-align:left; }
+    .actions button { margin-right:5px; }
+    button { background:#2c3e50; color:#fff; border:none; cursor:pointer; border-radius:4px; }
+    button.ghost { background:#aaa; }
+    button.small { padding:4px 6px; font-size:12px; }
+    .right { text-align:right; }
+    .muted { color:#888; font-size:13px; }
+    #reader { width:100%; max-width:400px; margin-top:10px; }
+    #cart { background:#fff; padding:10px; min-height:80px; margin-top:10px; border-radius:4px; }
+    #cart table { margin-top:0; }
   </style>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
-  <header><h1>POS Kasir</h1></header>
-
-  <div class="container">
-    <div class="actions">
-      <input type="text" id="sku" placeholder="Scan / Ketik SKU" onkeypress="if(event.key==='Enter'){addToCart(this.value)}">
-      <button onclick="startScan('sell')">📷 Mulai Scan</button>
-      <select id="scanMode">
-        <option value="single">Single</option>
-        <option value="multi">Multi</option>
-      </select>
-      <label><input type="checkbox" id="autoSell" checked> Auto Tambah ke Keranjang</label>
-      <button onclick="addToCart(document.getElementById('sku').value)">Tambah Manual</button>
-    </div>
-
-    <table>
-      <thead>
-        <tr>
-          <th>SKU</th>
-          <th>Nama Barang</th>
-          <th>Harga</th>
-          <th>Qty</th>
-          <th>Total</th>
-          <th>Aksi</th>
-        </tr>
-      </thead>
-      <tbody id="cart"></tbody>
-    </table>
-
-    <h3>Total: Rp <span id="total">0</span></h3>
+<header>
+  <h1>Aplikasi Kasir + Scanner</h1>
+  <div>
+    <button onclick="startScan('sell')">📷 Scan Produk</button>
+    <button onclick="stopScan()">⛔ Stop</button>
+    <select id="scanMode">
+      <option value="single">1x</option>
+      <option value="continuous">Terus</option>
+    </select>
   </div>
+</header>
 
-  <script>
-    let cart = [];
-    let scanTarget = null;
-    let scanWindow = null;
+<div class="container">
+  <!-- PRODUCT FORM -->
+  <h2>Tambah / Edit Produk</h2>
+  <input type="text" id="sku" placeholder="SKU / Kode Produk">
+  <button onclick="scanSku()">Scan SKU</button><br>
+  <input type="text" id="name" placeholder="Nama Produk"><br>
+  <input type="number" id="price" placeholder="Harga"><br>
+  <input type="number" id="qty" placeholder="Stok"><br>
+  <button id="formSubmitBtn" onclick="submitProduct()">Tambah</button>
+  <button class="ghost" onclick="resetForm()">Batal</button>
 
-    function startScan(target) {
-      scanTarget = target;
-      scanWindow = window.open("", "scanPopup", "width=400,height=500");
-      if (!scanWindow) {
-        alert("Popup diblokir! Izinkan popup untuk scanner.");
-        return;
-      }
+  <!-- SEARCH -->
+  <h2>Daftar Produk</h2>
+  <input type="text" id="search" placeholder="Cari produk..." oninput="render()">
+  <table id="tbl">
+    <thead><tr><th>SKU</th><th>Nama</th><th>Stok</th><th>Harga</th><th>Aksi</th></tr></thead>
+    <tbody></tbody>
+  </table>
 
-      scanWindow.document.open();
-      scanWindow.document.write(`
-        <style>
-          body{margin:0;font-family:sans-serif;background:#000;color:#fff;text-align:center;}
-          #reader{width:100%;height:calc(100% - 50px);}
-          button{padding:6px 10px;background:#0b74da;color:#fff;border:none;cursor:pointer;margin:10px;}
-        </style>
-        <div id="reader"></div>
-        <button onclick="window.close()">Tutup</button>
-        <script src="https://unpkg.com/html5-qrcode"><\/script>
-        <script>
-          const scanner = new Html5Qrcode("reader");
-          const config = { fps: 10, qrbox: 250 };
-          scanner.start({ facingMode: "environment" }, config, (msg) => {
-            window.opener.handleScan(msg);
-            const mode = window.opener.document.getElementById('scanMode').value;
-            const auto = window.opener.document.getElementById('autoSell').checked;
-            if(mode === 'single' && auto){
-              scanner.stop().then(()=>window.close());
-            }
-          }).catch(err=>alert('Gagal akses kamera: '+err));
-        <\/script>
-      `);
-      scanWindow.document.close();
+  <!-- RESTOCK -->
+  <h2>Restock Produk</h2>
+  <select id="restockName"></select><br>
+  <input type="number" id="restockQty" placeholder="Jumlah Restock"><br>
+  <button onclick="restockProduct()">Restock</button>
+
+  <!-- TRANSAKSI -->
+  <h2>Transaksi Penjualan</h2>
+  <div id="cart"><i class="muted">Keranjang kosong</i></div>
+  <p>Total: <strong id="total">Rp 0</strong></p>
+  <button id="checkoutBtn" onclick="checkout()" disabled>Checkout</button>
+  <button class="ghost" onclick="clearCart()">Kosongkan</button>
+  <br><br>
+  <label><input type="checkbox" id="autoPrint"> Cetak otomatis</label>
+  <br>
+  <label>Pilih printer:</label>
+  <select id="printerSelect" onchange="savePrinterPreference()">
+    <option value="">(Default)</option>
+    <option value="thermal">Thermal Printer</option>
+    <option value="pdf">Save to PDF</option>
+  </select>
+
+  <!-- SCANNER PREVIEW -->
+  <h2>Scanner Kamera</h2>
+  <div id="reader"></div>
+</div>
+
+<script>
+let products = JSON.parse(localStorage.getItem('products')||'[]')
+let sales = JSON.parse(localStorage.getItem('sales')||'[]')
+let restocks = JSON.parse(localStorage.getItem('restocks')||'[]')
+let cart = []
+
+function getLocalDateTime(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`;
+}
+
+function render(){
+  const tbl=document.querySelector("#tbl tbody")
+  const search=document.querySelector("#search").value.toLowerCase()
+  tbl.innerHTML=""
+  products.forEach((p)=>{
+    if(p.name.toLowerCase().includes(search)||p.sku.includes(search)){
+      const tr=document.createElement("tr")
+      tr.innerHTML=`<td>${p.sku}</td>
+        <td>${p.name}</td>
+        <td>${p.qty}</td>
+        <td>Rp ${p.price.toLocaleString()}</td>
+        <td class="actions">
+          <button class="small" onclick="editProduct('${p.sku}')">Edit</button>
+          <button class="small ghost" onclick="deleteProduct('${p.sku}')">Hapus</button>
+        </td>`
+      tbl.appendChild(tr)
     }
+  })
+  updateRestockDropdown()
+}
 
-    function handleScan(msg) {
-      const auto = document.getElementById("autoSell").checked;
-      if (scanTarget === "sell" || auto) {
-        addToCart(msg);
-      } else {
-        document.getElementById("sku").value = msg;
-        alert("Kode Barang terdeteksi: " + msg);
-      }
+function submitProduct(){
+  const sku=document.getElementById("sku").value.trim()
+  const name=document.getElementById("name").value.trim()
+  const price=parseInt(document.getElementById("price").value)
+  const qty=parseInt(document.getElementById("qty").value)
+  if(!sku || !name || !price || !qty) return alert("Lengkapi data!")
+
+  const exist=products.find(p=>p.sku===sku)
+  if(exist){
+    exist.qty+=qty
+    exist.price=price
+  }else{
+    products.push({sku,name,price,qty})
+  }
+  localStorage.setItem("products",JSON.stringify(products))
+  render(); resetForm()
+}
+
+function resetForm(){
+  document.getElementById("sku").value=""
+  document.getElementById("name").value=""
+  document.getElementById("price").value=""
+  document.getElementById("qty").value=""
+  document.getElementById("formSubmitBtn").textContent="Tambah"
+}
+
+function editProduct(sku){
+  const p=products.find(x=>x.sku===sku)
+  if(!p) return
+  document.getElementById("sku").value=p.sku
+  document.getElementById("name").value=p.name
+  document.getElementById("price").value=p.price
+  document.getElementById("qty").value=p.qty
+  document.getElementById("formSubmitBtn").textContent="Update"
+}
+
+function deleteProduct(sku){
+  if(!confirm("Hapus produk ini?")) return
+  products=products.filter(p=>p.sku!==sku)
+  localStorage.setItem("products",JSON.stringify(products))
+  render()
+}
+
+function updateRestockDropdown(){
+  const sel=document.getElementById("restockName")
+  sel.innerHTML='<option value="">Pilih Produk...</option>'
+  products.forEach(p=>{
+    const opt=document.createElement("option")
+    opt.value=p.sku; opt.textContent=p.name
+    sel.appendChild(opt)
+  })
+}
+
+function restockProduct(){
+  const sku=document.getElementById("restockName").value
+  const qty=parseInt(document.getElementById("restockQty").value)
+  if(!sku||!qty) return alert("Pilih produk & jumlah!")
+  const p=products.find(x=>x.sku===sku)
+  if(!p) return alert("Produk tidak ditemukan")
+
+  p.qty+=qty
+  localStorage.setItem("products",JSON.stringify(products))
+
+  restocks.push({date:getLocalDateTime(),sku:p.sku,name:p.name,qty,stockAfter:p.qty})
+  localStorage.setItem("restocks",JSON.stringify(restocks))
+  render(); document.getElementById("restockQty").value=""
+}
+
+function addToCart(sku){
+  const p=products.find(x=>x.sku===sku)
+  if(!p) return alert("Produk tidak ditemukan")
+  const cartItem=cart.find(c=>c.sku===sku)
+  if(cartItem){
+    if(cartItem.qty>=p.qty) return alert("Stok tidak cukup")
+    cartItem.qty+=1
+  }else{
+    cart.push({sku:p.sku,name:p.name,price:p.price,qty:1})
+  }
+  renderCart()
+}
+
+function renderCart(){
+  const el=document.getElementById("cart")
+  const checkoutBtn=document.getElementById("checkoutBtn")
+  if(cart.length===0){
+    el.innerHTML='<i class="muted">Keranjang kosong</i>'
+    checkoutBtn.disabled=true
+    document.getElementById("total").textContent="Rp 0"
+    return
+  }
+  let html="<table>", total=0
+  cart.forEach(c=>{
+    total+=c.price*c.qty
+    html+=`<tr>
+      <td>${c.name} x${c.qty}</td>
+      <td class="right">Rp ${(c.price*c.qty).toLocaleString()}</td>
+      <td class="actions"><button class="small" onclick="removeFromCart('${c.sku}')">-</button></td>
+    </tr>`
+  })
+  html+="</table>"
+  el.innerHTML=html
+  checkoutBtn.disabled=false
+  document.getElementById("total").textContent="Rp "+total.toLocaleString()
+}
+
+function removeFromCart(sku){cart=cart.filter(c=>c.sku!==sku); renderCart()}
+function clearCart(){cart=[]; renderCart()}
+
+function savePrinterPreference(){
+  const sel = document.getElementById('printerSelect')
+  localStorage.setItem('preferredPrinter', sel.value)
+}
+
+function checkout(){
+  if(cart.length===0) return alert("Keranjang kosong")
+  const invoice="INV"+Date.now()
+  const now = new Date()
+  const date = now.toISOString()
+  const dateDisplay = now.toLocaleString()
+  let total=0
+  cart.forEach(c=>{
+    total+=c.price*c.qty
+    const p=products.find(x=>x.sku===c.sku)
+    if(p) p.qty-=c.qty
+  })
+  const transaction={invoice,date,dateDisplay,items:[...cart],total}
+  sales.push(transaction)
+  localStorage.setItem("sales",JSON.stringify(sales))
+  localStorage.setItem("products",JSON.stringify(products))
+
+  const auto=document.getElementById("autoPrint").checked
+  if(auto){
+    try{printReceipt(transaction)}catch(e){alert("Gagal mencetak.");}
+  }
+  cart=[]
+  renderCart(); render()
+  alert("Transaksi berhasil! Invoice: "+invoice)
+}
+
+function printReceipt(t){
+  let html = `<div style="font-family:Arial;font-size:12px;padding:8px">
+  <h3 style="margin:4px 0">Struk Pembelian</h3>
+  <div>Invoice: ${t.invoice}</div>
+  <div>Tanggal: ${t.dateDisplay}</div><hr/>
+  <table style="width:100%;font-size:12px">
+  <tr><th align="left">Nama</th><th>Qty</th><th align="right">Subtotal</th></tr>`
+  t.items.forEach(i=>{
+    html += `<tr><td>${i.name}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">Rp ${(i.price*i.qty).toLocaleString()}</td></tr>`
+  })
+  html += `</table><hr/><h4 style="text-align:right">Total: Rp ${t.total.toLocaleString()}</h4></div>`
+  const w = window.open("","_blank","width=400,height=600")
+  w.document.write(html); w.document.close(); w.focus(); w.print()
+  setTimeout(()=>{w.close()},1200)
+}
+
+let html5QrcodeScanner=null, scanTarget=null
+function startScan(target){
+  scanTarget=target
+  if(html5QrcodeScanner) return
+  html5QrcodeScanner=new Html5Qrcode("reader")
+  const config={fps:10, qrbox:250}
+  html5QrcodeScanner.start({facingMode:"environment"}, config, qrCodeMessage=>{
+    handleScan(qrCodeMessage)
+    if(document.getElementById("scanMode").value==="single"){
+      stopScan()
     }
+  }).catch(err=>alert("Gagal akses kamera: "+err))
+}
+function stopScan(){
+  if(html5QrcodeScanner){
+    html5QrcodeScanner.stop().catch(()=>{}); html5QrcodeScanner=null
+  }
+}
+function handleScan(code){
+  if(scanTarget==="sell"){
+    addToCart(code)
+  }else if(scanTarget==="sku"){
+    document.getElementById("sku").value=code
+  }
+}
+function scanSku(){
+  if(html5QrcodeScanner){
+    alert("Scanner sedang aktif. Stop dulu sebelum scan SKU.")
+    return
+  }
+  startScan("sku")
+}
 
-    function addToCart(sku) {
-      if (!sku) return;
-      let item = cart.find(i => i.sku === sku);
-      if (item) {
-        item.qty++;
-      } else {
-        cart.push({ sku, name: "Barang " + sku, price: 10000, qty: 1 });
-      }
-      document.getElementById("sku").value = "";
-      renderCart();
-    }
-
-    function removeFromCart(sku) {
-      cart = cart.filter(i => i.sku !== sku);
-      renderCart();
-    }
-
-    function renderCart() {
-      const tbody = document.getElementById("cart");
-      tbody.innerHTML = "";
-      let total = 0;
-      cart.forEach(item => {
-        const row = document.createElement("tr");
-        const subtotal = item.price * item.qty;
-        total += subtotal;
-        row.innerHTML = `
-          <td>${item.sku}</td>
-          <td>${item.name}</td>
-          <td>${item.price.toLocaleString()}</td>
-          <td>${item.qty}</td>
-          <td>${subtotal.toLocaleString()}</td>
-          <td><button onclick="removeFromCart('${item.sku}')">Hapus</button></td>
-        `;
-        tbody.appendChild(row);
-      });
-      document.getElementById("total").textContent = total.toLocaleString();
-    }
-
-    document.addEventListener("keydown", (e)=>{
-      if(e.key === "F2"){
-        e.preventDefault();
-        startScan('sell');
-      }
-    });
-  </script>
+render()
+loadPrinterPreference?.()
+</script>
 </body>
 </html>

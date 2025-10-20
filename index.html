@@ -1,266 +1,257 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>POS Sembako Mobile-Friendly</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>POS Toko Sembako</title>
+  <link rel="stylesheet" href="style.css" />
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-
   <style>
-    /* GUNAKAN CSS ASLI */
-    :root {
-      --bg: #f7f9fc;
-      --card: #ffffff;
-      --accent: #0b74da;
-      --accent-dark: #094fa1;
-      --muted: #6b7280;
-      --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      --radius: 10px;
-      --font: "Poppins", system-ui, sans-serif;
-      --font-size-base: 13px;
-      --font-size-small: 11px;
-      --spacing-sm: 6px;
-      --spacing-md: 10px;
-      --spacing-lg: 14px;
+    /* Tambahan untuk popup scanner */
+    #cameraModal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
     }
-    *,*::before,*::after{box-sizing:border-box}
-    body{margin:0;font-family:var(--font);background-color:var(--bg);color:#111;font-size:var(--font-size-base)}
-    header{background:linear-gradient(90deg,var(--accent),var(--accent-dark));color:#fff;padding:var(--spacing-lg) var(--spacing-md);box-shadow:var(--shadow)}
-    .container{max-width:100%;margin:0 auto;padding:var(--spacing-md)}
-    h2{margin:var(--spacing-md) 0;font-size:1.4rem}
-    h3{margin:var(--spacing-md) 0;font-size:1.2rem}
-    .grid{display:grid;grid-template-columns:1fr;gap:var(--spacing-lg)}
-    @media(min-width:900px){.grid{grid-template-columns:1fr 360px}}
-    .card{background:var(--card);border-radius:var(--radius);padding:var(--spacing-lg);box-shadow:var(--shadow);overflow:hidden}
-    .row{display:flex;gap:var(--spacing-md);flex-wrap:wrap;margin-bottom:var(--spacing-lg)}
-    .col{flex:1;min-width:100px}
-    input,select{width:100%;padding:var(--spacing-sm);border:1px solid #dee2e6;border-radius:var(--radius);font-size:var(--font-size-base)}
-    input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(11,116,218,0.15)}
-    button{background:var(--accent);color:#fff;padding:var(--spacing-sm) var(--spacing-md);border:none;border-radius:var(--radius);font-weight:600;font-size:var(--font-size-base);cursor:pointer}
-    button:hover{background:var(--accent-dark)}
-    button.ghost{background:transparent;color:var(--accent);border:1px solid rgba(11,116,218,0.2)}
-    button.small{padding:var(--spacing-sm) var(--spacing-md);font-size:var(--font-size-small)}
-    table{width:100%;border-collapse:collapse;font-size:var(--font-size-base)}
-    th,td{padding:var(--spacing-sm);border-bottom:1px solid #f1f3f5;text-align:left}
-    th{font-weight:600;background:#f9fbfd}
-    .table-wrapper{overflow-x:auto;width:100%;-webkit-overflow-scrolling:touch}
-    .table-wrapper table{min-width:640px}
-    @media(max-width:600px){.table-wrapper table{min-width:unset}th,td{font-size:12px;padding:6px 8px}}
-
-    /* Modal Scanner Popup */
-    #cameraModal{
-      position:fixed;top:0;left:0;width:100%;height:100%;
-      background:rgba(0,0,0,.6);display:none;
-      align-items:center;justify-content:center;z-index:9999;
+    #cameraModal .popup-box {
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      max-width: 400px;
+      width: 90%;
     }
-    #cameraBox{
-      background:#fff;padding:var(--spacing-md);
-      border-radius:var(--radius);max-width:400px;width:90%;
+    #readerPopup {
+      width: 100%;
+      height: 300px;
+      background: #000;
+      border-radius: 8px;
     }
-    #readerPopup{
-      width:100%;height:320px;background:#000;border-radius:var(--radius)
+    #cameraModal .popup-actions {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
     }
-    .flex-btn{display:flex;justify-content:space-between;margin-top:10px}
   </style>
 </head>
-
 <body>
+
+  <!-- 🧭 Header -->
   <header>
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--spacing-md);flex-wrap:wrap">
-      <h2 style="margin:0">POS Toko Sembako</h2>
-      <div style="display:flex;gap:var(--spacing-md);align-items:center">
-        <div class="muted">Keranjang: <span id="cartCount">0</span> barang</div>
-        <div class="badge" id="shopStatus">Offline</div>
-      </div>
+    <div class="container">
+      <h1>POS Toko Sembako</h1>
+      <div id="cart-status">Keranjang: 0 barang &nbsp; <span id="status">Offline</span></div>
     </div>
   </header>
 
-  <main class="container">
-    <div class="grid">
-      <!-- KIRI: Dashboard -->
+  <!-- 🧭 Dashboard -->
+  <main>
+    <div class="container grid">
       <div class="card">
-        <h3>📊 Dashboard</h3>
-        <div class="tabs">
-          <button class="tab-btn active" onclick="openTab('penjualan')">Penjualan</button>
-          <button class="tab-btn" onclick="openTab('restock')">Restock</button>
-          <button class="tab-btn" onclick="openTab('stok')">Stok Akhir</button>
+        <h3><i>📊</i> Dashboard</h3>
+        <div class="tab">
+          <button class="active" onclick="showTab('penjualan')">Penjualan</button>
+          <button onclick="showTab('restock')">Restock</button>
+          <button onclick="showTab('stokakhir')">Stok Akhir</button>
         </div>
 
-        <div id="penjualan" class="tab-content active">
+        <!-- Penjualan -->
+        <div id="penjualan" class="tabcontent">
           <h4>Laporan Penjualan</h4>
-          <div class="table-wrapper">
-            <table id="salesTbl">
-              <thead><tr><th>No</th><th>Tanggal</th><th>Invoice</th><th>Item</th><th>Total</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>No</th><th>Tanggal</th><th>Invoice</th><th>Item</th><th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="sales-table"></tbody>
+          </table>
         </div>
 
-        <div id="restock" class="tab-content">
+        <!-- Restock -->
+        <div id="restock" class="tabcontent" style="display:none;">
           <h4>Laporan Restock</h4>
-          <div class="table-wrapper">
-            <table id="restockTbl">
-              <thead><tr><th>No</th><th>Tanggal</th><th>SKU</th><th>Nama</th><th>Jumlah</th><th>Stok Akhir</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>No</th><th>Tanggal</th><th>SKU</th><th>Nama</th><th>Jumlah</th><th>Stok Akhir</th>
+              </tr>
+            </thead>
+            <tbody id="restock-table"></tbody>
+          </table>
         </div>
 
-        <div id="stok" class="tab-content">
+        <!-- Stok Akhir -->
+        <div id="stokakhir" class="tabcontent" style="display:none;">
           <h4>Stok Akhir Produk</h4>
-          <div class="table-wrapper">
-            <table id="finalStockTbl">
-              <thead><tr><th>No</th><th>SKU</th><th>Nama</th><th>Stok</th><th>Harga</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>No</th><th>SKU</th><th>Nama</th><th>Stok</th><th>Harga</th>
+              </tr>
+            </thead>
+            <tbody id="stock-table"></tbody>
+          </table>
         </div>
       </div>
 
-      <!-- KANAN: Tambah & Scan Produk -->
+      <!-- 🧾 Tambah/Edit Produk -->
       <div class="card">
         <h3>Tambah / Edit Produk</h3>
-        <div class="row">
-          <div class="col">
-            <input id="sku" placeholder="Kode Barang" />
-          </div>
-          <div class="col">
-            <button class="small" onclick="startScan('sku')">Scan</button>
-          </div>
-        </div>
-        <input id="name" placeholder="Nama Produk" style="margin-bottom:6px">
-        <input id="price" placeholder="Harga" type="number" style="margin-bottom:6px">
-        <input id="qty" placeholder="Stok" type="number" style="margin-bottom:6px">
-        <button onclick="submitProduct()">Simpan</button>
+        <input type="text" id="sku" placeholder="Kode Barang" />
+        <button class="small" onclick="startScan('sku')">Scan</button>
+        <input type="text" id="name" placeholder="Nama Produk" />
+        <input type="number" id="price" placeholder="Harga" />
+        <input type="number" id="stock" placeholder="Stok" />
+        <button onclick="saveProduct()">Simpan</button>
+      </div>
 
-        <hr>
+      <!-- 🛒 Keranjang -->
+      <div class="card">
         <h3>Scan Produk Jual</h3>
-        <div style="display:flex;gap:6px;margin-bottom:6px">
-          <button onclick="startScan('sell')">Mulai Scan</button>
-          <button class="ghost" onclick="stopScan()">Stop Scan</button>
+        <button class="small" onclick="startScan('sell')">Mulai Scan Jual</button>
+        <button class="small ghost" onclick="stopScan()">Stop Scan</button>
+        <div style="margin-top:10px;">
+          <label><input type="checkbox" id="autoSell" /> Auto-sell</label>
+          <select id="scanMode">
+            <option value="single">1x auto-stop</option>
+            <option value="continuous">Multi-scan</option>
+          </select>
         </div>
-        <label><input type="checkbox" id="autoSell"> Auto-sell</label>
-        <select id="scanMode">
-          <option value="single">1x auto-stop</option>
-          <option value="continuous">Multi-scan</option>
-        </select>
-        <div id="cart" style="margin-top:10px"><i>Keranjang kosong</i></div>
+        <div id="cart-list" style="margin-top:10px;">
+          <em>Keranjang kosong</em>
+        </div>
       </div>
     </div>
   </main>
 
-  <!-- MODAL SCANNER -->
+  <!-- 📸 Popup Scanner -->
   <div id="cameraModal">
-    <div id="cameraBox">
+    <div class="popup-box">
       <div id="readerPopup"></div>
-      <div class="flex-btn">
-        <button class="ghost" onclick="stopScan()">Stop Scan</button>
-        <button onclick="closeCameraModal()">Tutup</button>
+      <div class="popup-actions">
+        <button class="small ghost" onclick="stopScan()">Stop Scan</button>
+        <button class="small" onclick="closeCameraModal()">Tutup</button>
       </div>
     </div>
   </div>
 
-<script>
-let products = JSON.parse(localStorage.getItem('products')||'[]')
-let restocks = JSON.parse(localStorage.getItem('restocks')||'[]')
-let cart = []
-let html5QrcodeScanner=null, scanTarget=null
-
-/* TAB */
-function openTab(id){
-  document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'))
-  document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active'))
-  document.getElementById(id).classList.add('active')
-  event.target.classList.add('active')
-  if(id==='stok') renderFinalStock()
-  if(id==='restock') renderRestock()
-}
-
-/* PRODUCT */
-function submitProduct(){
-  const sku=document.getElementById('sku').value.trim()
-  const name=document.getElementById('name').value.trim()
-  const price=parseInt(document.getElementById('price').value)
-  const qty=parseInt(document.getElementById('qty').value)
-  if(!sku||!name||!price||!qty) return alert('Lengkapi data')
-  const exist=products.find(p=>p.sku===sku)
-  if(exist){ exist.qty+=qty; exist.price=price }else{ products.push({sku,name,price,qty}) }
-  localStorage.setItem('products',JSON.stringify(products))
-  document.getElementById('sku').value=''
-  document.getElementById('name').value=''
-  document.getElementById('price').value=''
-  document.getElementById('qty').value=''
-  renderFinalStock()
-}
-
-/* CART */
-function addToCart(sku){
-  const p=products.find(x=>x.sku===sku)
-  if(!p) return alert('Produk tidak ditemukan')
-  const c=cart.find(i=>i.sku===sku)
-  if(c){ if(c.qty>=p.qty) return alert('Stok habis'); c.qty++ } else { cart.push({sku:p.sku,name:p.name,price:p.price,qty:1}) }
-  renderCart()
-}
-function renderCart(){
-  const el=document.getElementById('cart')
-  if(cart.length===0){ el.innerHTML='<i>Keranjang kosong</i>'; return }
-  let html='<table>'
-  let total=0
-  cart.forEach(c=>{
-    total+=c.price*c.qty
-    html+=`<tr><td>${c.name} x${c.qty}</td><td>Rp ${(c.price*c.qty).toLocaleString()}</td><td><button class="ghost" onclick="removeFromCart('${c.sku}')">-</button></td></tr>`
-  })
-  html+=`<tr><td colspan="3"><b>Total: Rp ${total.toLocaleString()}</b></td></tr></table>`
-  el.innerHTML=html
-}
-function removeFromCart(sku){ cart=cart.filter(c=>c.sku!==sku); renderCart() }
-
-/* RESTOCK */
-function renderRestock(){
-  const tbody=document.querySelector('#restockTbl tbody')
-  tbody.innerHTML=''
-  restocks.forEach((r,i)=>{
-    tbody.innerHTML+=`<tr><td>${i+1}</td><td>${r.date}</td><td>${r.sku}</td><td>${r.name}</td><td>${r.qty}</td><td>${r.stockAfter}</td></tr>`
-  })
-}
-
-/* STOK */
-function renderFinalStock(){
-  const tbody=document.querySelector('#finalStockTbl tbody')
-  tbody.innerHTML=''
-  products.forEach((p,i)=>{
-    tbody.innerHTML+=`<tr><td>${i+1}</td><td>${p.sku}</td><td>${p.name}</td><td>${p.qty}</td><td>Rp ${p.price.toLocaleString()}</td></tr>`
-  })
-}
-
-/* SCANNER POPUP */
-function startScan(target){
-  scanTarget=target
-  openCameraModal()
-  if(html5QrcodeScanner) return
-  html5QrcodeScanner=new Html5Qrcode("readerPopup")
-  const config={fps:10,qrbox:250}
-  html5QrcodeScanner.start({facingMode:"environment"},config,(msg)=>{
-    handleScan(msg)
-    if(document.getElementById("scanMode").value==="single" && document.getElementById("autoSell").checked){
-      stopScan();closeCameraModal()
+  <!-- ================= SCRIPT ================= -->
+  <script>
+    /* 🧭 TAB SWITCHER */
+    function showTab(tab) {
+      document.querySelectorAll('.tabcontent').forEach(el => el.style.display = 'none');
+      document.getElementById(tab).style.display = 'block';
+      document.querySelectorAll('.tab button').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
     }
-  }).catch(err=>alert("Gagal akses kamera: "+err))
-}
-function stopScan(){
-  if(html5QrcodeScanner){
-    html5QrcodeScanner.stop().catch(()=>{}).then(()=>{html5QrcodeScanner=null})
-  }
-}
-function handleScan(msg){
-  if(scanTarget==='sell' || document.getElementById('autoSell').checked){ addToCart(msg) }
-  else{ document.getElementById('sku').value=msg; alert('Kode: '+msg) }
-}
-function openCameraModal(){ document.getElementById('cameraModal').style.display='flex' }
-function closeCameraModal(){ stopScan(); document.getElementById('cameraModal').style.display='none' }
 
-renderFinalStock()
-</script>
+    /* 🧾 PRODUCT LOGIC (dummy contoh minimal) */
+    const products = [];
+    const cart = [];
+
+    function saveProduct() {
+      const sku = skuInput.value.trim();
+      const name = document.getElementById('name').value.trim();
+      const price = parseFloat(document.getElementById('price').value);
+      const stock = parseInt(document.getElementById('stock').value);
+      if (!sku || !name || isNaN(price) || isNaN(stock)) return alert("Lengkapi data");
+
+      const exist = products.find(p => p.sku === sku);
+      if (exist) {
+        exist.stock += stock;
+        exist.price = price;
+        exist.name = name;
+      } else {
+        products.push({ sku, name, price, stock });
+      }
+      alert('Produk disimpan!');
+    }
+
+    function addToCart(sku) {
+      const product = products.find(p => p.sku === sku);
+      if (!product) {
+        alert('Produk tidak ditemukan');
+        return;
+      }
+      const exist = cart.find(c => c.sku === sku);
+      if (exist) exist.qty++;
+      else cart.push({ ...product, qty: 1 });
+      renderCart();
+    }
+
+    function renderCart() {
+      const list = document.getElementById('cart-list');
+      if (cart.length === 0) {
+        list.innerHTML = '<em>Keranjang kosong</em>';
+        return;
+      }
+      let html = '<ul>';
+      let total = 0;
+      cart.forEach(item => {
+        const subtotal = item.price * item.qty;
+        total += subtotal;
+        html += `<li>${item.sku} - ${item.name} x${item.qty} (Rp ${subtotal.toLocaleString()})</li>`;
+      });
+      html += `</ul><strong>Total: Rp ${total.toLocaleString()}</strong>`;
+      list.innerHTML = html;
+    }
+
+    /* 📸 SCANNER POPUP */
+    let html5QrcodeScanner = null;
+    let scanTarget = null;
+
+    function startScan(target) {
+      scanTarget = target;
+      openCameraModal();
+      if (html5QrcodeScanner) return;
+
+      html5QrcodeScanner = new Html5Qrcode("readerPopup");
+      const config = { fps: 10, qrbox: 250 };
+
+      html5QrcodeScanner.start({ facingMode: "environment" }, config, (msg) => {
+        handleScan(msg);
+        if (document.getElementById("scanMode").value === "single" && document.getElementById("autoSell").checked) {
+          stopScan();
+          closeCameraModal();
+        }
+      }).catch((err) => {
+        console.error(err);
+        alert("Gagal mengakses kamera: " + err);
+      });
+    }
+
+    function stopScan() {
+      if (html5QrcodeScanner) {
+        html5QrcodeScanner.stop().catch(()=>{}).then(()=>{
+          html5QrcodeScanner = null;
+        });
+      }
+    }
+
+    function handleScan(msg) {
+      if (scanTarget === "sell" || document.getElementById("autoSell").checked) {
+        addToCart(msg);
+      } else {
+        document.getElementById("sku").value = msg;
+        alert("Kode Barang terdeteksi: " + msg);
+      }
+    }
+
+    function openCameraModal() {
+      document.getElementById("cameraModal").style.display = "flex";
+    }
+
+    function closeCameraModal() {
+      stopScan();
+      document.getElementById("cameraModal").style.display = "none";
+    }
+  </script>
 </body>
 </html>

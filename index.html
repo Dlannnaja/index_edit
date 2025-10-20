@@ -18,9 +18,7 @@
       padding: 15px;
       text-align: center;
     }
-    .container {
-      padding: 15px;
-    }
+    .container { padding: 15px; }
     .actions {
       display: flex;
       flex-wrap: wrap;
@@ -38,9 +36,7 @@
       cursor: pointer;
       transition: 0.2s;
     }
-    button:hover {
-      background: #095eb3;
-    }
+    button:hover { background: #095eb3; }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -51,9 +47,7 @@
       padding: 8px;
       text-align: left;
     }
-    th {
-      background: #eee;
-    }
+    th { background: #eee; }
     @media(max-width:600px){
       .actions { flex-direction: column; }
       input, select, button { width: 100%; }
@@ -98,19 +92,18 @@
 
   <script>
     let cart = [];
-    let html5QrcodeScanner = null;
     let scanTarget = null;
     let scanWindow = null;
 
+    // --- START POPUP SCANNER ---
     function startScan(target) {
       scanTarget = target;
       scanWindow = window.open("", "scanPopup", "width=400,height=500");
       if (!scanWindow) {
-        alert("Popup diblokir! Izinkan popup untuk menjalankan scanner.");
+        alert("Popup diblokir! Izinkan popup untuk scanner.");
         return;
       }
 
-      // gunakan replaceAll untuk escape karakter backtick
       const popupHTML = `
 <!DOCTYPE html>
 <html>
@@ -150,9 +143,11 @@
       scanWindow.document.write(popupHTML);
       scanWindow.document.close();
     }
+    // --- END POPUP SCANNER ---
 
     function handleScan(msg) {
-      if (scanTarget === "sell" || document.getElementById("autoSell").checked) {
+      const auto = document.getElementById("autoSell").checked;
+      if (scanTarget === "sell" || auto) {
         addToCart(msg);
       } else {
         document.getElementById("sku").value = msg;
@@ -197,6 +192,14 @@
       });
       document.getElementById("total").textContent = total.toLocaleString();
     }
+
+    // Shortcut F2 langsung buka kamera
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "F2") {
+        e.preventDefault();
+        startScan('sell');
+      }
+    });
   </script>
 </body>
 </html>

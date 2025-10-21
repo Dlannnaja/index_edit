@@ -297,14 +297,26 @@
     font-size: var(--font-size-small);
   }
 
-  #cameraModal{
-    display: none;
-    pointer-events: none;
-  }
-  #cameraModal.active{
-    display: flex;
-    pointer-events: auto;
-  }
+    #cameraModal {
+  display: flex;               /* boleh flex biar modal tengah */
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+
+  opacity: 0;                  /* disembunyikan dengan opacity */
+  pointer-events: none;        /* ini penting: blokir klik saat tidak aktif */
+  transition: opacity 0.2s ease;
+}
+
+#cameraModal.active {
+  opacity: 1;
+  pointer-events: auto;        /* klik hanya aktif saat popup kamera muncul */
+}
 
   /* ---------- NEW: responsive table wrapper for mobile (Android) ---------- */
   .table-wrapper {
@@ -848,35 +860,29 @@ let scanTarget = null;
 
 function openCamera(target) {
   scanTarget = target;
-  document.getElementById('cameraModal').style.display = 'flex';
+  const modal = document.getElementById('cameraModal');
+  modal.classList.add('active');
 
-  // Inisialisasi kamera
-  if (html5QrcodeScanner) return;
-  html5QrcodeScanner = new Html5Qrcode("cameraReader");
-  const config = { fps: 10, qrbox: 250 };
-  html5QrcodeScanner.start({ facingMode: "environment" }, config, qrCodeMessage => {
-    handleScan(qrCodeMessage);
-    if (document.getElementById("scanMode") && 
-        document.getElementById("scanMode").value === "single" && 
-        (scanTarget === "sell" || document.getElementById("autoSell")?.checked)) {
-      stopCamera();
-    }
-  }).catch(err => {
-    console.error(err);
-    alert("Gagal mengakses kamera: " + err);
-  });
+  if (!html5QrcodeScanner) {
+    html5QrcodeScanner = new Html5Qrcode("cameraReader");
+    const config = { fps: 10, qrbox: 250 };
+    html5QrcodeScanner.start({ facingMode: "environment" }, config, qrCodeMessage => {
+      handleScan(qrCodeMessage);
+      if (document.getElementById("scanMode")?.value === "single" && (scanTarget === "sell" || document.getElementById("autoSell")?.checked)) {
+        closeCamera();
+      }
+    }).catch(err => console.error(err));
+  }
 }
 
 function closeCamera() {
-  stopCamera();
-  document.getElementById('cameraModal').style.display = 'none';
-}
+  const modal = document.getElementById('cameraModal');
+  modal.classList.remove('active');
 
-function stopCamera() {
   if (html5QrcodeScanner) {
-    html5QrcodeScanner.stop().catch(()=>{}).finally(() => {
+    html5QrcodeScanner.stop().then(() => {
+      html5QrcodeScanner.clear();
       html5QrcodeScanner = null;
-      document.getElementById("cameraReader").innerHTML = "";
     });
   }
 }

@@ -844,34 +844,28 @@ function printReceipt(t){
 }
 
 /* ---------- SCAN ---------- */
-<script>
+/* ---------- SCAN ---------- */
 let html5QrcodeScanner = null;
 let scanTarget = null;
 
 function openCamera(target) {
   scanTarget = target;
-  document.getElementById('cameraModal').style.display = 'flex';
+  const camModal = document.getElementById('cameraModal');
+  camModal.style.display = 'flex';
+  camModal.style.pointerEvents = 'auto';
+  camModal.style.zIndex = '9000';
 
-  // Inisialisasi kamera
   if (html5QrcodeScanner) return;
   html5QrcodeScanner = new Html5Qrcode("cameraReader");
   const config = { fps: 10, qrbox: 250 };
-  html5QrcodeScanner.start({ facingMode: "environment" }, config, qrCodeMessage => {
-    handleScan(qrCodeMessage);
-    if (document.getElementById("scanMode") && 
-        document.getElementById("scanMode").value === "single" && 
-        (scanTarget === "sell" || document.getElementById("autoSell")?.checked)) {
-      stopCamera();
-    }
+
+  html5QrcodeScanner.start({ facingMode: "environment" }, config, msg => {
+    handleScan(msg);
+    if (document.getElementById("scanMode")?.value === "single") stopCamera();
   }).catch(err => {
     console.error(err);
     alert("Gagal mengakses kamera: " + err);
   });
-}
-
-function closeCamera() {
-  stopCamera();
-  document.getElementById('cameraModal').style.display = 'none';
 }
 
 function stopCamera() {
@@ -881,7 +875,14 @@ function stopCamera() {
       document.getElementById("cameraReader").innerHTML = "";
     });
   }
+  const camModal = document.getElementById('cameraModal');
+  if (camModal) {
+    camModal.style.display = "none";
+    camModal.style.pointerEvents = "none";
+  }
 }
+
+function closeCamera() { stopCamera(); }
 
 function handleScan(msg) {
   if (scanTarget === "sell" || document.getElementById("autoSell")?.checked) {
@@ -892,40 +893,51 @@ function handleScan(msg) {
   }
 }
 
-function scanSku() {
-  openCamera("sku");
+function scanSku() { openCamera("sku"); }
+function startScan(target) { openCamera(target); }
+
+/* ---------- GUIDE OVERLAY ---------- */
+function showGuide() {
+  stopCamera();
+  const cam = document.getElementById("cameraModal");
+  const guide = document.getElementById("guideOverlay");
+  if (cam) { cam.style.display = "none"; cam.style.pointerEvents = "none"; }
+  if (guide) { guide.style.display = "flex"; guide.style.pointerEvents = "auto"; }
 }
 
-function startScan(target) {
-  openCamera(target);
+function startGuide() {
+  const guide = document.getElementById("guideOverlay");
+  if (guide) guide.style.display = "none";
+  alert("Tutorial dimulai!\n1️⃣ Tambah produk\n2️⃣ Restock\n3️⃣ Scan\n4️⃣ Keranjang\n5️⃣ Cetak struk");
 }
-</script>
 
-/* ---------- Overlay --------- */
-  function showGuide() {
-  if (html5QrcodeScanner) {
-    try { html5QrcodeScanner.stop(); } catch(e){}
-  }
-  document.getElementById("cameraModal").style.display = "none";
-  document.getElementById("guideOverlay").style.display = "flex";
-  }
+function skipGuide() {
+  const guide = document.getElementById("guideOverlay");
+  if (guide) guide.style.display = "none";
+}
 
-  function startGuide() {
-  document.getElementById("guideOverlay").style.display = "none";
-  alert("Mulai tutorial (lanjutkan sesuai step kamu)");
-  }
+/* ---------- INIT FIX ---------- */
+document.addEventListener("DOMContentLoaded", () => {
+  const guide = document.getElementById("guideOverlay");
+  const cam = document.getElementById("cameraModal");
 
-  function skipGuide() {
-  document.getElementById("guideOverlay").style.display = "none";
+  if (guide) {
+    guide.style.display = "flex";
+    guide.style.zIndex = "99999";
+    guide.style.pointerEvents = "auto";
   }
-  function startGuide(){
-  document.getElementById("guideOverlay").style.display="none";
-  alert("Tutorial dimulai...");
-  }
-  function skipGuide(){
-  document.getElementById("guideOverlay").style.display="none";
+  if (cam) {
+    cam.style.display = "none";
+    cam.style.pointerEvents = "none";
+    cam.style.zIndex = "9000";
   }
 
+  // pastikan tombol overlay aktif
+  document.querySelectorAll("#guideBox button").forEach(btn => {
+    btn.style.pointerEvents = "auto";
+    btn.style.cursor = "pointer";
+  });
+});
 
 
 /* ---------- TABS ---------- */
@@ -1121,5 +1133,188 @@ function init(){
 
 init()
 </script>
+</body>
+</html>
+
+  <style>
+  /* === FIX FINAL untuk overlay & hilangkan debug === */
+  #cameraModal {
+    z-index: 9000;
+  }
+  #cameraModal[style*="display:none"] {
+    pointer-events: none !important;
+  }
+
+  #guideOverlay {
+    z-index: 99999 !important;
+    pointer-events: auto !important;
+  }
+  #guideOverlay * {
+    pointer-events: auto !important;
+  }
+
+  /* Hapus semua border/debug */
+  #cameraModal::before,
+  #guideOverlay::before {
+    content: none !important;
+  }
+  #cameraModal, #guideOverlay {
+    outline: none !important;
+  }
+  </style>
+
+  <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const cam = document.getElementById("cameraModal");
+  const guide = document.getElementById("guideOverlay");
+
+  // Pastikan kamera tertutup dan tidak blokir klik
+  if (cam) {
+    cam.style.display = "none";
+    cam.style.pointerEvents = "none";
+    cam.style.zIndex = "1";
+  }
+
+  // Pastikan guide di atas dan bisa diklik
+  if (guide) {
+    guide.style.display = "flex";
+    guide.style.zIndex = "99999";
+    guide.style.pointerEvents = "auto";
+  }
+
+  // Pastikan tombol di guide bisa diklik
+  document.querySelectorAll("#guideBox button").forEach(btn => {
+    btn.style.pointerEvents = "auto";
+    btn.style.cursor = "pointer";
+  });
+});
+
+// Definisi ulang fungsi supaya tidak hilang
+function startGuide() {
+  const guide = document.getElementById("guideOverlay");
+  const cam = document.getElementById("cameraModal");
+  if (cam) cam.style.display = "none";
+  if (guide) guide.style.display = "none";
+  alert("Tutorial dimulai!\n1️⃣ Tambah produk\n2️⃣ Restock\n3️⃣ Scan\n4️⃣ Keranjang\n5️⃣ Cetak struk");
+}
+
+function skipGuide() {
+  const guide = document.getElementById("guideOverlay");
+  if (guide) guide.style.display = "none";
+}
+</script>
+
+<style>
+/* === GUIDE INTERAKTIF === */
+#highlightBox {
+  position: absolute;
+  border: 2px solid #0b74da;
+  border-radius: 10px;
+  background: rgba(11, 116, 218, 0.15);
+  z-index: 100000;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+#guideTooltip {
+  position: absolute;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  padding: 12px;
+  max-width: 260px;
+  z-index: 100001;
+  font-size: 13px;
+}
+
+#guideTooltip button {
+  background: #0b74da;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+#guideTooltip button:hover {
+  background: #094fa1;
+}
+</style>
+
+<script>
+let guideSteps = [
+  { selector: "#formProduct", text: "🧾 Tambahkan produk baru di sini. Isi kode, nama, harga, dan stok." },
+  { selector: "#formRestock", text: "📦 Tambah stok barang yang sudah ada dengan form Restock ini." },
+  { selector: "#tbl", text: "📋 Daftar semua produk kamu muncul di tabel ini. Bisa diedit atau dihapus." },
+  { selector: "#btnStartScan", text: "📸 Gunakan fitur Scan untuk menambah produk ke keranjang lewat kamera." },
+  { selector: "#cart", text: "🛒 Semua barang yang kamu jual akan muncul di keranjang ini." },
+  { selector: "#checkoutBtn", text: "💰 Setelah selesai, klik tombol ini untuk menyelesaikan penjualan dan cetak struk." },
+];
+let currentStep = 0;
+let highlightBox, tooltip;
+
+function startGuide() {
+  document.getElementById("guideOverlay").style.display = "none";
+  currentStep = 0;
+  createGuideElements();
+  showStep(currentStep);
+}
+
+function createGuideElements() {
+  highlightBox = document.createElement("div");
+  highlightBox.id = "highlightBox";
+  document.body.appendChild(highlightBox);
+
+  tooltip = document.createElement("div");
+  tooltip.id = "guideTooltip";
+  document.body.appendChild(tooltip);
+}
+
+function showStep(i) {
+  const step = guideSteps[i];
+  const el = document.querySelector(step.selector);
+  if (!el) return endGuide();
+
+  const rect = el.getBoundingClientRect();
+
+  // posisi highlight
+  highlightBox.style.top = (rect.top + window.scrollY - 5) + "px";
+  highlightBox.style.left = (rect.left + window.scrollX - 5) + "px";
+  highlightBox.style.width = rect.width + 10 + "px";
+  highlightBox.style.height = rect.height + 10 + "px";
+
+  // posisi tooltip
+  tooltip.innerHTML = `
+    <div>${step.text}</div>
+    <div style="text-align:right">
+      <button onclick="nextGuide()">${i === guideSteps.length - 1 ? "Selesai" : "Lanjut ➜"}</button>
+    </div>
+  `;
+
+  const ttTop = rect.bottom + window.scrollY + 10;
+  const ttLeft = rect.left + window.scrollX;
+  tooltip.style.top = ttTop + "px";
+  tooltip.style.left = ttLeft + "px";
+
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function nextGuide() {
+  currentStep++;
+  if (currentStep >= guideSteps.length) {
+    endGuide();
+  } else {
+    showStep(currentStep);
+  }
+}
+
+function endGuide() {
+  if (highlightBox) highlightBox.remove();
+  if (tooltip) tooltip.remove();
+  alert("🎉 Tutorial selesai! Sekarang kamu sudah paham semua fitur utama POS ini.");
+}
+</script>
+
+
 </body>
 </html>

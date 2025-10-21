@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>POS Sembako Mobile-Friendly</title>
+  <title>INDOCART</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   
   <style>
@@ -186,6 +186,34 @@
     border-radius: var(--radius);
     overflow-x: auto;
   }
+    #cart table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed; /* Biar kolom ga pecah */
+    word-wrap: break-word;
+  }
+
+    #cart td {
+    vertical-align: middle;
+    white-space: nowrap; /* Biar nama produk tetap 1 baris */
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+    #cart td:first-child {
+    width: 65%;
+  }
+
+    #cart td:nth-child(2) {
+    text-align: right;
+    width: 25%;
+  }
+
+    #cart td:nth-child(3) {
+    text-align: center;
+    width: 10%;
+  }
+
 
   #reader {
     width: 100%;
@@ -357,7 +385,7 @@
 <body>
   <header>
     <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--spacing-md);flex-wrap:wrap">
-      <h2 style="margin:0;font-size:1.25rem">POS Toko Sembako</h2>
+      <h2 style="margin:0;font-size:1.25rem">INDOCART</h2>
       <div style="display:flex;gap:var(--spacing-md);align-items:center">
         <div class="muted">Keranjang: <span id="cartCount">0</span> barang</div>
         <div class="badge" id="shopStatus">Offline</div>
@@ -735,11 +763,17 @@ function renderCart(){
   let html="<table style='width:100%'>", total=0
   cart.forEach((c,i)=>{
     total+=c.price*c.qty
-    html+=`<tr>
-      <td>${c.name} x${c.qty}</td>
-      <td class="right">Rp ${(c.price*c.qty).toLocaleString()}</td>
-      <td class="actions"><button class="small" onclick="removeFromCart('${c.sku}')">-</button></td>
-    </tr>`
+    html += `
+    <tr>
+    <td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+      ${c.name} <span style="color:#6b7280;">x${c.qty}</span>
+    </td>
+    <td style="text-align:right;">Rp ${(c.price*c.qty).toLocaleString()}</td>
+    <td style="text-align:center;">
+      <button class="small ghost" onclick="removeFromCart('${c.sku}')">-</button>
+    </td>
+  </tr>`;
+
   })
   html+="</table>"
   el.innerHTML=html

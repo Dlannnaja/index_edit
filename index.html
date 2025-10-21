@@ -355,6 +355,31 @@
   </header>
 
   <main class="container">
+    <!-- Modal Kamera (Popup) -->
+<div id="cameraModal" style="
+  display:none;
+  position:fixed;
+  top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.6);
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+">
+  <div style="
+    background:#fff;
+    border-radius:10px;
+    padding:20px;
+    max-width:400px;
+    width:90%;
+    box-shadow:0 4px 12px rgba(0,0,0,0.2);
+  ">
+    <h3 style="margin-top:0;margin-bottom:10px">📷 Scan Barcode</h3>
+    <div id="cameraReader" style="width:100%;background:#000;min-height:250px;border-radius:8px;overflow:hidden"></div>
+    <div style="display:flex;justify-content:end;margin-top:10px;gap:10px">
+      <button class="ghost small" onclick="closeCamera()">Tutup</button>
+    </div>
+  </div>
+</div>
     <div class="grid">
 
       <!-- Dashboard Laporan -->
@@ -516,7 +541,6 @@
         <div style="display:flex; gap: var(--spacing-sm); align-items:center; margin-bottom: var(--spacing-sm)">
           <label><input type="checkbox" id="autoSell" /> <span class="muted">Auto-sell on scan</span></label>
         </div>
-        <div id="reader"></div>
         <div class="muted note" style="margin-top: var(--spacing-sm)">Gunakan kamera ponsel. Pilih mode single jika ingin berhenti setelah 1 scan.</div>
       </div>
       
@@ -808,150 +832,64 @@ function printReceipt(t){
   }
 }
 
-/* ---------- SCAN (DIUBAH MENJADI POPUP) ---------- */
+/* ---------- SCAN ---------- */
+<script>
 let html5QrcodeScanner = null;
 let scanTarget = null;
 
-function startScan(target) {
+function openCamera(target) {
   scanTarget = target;
+  document.getElementById('cameraModal').style.display = 'flex';
 
-  // tampilkan modal kamera
-  const cam = document.getElementById("cameraModal");
-  if (cam) cam.style.display = "flex";
-
-  // jika ada scanner aktif, hentikan dulu (mencegah duplikat)
-  if (html5QrcodeScanner) {
-    html5QrcodeScanner.stop().catch(()=>{}).then(()=>{ html5QrcodeScanner = null; });
-  }
-
-  html5QrcodeScanner = new Html5Qrcode("readerPopup");
-
+  // Inisialisasi kamera
+  if (html5QrcodeScanner) return;
+  html5QrcodeScanner = new Html5Qrcode("cameraReader");
   const config = { fps: 10, qrbox: 250 };
-
-  html5QrcodeScanner.start(
-    { facingMode: "environment" },
-    config,
-    (qrCodeMessage) => {
-      try {
-        handleScan(qrCodeMessage);
-      } catch (e) {
-        console.error("handleScan error:", e);
-      }
-      const modeEl = document.getElementById("scanMode");
-      const autoSellEl = document.getElementById("autoSell");
-      const singleMode = modeEl && modeEl.value === "single";
-      const autoSell = autoSellEl && autoSellEl.checked;
-      if (singleMode && (scanTarget === "sku" || autoSell || scanTarget === "sell")) {
-        stopScan();
-        closeCameraModal();
-      }
-    },
-    (errorMessage) => {
-      // optional: bisa tampilkan log kecil bila perlu
-      // console.warn("scan error", errorMessage);
+  html5QrcodeScanner.start({ facingMode: "environment" }, config, qrCodeMessage => {
+    handleScan(qrCodeMessage);
+    if (document.getElementById("scanMode") && 
+        document.getElementById("scanMode").value === "single" && 
+        (scanTarget === "sell" || document.getElementById("autoSell")?.checked)) {
+      stopCamera();
     }
-  ).catch((err) => {
-    console.error("start error:", err);
+  }).catch(err => {
+    console.error(err);
     alert("Gagal mengakses kamera: " + err);
-    const cam2 = document.getElementById("cameraModal");
-    if (cam2) cam2.style.display = "none";
-    html5QrcodeScanner = null;
   });
 }
 
-function stopScan() {
-  if (!html5QrcodeScanner) return;
-  html5QrcodeScanner.stop().then(()=> {
-    try { html5QrcodeScanner.clear(); } catch(e) {}
-    html5QrcodeScanner = null;
-  }).catch((e)=> {
-    console.warn("stop failed", e);
-    html5QrcodeScanner = null;
-  });
+function closeCamera() {
+  stopCamera();
+  document.getElementById('cameraModal').style.display = 'none';
+}
+
+function stopCamera() {
+  if (html5QrcodeScanner) {
+    html5QrcodeScanner.stop().catch(()=>{}).finally(() => {
+      html5QrcodeScanner = null;
+      document.getElementById("cameraReader").innerHTML = "";
+    });
+  }
 }
 
 function handleScan(msg) {
-  if (!msg) return;
-  const code = String(msg).trim();
-
-  if (scanTarget === "sell") {
-    const p = products.find(x => String(x.sku) === code);
-    if (p) {
-      addToCart(p.sku);
-      smallNotify(`Ditambahkan: ${p.name}`);
-    } else {
-      // kalau tidak ada produk, isi SKU di form dan beri tahu user
-      const skuEl = document.getElementById("sku");
-      if (skuEl) skuEl.value = code;
-      const nameEl = document.getElementById("name");
-      if (nameEl) nameEl.focus();
-      alert("Produk tidak ditemukan. Kode dimasukkan ke form tambah produk untuk ditambahkan.");
-    }
-    return;
-  }
-
-  // bila target 'sku' (scan dari form tambah/edit) atau target lain
-  if (scanTarget === "sku") {
-    const skuEl = document.getElementById("sku");
-    if (skuEl) skuEl.value = code;
-    alert("Kode Barang terdeteksi: " + code);
-    return;
-  }
-
-  // fallback: jika autoSell aktif, tambahkan bila ada
-  const autoSellEl = document.getElementById("autoSell");
-  if (autoSellEl && autoSellEl.checked) {
-    const p = products.find(x => String(x.sku) === code);
-    if (p) {
-      addToCart(p.sku);
-      smallNotify(`Ditambahkan: ${p.name}`);
-    } else {
-      const skuEl = document.getElementById("sku");
-      if (skuEl) skuEl.value = code;
-      alert("Produk tidak ditemukan. Kode dimasukkan ke form tambah produk.");
-    }
+  if (scanTarget === "sell" || document.getElementById("autoSell")?.checked) {
+    addToCart(msg);
   } else {
-    const skuEl = document.getElementById("sku");
-    if (skuEl) skuEl.value = code;
-    alert("Kode Barang terdeteksi: " + code);
+    document.getElementById("sku").value = msg;
+    alert("Kode Barang terdeteksi: " + msg);
   }
 }
 
-function closeCameraModal() {
-  stopScan();
-  const cam = document.getElementById("cameraModal");
-  if (cam) cam.style.display = "none";
-  scanTarget = null;
+function scanSku() {
+  openCamera("sku");
 }
 
-function scanSku(){
-  startScan('sku');
+function startScan(target) {
+  openCamera(target);
 }
+</script>
 
-// notifikasi kecil non-blocking (sementara pakai timeout)
-let _snTimeout = null;
-function smallNotify(text){
-  let n = document.getElementById("__smallNotify");
-  if(!n){
-    n = document.createElement("div");
-    n.id = "__smallNotify";
-    n.style.position = "fixed";
-    n.style.left = "50%";
-    n.style.bottom = "20px";
-    n.style.transform = "translateX(-50%)";
-    n.style.background = "rgba(0,0,0,0.8)";
-    n.style.color = "#fff";
-    n.style.padding = "8px 12px";
-    n.style.borderRadius = "6px";
-    n.style.zIndex = 10000;
-    n.style.fontSize = "13px";
-    document.body.appendChild(n);
-  }
-  n.textContent = text;
-  n.style.display = "block";
-  if(_snTimeout) clearTimeout(_snTimeout);
-  _snTimeout = setTimeout(()=>{ n.style.display = "none"; }, 1800);
-}
 /* ---------- TABS ---------- */
 function openTab(id){
   document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"))

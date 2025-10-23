@@ -1304,21 +1304,32 @@ function startScan(target) { openCamera(target); }
       </div>
     `;
 
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const tooltipTop = (spaceBelow > 140) ? (rect.bottom + window.scrollY + 10) : (rect.top + window.scrollY - 140 - 10);
-    let left = rect.left + window.scrollX;
-    if(left + 340 > window.innerWidth + window.scrollX) left = window.innerWidth + window.scrollX - 360;
-    if(left < 10) left = 10;
+    // --- posisi tooltip adaptif (auto menyesuaikan di atas/bawah/tengah) ---
+      const tooltipHeight = 130;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      let tooltipTop;
 
-    tooltip.style.top = tooltipTop + "px";
-    tooltip.style.left = left + "px";
-    tooltip.style.display = "block";
+      if (spaceBelow > tooltipHeight + 20) {
+   // cukup ruang di bawah elemen
+      tooltipTop = rect.bottom + window.scrollY + 12;
+      } else if (rect.top > tooltipHeight + 20) {
+  // cukup ruang di atas elemen
+      tooltipTop = rect.top + window.scrollY - tooltipHeight - 12;
+      } else {
+  // fallback: di tengah layar kalau sempit
+      tooltipTop = window.scrollY + window.innerHeight / 2 - tooltipHeight / 2;
+   }
 
-    try { el.scrollIntoView({ behavior: "smooth", block: "center" }); } catch(e){}
+      let left = rect.left + window.scrollX;
+      if (left + 340 > window.innerWidth + window.scrollX) left = window.innerWidth + window.scrollX - 360;
+      if (left < 10) left = 10;
 
-    document.getElementById("guideNextBtn").onclick = function(e){
-      e.preventDefault();
-      nextGuide();
+      tooltip.style.top = tooltipTop + "px";
+      tooltip.style.left = left + "px";
+      tooltip.style.display = "block";
+      tooltip.style.opacity = 0;
+      tooltip.style.transition = "opacity 0.25s ease";
+      setTimeout(() => (tooltip.style.opacity = 1), 20);
     }
   }
 

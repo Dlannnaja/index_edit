@@ -44,7 +44,17 @@
     padding: var(--spacing-lg) var(--spacing-md);
     box-shadow: var(--shadow);
   }
-
+    /* --- Keranjang di header --- */
+  header .muted {
+    color: #ffffff !important;     /* ubah warna jadi putih terang */
+    font-weight: 500;              /* sedikit tebal biar jelas */
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2); /* efek lembut biar gak silau */
+  }
+  header #cartCount {
+    color: #ffffff;                /* pastikan angka keranjang putih juga */
+    font-weight: 600;
+  }
+    
   .container {
     max-width: 100%;
     margin: 0 auto;
@@ -157,6 +167,88 @@
     font-size: var(--font-size-base);
     min-width: 100%;
   }
+    /* === Laporan Penjualan === */
+#salesTbl {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  min-width: 700px;
+}
+
+#salesTbl th, #salesTbl td {
+  padding: 10px;
+  border-bottom: 1px solid #f1f3f5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#salesTbl th:nth-child(1), #salesTbl td:nth-child(1) { width: 6%; text-align: center; } /* No */
+#salesTbl th:nth-child(2), #salesTbl td:nth-child(2) { width: 25%; } /* Tanggal */
+#salesTbl th:nth-child(3), #salesTbl td:nth-child(3) { width: 20%; } /* Invoice */
+#salesTbl th:nth-child(4), #salesTbl td:nth-child(4) { width: 35%; } /* Item */
+#salesTbl th:nth-child(5), #salesTbl td:nth-child(5) { width: 14%; text-align: right; } /* Total */
+
+
+/* === Laporan Restock === */
+#restockTbl {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  min-width: 700px;
+}
+
+#restockTbl th, #restockTbl td {
+  padding: 10px;
+  border-bottom: 1px solid #f1f3f5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#restockTbl th:nth-child(1), #restockTbl td:nth-child(1) { width: 6%; text-align: center; } /* No */
+#restockTbl th:nth-child(2), #restockTbl td:nth-child(2) { width: 18%; } /* Tanggal */
+#restockTbl th:nth-child(3), #restockTbl td:nth-child(3) { width: 15%; } /* SKU */
+#restockTbl th:nth-child(4), #restockTbl td:nth-child(4) { width: 30%; } /* Nama */
+#restockTbl th:nth-child(5), #restockTbl td:nth-child(5) { width: 15%; text-align: center; } /* Jumlah */
+#restockTbl th:nth-child(6), #restockTbl td:nth-child(6) { width: 16%; text-align: right; } /* Stok Akhir */
+
+
+/* === Laporan Stok Akhir === */
+#finalStockTbl {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  min-width: 650px;
+}
+
+#finalStockTbl th, #finalStockTbl td {
+  padding: 10px;
+  border-bottom: 1px solid #f1f3f5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#finalStockTbl th:nth-child(1), #finalStockTbl td:nth-child(1) { width: 6%; text-align: center; } /* No */
+#finalStockTbl th:nth-child(2), #finalStockTbl td:nth-child(2) { width: 18%; } /* SKU */
+#finalStockTbl th:nth-child(3), #finalStockTbl td:nth-child(3) { width: 36%; } /* Nama */
+#finalStockTbl th:nth-child(4), #finalStockTbl td:nth-child(4) { width: 20%; text-align: center; } /* Stok */
+#finalStockTbl th:nth-child(5), #finalStockTbl td:nth-child(5) { width: 20%; text-align: right; } /* Harga */
+
+/* --- Style seragam agar sama seperti tabel produk --- */
+#salesTbl th, #restockTbl th, #finalStockTbl th {
+  background: #f9fbfd;
+  color: #333;
+  font-weight: 600;
+}
+
+#salesTbl tbody tr:nth-child(even),
+#restockTbl tbody tr:nth-child(even),
+#finalStockTbl tbody tr:nth-child(even) {
+  background: #fcfdff;
+}
+
 
   th, td {
     padding: var(--spacing-sm);
@@ -212,6 +304,27 @@
     #cart td:nth-child(3) {
     text-align: center;
     width: 10%;
+  }
+    /* Rapi di semua perangkat */
+    .table-wrapper {
+    overflow-x: auto;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+    #tbl {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto; /* biar kolom menyesuaikan konten */
+    min-width: 600px;   /* biar ga rusak di layar kecil */
+  }
+    #tbl th, #tbl td {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    padding: 8px;
+    border-bottom: 1px solid #f1f3f5;
+    text-align: left;
+    vertical-align: middle;
   }
 
 
@@ -336,48 +449,41 @@
     pointer-events: none !important;
   }
 
-  /* ---------- NEW: responsive table wrapper for mobile (Android) ---------- */
+  /* Payment modal */
+  #paymentModal {
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.45);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 11000;
+  }
+  #paymentModal .box {
+    background: #fff;
+    border-radius: 10px;
+    padding: 18px;
+    width: 92%;
+    max-width: 420px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+  }
+  #paymentMethods { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .pm-btn { flex:1; padding:8px 10px; border-radius:8px; border:1px solid #eef5ff; background:#f8fbff; cursor:pointer; text-align:center; font-weight:600; color:#094fa1; }
+  .pm-btn.active { background:#0b74da; color:#fff; border-color:#0b74da; }
+
+  /* small instruction box */
+  .pay-instr { background:#f5f7fb; padding:8px; border-radius:8px; margin-bottom:10px; font-size:13px; color:#333; }
+
   .table-wrapper {
-    overflow-x: auto;
     width: 100%;
+    overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    margin-top: var(--spacing-sm);
+    border-radius: var(--radius);
+    background: var(--card);
+    box-shadow: var(--shadow);
   }
-
-  /* Prefer tabel tetap rapi: minimal total width agar kolom tidak terlalu sempit di desktop.
-     Untuk mobile, media query menonaktifkan min-width supaya tabel mengikuti lebar layar. */
-  .table-wrapper table {
-    min-width: 640px;
-  }
-
-  @media (max-width: 600px) {
-    .table-wrapper table {
-      min-width: unset;
-    }
-    th, td {
-      font-size: 12px;
-      padding: 6px 8px;
-    }
-    .actions button {
-      padding: 4px 8px;
-      font-size: 11px;
-    }
-  }
-
-  @media (min-width: 600px) {
-    body {
-      font-size: 14px;
-    }
-    button {
-      width: auto;
-    }
-  }
-
-  @media (min-width: 900px) {
-    body {
-      font-size: 15px;
-    }
-  }
-</style>
+  </style>
 
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
@@ -458,7 +564,7 @@
       <!-- Tambah / Edit Produk -->
       <div class="card">
         <section>
-          <h3>Tambah / Edit Produk</h3>
+          <h3>Tambah Produk</h3>
           <form id="formProduct" onsubmit="submitProduct();return false" style="margin-bottom: var(--spacing-lg)">
             <div class="row">
               <div class="col">
@@ -534,7 +640,8 @@
             <div class="info-small">Jika auto print aktif: pastikan pilih & simpan printer. Jika tidak, proses cetak akan diblokir dan muncul peringatan.</div>
           </div>
           <div style="width: 100%; margin-top: var(--spacing-md)">
-            <button id="checkoutBtn" onclick="checkout()" disabled>Selesaikan Penjualan</button>
+            <!-- tetap pakai id checkoutBtn supaya minimal perubahan -->
+            <button id="checkoutBtn" onclick="checkout()" disabled>Bayar</button>
             <button class="ghost" onclick="clearCart()">Kosongkan</button>
           </div>
         </div>
@@ -552,7 +659,7 @@
             </select>
           </label>
         </div>
-        <div style="display:flex; gap: var(--spacing-sm); align-items:center; margin-bottom: var(--spacing-sm)">
+        <div style="display:flex; gap:var(--spacing-sm); align-items:center; margin-bottom: var(--spacing-sm)">
           <label><input type="checkbox" id="autoSell" /> <span class="muted">Auto-sell on scan</span></label>
         </div>
         <div class="muted note" style="margin-top: var(--spacing-sm)">Gunakan kamera ponsel. Pilih mode single jika ingin berhenti setelah 1 scan.</div>
@@ -595,16 +702,45 @@
     </div>
   </div>
 
+  <!-- payment modal -->
+  <div id="paymentModal">
+    <div class="box">
+      <h3 style="margin-top:0">Pembayaran</h3>
+      <div id="pmTop" style="margin-bottom:8px" class="muted">Pilih metode pembayaran untuk menyelesaikan transaksi.</div>
+
+      <div id="paymentMethods">
+        <div class="pm-btn" data-method="cash" onclick="selectPaymentMethod('cash', this)">Tunai</div>
+        <div class="pm-btn" data-method="transfer" onclick="selectPaymentMethod('transfer', this)">Transfer Bank</div>
+        <div class="pm-btn" data-method="card" onclick="selectPaymentMethod('card', this)">Kartu (EDC)</div>
+        <div class="pm-btn" data-method="qris" onclick="selectPaymentMethod('qris', this)">QRIS / e-Wallet</div>
+      </div>
+
+      <div id="paymentInfoBox" class="pay-instr">Total: <strong id="payTotal">Rp 0</strong></div>
+
+      <div style="display:flex;gap:8px">
+        <button onclick="confirmPayment()" id="confirmPayBtn">Konfirmasi Pembayaran</button>
+        <button class="ghost" onclick="closePaymentModal()">Batal</button>
+      </div>
+
+      <div id="payDebug" style="margin-top:10px" class="muted"></div>
+    </div>
+  </div>
+
   <!-- receipt area template (hidden) -->
   <div id="receiptTemplate" style="display:none">
     <div id="receiptArea"></div>
   </div>
+
 <script>
 /* ---------- data ---------- */
 let products = JSON.parse(localStorage.getItem('products')||'[]')
 let sales = JSON.parse(localStorage.getItem('sales')||'[]')
 let restocks = JSON.parse(localStorage.getItem('restocks')||'[]')
 let cart = []
+
+// pendingPaidInvoice stored during session so user can finalize after paying
+let pendingPaidInvoice = localStorage.getItem('pendingPaidInvoice') || null
+let selectedPaymentMethod = null
 
 /* ---------- utility: reliable local datetime string ---------- */
 function getLocalDateTime(){
@@ -620,16 +756,13 @@ function getLocalDateTime(){
 }
 
 function parseStoredDate(dStr){
-  // dStr diharapkan format "YYYY-MM-DD HH:mm:ss"
   if(!dStr) return null;
   let iso = dStr;
   if(dStr.indexOf(' ') !== -1 && dStr.indexOf('T') === -1){
     iso = dStr.replace(' ', 'T');
   }
-  // beberapa fallback: jika masih invalid, coba Date.parse direct
   const d = new Date(iso);
   if(isNaN(d.getTime())){
-    // try replace slashes with hyphen
     const alt = dStr.replace(/\//g,'-').replace(' ', 'T');
     const d2 = new Date(alt);
     if(isNaN(d2.getTime())) return null;
@@ -663,20 +796,26 @@ function render(){
 
 /* ---------- product CRUD ---------- */
 function submitProduct(){
-  const sku=document.getElementById("sku").value.trim()
-  const name=document.getElementById("name").value.trim()
-  const price=parseInt(document.getElementById("price").value)
-  const qty=parseInt(document.getElementById("qty").value)
+  const sku = document.getElementById("sku").value.trim()
+  const name = document.getElementById("name").value.trim()
+  const price = parseInt(document.getElementById("price").value)
+  const qty = parseInt(document.getElementById("qty").value)
   if(!sku || !name || !price || !qty) return alert("Lengkapi data!")
-  const exist=products.find(p=>p.sku===sku)
+  
+  const exist = products.find(p => p.sku === sku)
   if(exist){
     exist.qty += qty
     exist.price = price
-  }else{
-    products.push({sku,name,price,qty})
+  } else {
+    products.push({sku, name, price, qty})
   }
-  localStorage.setItem("products",JSON.stringify(products))
-  render(); resetForm()
+
+  localStorage.setItem("products", JSON.stringify(products))
+  render()
+  resetForm()
+
+  // ✅ Tambahkan notifikasi sukses
+  alert("Berhasil ditambahkan!")
 }
 
 function resetForm(){
@@ -738,7 +877,7 @@ function restockProduct(){
   render(); document.getElementById("restockQty").value=""
 }
 
-/* ---------- CART & CHECKOUT ---------- */
+/* ---------- CART & CHECKOUT (diubah alurnya) ---------- */
 function addToCart(sku){
   const p=products.find(x=>x.sku===sku)
   if(!p) return alert("Produk tidak ditemukan")
@@ -781,10 +920,23 @@ function renderCart(){
   count2.textContent=cart.length
   checkoutBtn.disabled=false
   document.getElementById("total").textContent="Rp "+total.toLocaleString()
+
+  // if there is a pending paid invoice for this cart, show "Selesaikan Penjualan" label
+  if(pendingPaidInvoice){
+    document.getElementById("checkoutBtn").textContent = "Selesaikan Penjualan"
+  } else {
+    document.getElementById("checkoutBtn").textContent = "Bayar"
+  }
 }
 
 function removeFromCart(sku){cart=cart.filter(c=>c.sku!==sku); renderCart()}
-function clearCart(){cart=[]; renderCart()}
+function clearCart(){ 
+  // clear cart, reset pendingPaidInvoice if any (safety)
+  cart=[]; 
+  pendingPaidInvoice = null; 
+  localStorage.removeItem('pendingPaidInvoice');
+  renderCart()
+}
 
 /* ---------- printer preference helpers ---------- */
 function loadPrinterPreference(){
@@ -798,47 +950,185 @@ function savePrinterPreference(){
   localStorage.setItem('preferredPrinter', sel.value)
   alert(sel.value ? 'Preferensi printer disimpan: ' + sel.value : 'Preferensi printer dikosongkan')
 }
+  function printRestockTable() {
+  const tbl = document.getElementById("restockTbl");
+  if (!tbl) return alert("Tabel restock tidak ditemukan");
 
-/* ---------- checkout with robust date + printer check ---------- */
+  // ambil HTML tabel saja
+  const html = `
+    <html>
+    <head>
+      <title>Restock</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 10px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+        th { background: #f0f0f0; }
+        tbody tr:nth-child(even) { background: #f9f9f9; }
+      </style>
+    </head>
+    <body>
+      <h3>Data Restock</h3>
+      ${tbl.outerHTML}
+    </body>
+    </html>
+  `;
+
+  const w = window.open("", "_blank", "width=800,height=600");
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  try {
+    w.print();
+    setTimeout(() => w.close(), 1000);
+  } catch (e) {
+    w.close();
+    console.error(e);
+  }
+}
+
+/* ---------- NEW: PAYMENT FLOW ---------- */
+
+/** checkout() sekarang buka modal pembayaran.
+    Jika sudah ada pendingPaidInvoice untuk cart saat ini => jalankan finishSale */
 function checkout(){
-  if(cart.length===0) return alert("Keranjang kosong")
-  const invoice="INV"+Date.now()
+  // jika sudah ada invoice yang sudah dibayar tapi belum diselesaikan
+  if(pendingPaidInvoice){
+    // panggil finish sale untuk invoice itu
+    finishSale(pendingPaidInvoice);
+    return;
+  }
 
-  const now = new Date()
-  const date = now.toISOString()                // untuk filter & simpan aman
-  const dateDisplay = now.toLocaleString()      // untuk tampilan laporan
+  if(cart.length === 0) return alert("Keranjang kosong")
+  openPaymentModal()
+}
 
-  let total=0
-  cart.forEach(c=>{
-    total+=c.price*c.qty
-    const p=products.find(x=>x.sku===c.sku)
-    if(p) p.qty-=c.qty
+function openPaymentModal(){
+  selectedPaymentMethod = null
+  document.querySelectorAll('.pm-btn').forEach(b=>b.classList.remove('active'))
+  document.getElementById('payDebug').textContent = ''
+  const total = cart.reduce((s,i)=>s + i.price*i.qty, 0)
+  document.getElementById('payTotal').textContent = "Rp " + total.toLocaleString()
+  document.getElementById('paymentModal').style.display = 'flex'
+}
+
+function closePaymentModal(){
+  document.getElementById('paymentModal').style.display = 'none'
+  selectedPaymentMethod = null
+}
+
+function selectPaymentMethod(method, el){
+  selectedPaymentMethod = method
+  document.querySelectorAll('.pm-btn').forEach(b=>b.classList.remove('active'))
+  if(el) el.classList.add('active')
+  let info = ''
+  if(method === 'cash') info = 'Pembayaran tunai: Terima uang tunai dari pelanggan dan kembalikan jika perlu.'
+  if(method === 'transfer') info = 'Transfer bank: Tunjukkan nomor VA / rekening ke pembeli. Konfirmasi manual atau otomatis melalui gateway.'
+  if(method === 'card') info = 'Kartu/EDC: Lakukan pembayaran melalui mesin EDC (fisik).'
+  if(method === 'qris') info = 'QRIS / e-wallet: Tampilkan QR untuk dipindai pembeli. Setelah terbayar, konfirmasi.'
+  document.getElementById('paymentInfoBox').innerHTML = `<div class="pay-instr">${info}</div><div>Total: <strong id="payTotal">Rp ${cart.reduce((s,i)=>s+i.price*i.qty,0).toLocaleString()}</strong></div>`
+}
+
+/* Konfirmasi pembayaran (simulasi). Pada integrasi nyata, replace confirmPayment dengan panggilan backend/gateway. */
+function confirmPayment(){
+  if(!selectedPaymentMethod) return alert("Pilih metode pembayaran terlebih dahulu")
+  // disable tombol sebentar
+  const btn = document.getElementById('confirmPayBtn')
+  btn.disabled = true
+  btn.textContent = "Memproses..."
+  setTimeout(()=>{
+    // simulasi sukses
+    const invoice = 'INV' + Date.now()
+    const now = new Date()
+    const date = now.toISOString()
+    const dateDisplay = now.toLocaleString()
+    const total = cart.reduce((s,i)=>s + i.price*i.qty, 0)
+
+    // Simpan sebagai paid transaction — masuk laporan penjualan sesuai permintaan
+    const transaction = {
+      invoice,
+      date,
+      dateDisplay,
+      items: JSON.parse(JSON.stringify(cart)), // simpan items saat bayar
+      total,
+      method: selectedPaymentMethod,
+      status: 'paid',      // sudah dibayar, tapi belum diselesaikan (stok belum dikurangi)
+      finalized: false
+    }
+
+    sales.push(transaction)
+    localStorage.setItem('sales', JSON.stringify(sales))
+
+    // tandai pendingPaidInvoice supaya tombol berubah jadi "Selesaikan Penjualan"
+    pendingPaidInvoice = invoice
+    localStorage.setItem('pendingPaidInvoice', invoice)
+
+    btn.disabled = false
+    btn.textContent = "Konfirmasi Pembayaran"
+    closePaymentModal()
+    renderCart()
+    alert("Pembayaran berhasil dicatat. Invoice: " + invoice + ". Tekan tombol Selesaikan Penjualan untuk finalisasi & mencetak struk.")
+  }, 900) // simulasi delay
+}
+
+/* finishSale: finalisasi stok, print jika perlu, ubah status sale jadi completed */
+function finishSale(invoice){
+  // cari transaksi di sales
+  const txIndex = sales.findIndex(s=>s.invoice===invoice)
+  if(txIndex === -1) return alert("Transaksi tidak ditemukan")
+  const tx = sales[txIndex]
+  if(tx.finalized){
+    // jika sudah final, beri info
+    alert("Transaksi sudah diselesaikan: " + invoice)
+    // clear pending state
+    pendingPaidInvoice = null
+    localStorage.removeItem('pendingPaidInvoice')
+    renderCart(); render(); renderFinalStock()
+    return
+  }
+
+  // Kurangi stok produk berdasarkan items yang disimpan pada saat bayar
+  tx.items.forEach(it=>{
+    const p = products.find(x=>x.sku===it.sku)
+    if(p){
+      p.qty = Math.max(0, p.qty - it.qty)
+    }
   })
+  // update sale record
+  tx.status = 'completed'
+  tx.finalized = true
+  tx.completedAt = getLocalDateTime()
 
-  const transaction={invoice,date,dateDisplay,items:[...cart],total}
-  sales.push(transaction)
-  localStorage.setItem("sales",JSON.stringify(sales))
-  localStorage.setItem("products",JSON.stringify(products))
+  // simpan perubahan
+  localStorage.setItem('products', JSON.stringify(products))
+  localStorage.setItem('sales', JSON.stringify(sales))
 
-  // cek auto print & preferensi printer
+  // auto-print jika diinginkan
   const auto = document.getElementById("autoPrint").checked
   const preferred = localStorage.getItem('preferredPrinter') || ''
   if(auto){
     if(!preferred){
       alert("Cetak otomatis aktif tetapi tidak ada printer yang dipilih. Silahkan pilih & simpan printer terlebih dahulu.")
-    }else{
+    } else {
       try{
-        printReceipt(transaction)
-      }catch(e){
+        printReceipt(tx)
+      } catch(e) {
         console.error(e)
-        alert("Terjadi kesalahan saat mencoba mencetak. Silahkan hubungkan printer terlebih dahulu.")
+        alert("Gagal mencetak secara otomatis. Pastikan printer terhubung.")
       }
     }
   }
 
-  cart=[]
+  // jika autoPrint non aktif, tetap tawarkan cetak
+  const doPrint = confirm("Penjualan selesai. Mau cetak struk sekarang?")
+  if(doPrint) printReceipt(tx)
+
+  // clear pending and cart
+  pendingPaidInvoice = null
+  localStorage.removeItem('pendingPaidInvoice')
+  cart = []
   renderCart(); render(); renderFinalStock()
-  alert("Transaksi berhasil! Invoice: "+invoice)
+  alert("Penjualan selesai dan stok diperbarui. Invoice: " + invoice)
 }
 
 /* ---------- print receipt (opens print dialog) ---------- */
@@ -847,7 +1137,8 @@ function printReceipt(t){
   let html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;padding:8px">`
   html += `<h3 style="margin:4px 0">Struk Pembelian</h3>`
   html += `<div>Invoice: ${t.invoice}</div>`
-  html += `<div>Tanggal: ${t.date}</div>`
+  html += `<div>Tanggal: ${t.dateDisplay || t.date || getLocalDateTime()}</div>`
+  html += `<div>Metode: ${t.method || '-'}</div>`
   html += `<hr/>`
   html += `<table style="width:100%;border-collapse:collapse;font-size:12px">`
   html += `<tr><th align="left">Nama</th><th>Qty</th><th align="right">Subtotal</th></tr>`
@@ -864,21 +1155,17 @@ function printReceipt(t){
   }
   w.document.write(html)
   w.document.close()
-  // fokus & print
   w.focus()
-  // window.print usually doesn't throw, but wrap in try/catch anyway
   try{
     w.print()
-    // don't auto-close — some printers need selection; close after small timeout
     setTimeout(()=>{ try{ w.close() }catch(e){} }, 1200)
   }catch(e){
     try{ w.close() }catch(_) {}
     throw e
   }
 }
-
-/* ---------- SCAN ---------- */
-/* ---------- SCAN ---------- */
+  
+/* ---------- SCAN (tidak diubah) ---------- */
 let html5QrcodeScanner = null;
 let scanTarget = null;
 
@@ -930,7 +1217,7 @@ function handleScan(msg) {
 function scanSku() { openCamera("sku"); }
 function startScan(target) { openCamera(target); }
 
-/* ---------- GUIDE OVERLAY ---------- */
+/* ---------- GUIDE OVERLAY (tidak diubah) ---------- */
 function showGuide() {
   stopCamera();
   const cam = document.getElementById("cameraModal");
@@ -950,7 +1237,7 @@ function skipGuide() {
   if (guide) guide.style.display = "none";
 }
 
-/* ---------- INIT FIX ---------- */
+/* ---------- INIT FIX & REPORTS (kebanyakan tidak diubah) ---------- */
 document.addEventListener("DOMContentLoaded", () => {
   const guide = document.getElementById("guideOverlay");
   const cam = document.getElementById("cameraModal");
@@ -1032,7 +1319,6 @@ function loadRestock(){
 }
 
 /* ---------- CSV export (safely parse date) ---------- */
-// helper untuk ambil tanggal CSV
 function getCsvDateFromRecord(rec){
   let dObj = null;
 
@@ -1044,7 +1330,6 @@ function getCsvDateFromRecord(rec){
   }
 
   if(dObj && !isNaN(dObj)){
-    // format lengkap: YYYY-MM-DD HH:mm:ss
     const yyyy = dObj.getFullYear();
     const mm = String(dObj.getMonth()+1).padStart(2,"0");
     const dd = String(dObj.getDate()).padStart(2,"0");
@@ -1060,15 +1345,12 @@ function getCsvDateFromRecord(rec){
 function exportSales(){
   if(sales.length === 0) return alert("Tidak ada data penjualan");
 
-  // pakai titik koma (;) biar aman di Excel / Google Sheets Indonesia
   let csv = "No;Tanggal;Invoice;Item;Total\n";
   let counter = 1;
 
   sales.forEach((s) => {
     const d = getCsvDateFromRecord(s); // ambil tanggal yang aman
     const items = s.items.map(x => `${x.name} x${x.qty}`).join(" | ");
-
-    // bungkus kolom teks dengan "..." supaya tidak pecah
     csv += `${counter};"${d}";"${s.invoice}";"${items}";"${s.total}"\n`;
     counter++;
   });
@@ -1090,20 +1372,11 @@ function downloadCSV(content, filename){
 
   function clearSales(){
   if(!confirm("Hapus semua laporan penjualan?")) return;
-
-  // kosongkan seluruh data sales, termasuk data lama dengan format tanggal berbeda
   sales = [];
-
-  // simpan ke localStorage
   localStorage.setItem("sales", JSON.stringify(sales));
-
-  // refresh tabel penjualan
   loadSales();
-
   alert("Semua laporan penjualan berhasil dihapus.");
 }
-
-
 
 /* ---------- final stock ---------- */
 function renderFinalStock(){
@@ -1114,11 +1387,15 @@ function renderFinalStock(){
   })
 }
 
-/* ---------- GUIDE ---------- */
-function startGuide(){alert("Guide: 1. Tambah produk, 2. Restock, 3. Scan, 4. Keranjang, 5. Checkout & cetak"); skipGuide()}
+/* ---------- GUIDE (interaktif) ---------- */
+function startGuide() {
+  document.getElementById("guideOverlay").style.display = "none";
+  currentStep = 0;
+  createGuideElements();
+  showStep(currentStep);
+}
 function skipGuide(){document.getElementById("guideOverlay").style.display="none"}
 
-/* ---------- INIT ---------- */
 /* ---------- INIT ---------- */
 function init(){
   // ensure autoPrint is NOT checked on load (safety)
@@ -1128,13 +1405,14 @@ function init(){
   // load saved printer preference
   loadPrinterPreference()
 
-  // 🔄 migrasi data sales lama biar selalu ada dateDisplay
+  // restore pendingPaidInvoice from localStorage (jika ada)
+  pendingPaidInvoice = localStorage.getItem('pendingPaidInvoice') || pendingPaidInvoice
+
+  // migrasi dateDisplay seperti sebelumnya
   let updated = false
   sales.forEach(s => {
     if(s.date && !s.dateDisplay){
       let dObj = new Date(s.date)
-
-      // kalau hasilnya Invalid Date, coba parse manual format lama: DD-MM-YYYY HH:mm:ss
       if(isNaN(dObj)){
         const parts = s.date.split(" ")
         if(parts.length === 2){
@@ -1145,21 +1423,16 @@ function init(){
           }
         }
       }
-
-      // kalau sukses diparse, buat dateDisplay
       if(dObj && !isNaN(dObj)){
         s.dateDisplay = dObj.toLocaleString()
         updated = true
       } else {
-        // fallback kalau tetap gagal → pakai string aslinya
         s.dateDisplay = s.date
         updated = true
       }
     }
   })
-  if(updated){
-    localStorage.setItem("sales", JSON.stringify(sales))
-  }
+  if(updated) localStorage.setItem("sales", JSON.stringify(sales))
 
   render(); renderFinalStock(); setInterval(renderFinalStock,5000)
   document.getElementById("guideOverlay").style.display="flex"
@@ -1167,188 +1440,5 @@ function init(){
 
 init()
 </script>
-</body>
-</html>
-
-  <style>
-  /* === FIX FINAL untuk overlay & hilangkan debug === */
-  #cameraModal {
-    z-index: 9000;
-  }
-  #cameraModal[style*="display:none"] {
-    pointer-events: none !important;
-  }
-
-  #guideOverlay {
-    z-index: 99999 !important;
-    pointer-events: auto !important;
-  }
-  #guideOverlay * {
-    pointer-events: auto !important;
-  }
-
-  /* Hapus semua border/debug */
-  #cameraModal::before,
-  #guideOverlay::before {
-    content: none !important;
-  }
-  #cameraModal, #guideOverlay {
-    outline: none !important;
-  }
-  </style>
-
-  <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const cam = document.getElementById("cameraModal");
-  const guide = document.getElementById("guideOverlay");
-
-  // Pastikan kamera tertutup dan tidak blokir klik
-  if (cam) {
-    cam.style.display = "none";
-    cam.style.pointerEvents = "none";
-    cam.style.zIndex = "1";
-  }
-
-  // Pastikan guide di atas dan bisa diklik
-  if (guide) {
-    guide.style.display = "flex";
-    guide.style.zIndex = "99999";
-    guide.style.pointerEvents = "auto";
-  }
-
-  // Pastikan tombol di guide bisa diklik
-  document.querySelectorAll("#guideBox button").forEach(btn => {
-    btn.style.pointerEvents = "auto";
-    btn.style.cursor = "pointer";
-  });
-});
-
-// Definisi ulang fungsi supaya tidak hilang
-function startGuide() {
-  const guide = document.getElementById("guideOverlay");
-  const cam = document.getElementById("cameraModal");
-  if (cam) cam.style.display = "none";
-  if (guide) guide.style.display = "none";
-  alert("Tutorial dimulai!\n1️⃣ Tambah produk\n2️⃣ Restock\n3️⃣ Scan\n4️⃣ Keranjang\n5️⃣ Cetak struk");
-}
-
-function skipGuide() {
-  const guide = document.getElementById("guideOverlay");
-  if (guide) guide.style.display = "none";
-}
-</script>
-
-<style>
-/* === GUIDE INTERAKTIF === */
-#highlightBox {
-  position: absolute;
-  border: 2px solid #0b74da;
-  border-radius: 10px;
-  background: rgba(11, 116, 218, 0.15);
-  z-index: 100000;
-  pointer-events: none;
-  transition: all 0.3s ease;
-}
-
-#guideTooltip {
-  position: absolute;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  padding: 12px;
-  max-width: 260px;
-  z-index: 100001;
-  font-size: 13px;
-}
-
-#guideTooltip button {
-  background: #0b74da;
-  color: #fff;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-top: 8px;
-}
-#guideTooltip button:hover {
-  background: #094fa1;
-}
-</style>
-
-<script>
-let guideSteps = [
-  { selector: "#formProduct", text: "🧾 Tambahkan produk baru di sini. Isi kode, nama, harga, dan stok." },
-  { selector: "#formRestock", text: "📦 Tambah stok barang yang sudah ada dengan form Restock ini." },
-  { selector: "#tbl", text: "📋 Daftar semua produk kamu muncul di tabel ini. Bisa diedit atau dihapus." },
-  { selector: "#btnStartScan", text: "📸 Gunakan fitur Scan untuk menambah produk ke keranjang lewat kamera." },
-  { selector: "#cart", text: "🛒 Semua barang yang kamu jual akan muncul di keranjang ini." },
-  { selector: "#checkoutBtn", text: "💰 Setelah selesai, klik tombol ini untuk menyelesaikan penjualan dan cetak struk." },
-];
-let currentStep = 0;
-let highlightBox, tooltip;
-
-function startGuide() {
-  document.getElementById("guideOverlay").style.display = "none";
-  currentStep = 0;
-  createGuideElements();
-  showStep(currentStep);
-}
-
-function createGuideElements() {
-  highlightBox = document.createElement("div");
-  highlightBox.id = "highlightBox";
-  document.body.appendChild(highlightBox);
-
-  tooltip = document.createElement("div");
-  tooltip.id = "guideTooltip";
-  document.body.appendChild(tooltip);
-}
-
-function showStep(i) {
-  const step = guideSteps[i];
-  const el = document.querySelector(step.selector);
-  if (!el) return endGuide();
-
-  const rect = el.getBoundingClientRect();
-
-  // posisi highlight
-  highlightBox.style.top = (rect.top + window.scrollY - 5) + "px";
-  highlightBox.style.left = (rect.left + window.scrollX - 5) + "px";
-  highlightBox.style.width = rect.width + 10 + "px";
-  highlightBox.style.height = rect.height + 10 + "px";
-
-  // posisi tooltip
-  tooltip.innerHTML = `
-    <div>${step.text}</div>
-    <div style="text-align:right">
-      <button onclick="nextGuide()">${i === guideSteps.length - 1 ? "Selesai" : "Lanjut ➜"}</button>
-    </div>
-  `;
-
-  const ttTop = rect.bottom + window.scrollY + 10;
-  const ttLeft = rect.left + window.scrollX;
-  tooltip.style.top = ttTop + "px";
-  tooltip.style.left = ttLeft + "px";
-
-  el.scrollIntoView({ behavior: "smooth", block: "center" });
-}
-
-function nextGuide() {
-  currentStep++;
-  if (currentStep >= guideSteps.length) {
-    endGuide();
-  } else {
-    showStep(currentStep);
-  }
-}
-
-function endGuide() {
-  if (highlightBox) highlightBox.remove();
-  if (tooltip) tooltip.remove();
-  alert("🎉 Tutorial selesai! Sekarang kamu sudah paham semua fitur utama POS ini.");
-}
-</script>
-
-
 </body>
 </html>

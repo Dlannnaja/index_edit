@@ -1388,13 +1388,153 @@ function renderFinalStock(){
 }
 
 /* ---------- GUIDE (interaktif) ---------- */
-function startGuide() {
-  document.getElementById("guideOverlay").style.display = "none";
-  currentStep = 0;
-  createGuideElements();
-  showStep(currentStep);
-}
-function skipGuide(){document.getElementById("guideOverlay").style.display="none"}
+<!-- GANTI BAGIAN GUIDE INTERAKTIF LAMA DENGAN BLOCK INI -->
+<script>
+/* === GUIDE INTERAKTIF: robust replacement === */
+
+/*
+  Usage:
+  - Pastikan ada element #guideOverlay & tombol yang memanggil startGuide().
+  - Jika Anda sudah memiliki array `guideSteps`, fungsi ini akan pakai itu.
+    Jika belum ada, akan dibuat default steps (non-invasive).
+*/
+
+(function(){
+  // safe globals for guide
+  window.guideSteps = window.guideSteps || [
+    { selector: "#formProduct", text: "🧾 Tambahkan produk baru di sini. Isi kode, nama, harga, dan stok." },
+    { selector: "#formRestock", text: "📦 Tambah stok barang yang sudah ada dengan form Restock ini." },
+    { selector: "#tbl", text: "📋 Daftar semua produk kamu muncul di tabel ini. Bisa diedit atau dihapus." },
+    { selector: "#btnStartScan", text: "📸 Gunakan fitur Scan untuk menambah produk ke keranjang lewat kamera." },
+    { selector: "#cart", text: "🛒 Semua barang yang kamu jual akan muncul di keranjang ini." },
+    { selector: "#checkoutBtn", text: "💰 Setelah selesai, tekan tombol ini untuk menyelesaikan penjualan (setelah bayar)." },
+  ];
+
+  let currentStep = 0;
+  let highlightBox = null;
+  let tooltip = null;
+
+  function createGuideElements(){
+    // jika sudah dibuat, pakai yang ada
+    if(!highlightBox){
+      highlightBox = document.createElement("div");
+      highlightBox.id = "highlightBox";
+      highlightBox.style.position = "absolute";
+      highlightBox.style.border = "2px solid #0b74da";
+      highlightBox.style.borderRadius = "10px";
+      highlightBox.style.background = "rgba(11, 116, 218, 0.12)";
+      highlightBox.style.zIndex = "100000";
+      highlightBox.style.pointerEvents = "none";
+      highlightBox.style.transition = "all 0.25s ease";
+      document.body.appendChild(highlightBox);
+    }
+
+    if(!tooltip){
+      tooltip = document.createElement("div");
+      tooltip.id = "guideTooltip";
+      tooltip.style.position = "absolute";
+      tooltip.style.background = "#fff";
+      tooltip.style.borderRadius = "8px";
+      tooltip.style.boxShadow = "0 6px 20px rgba(0,0,0,0.15)";
+      tooltip.style.padding = "12px";
+      tooltip.style.maxWidth = "320px";
+      tooltip.style.zIndex = "100001";
+      tooltip.style.fontSize = "13px";
+      document.body.appendChild(tooltip);
+    }
+  }
+
+  function showStep(i){
+    const steps = window.guideSteps || [];
+    if(!steps || steps.length === 0) return endGuide();
+    if(i < 0) i = 0;
+    if(i >= steps.length) return endGuide();
+
+    currentStep = i;
+    const step = steps[i];
+    if(!step || !step.selector) return nextGuide();
+
+    const el = document.querySelector(step.selector);
+    if(!el){ console.warn("Guide: element not found:", step.selector); return nextGuide(); }
+
+    createGuideElements();
+
+    const rect = el.getBoundingClientRect();
+    const padding = 8;
+    highlightBox.style.top = (rect.top + window.scrollY - padding) + "px";
+    highlightBox.style.left = (rect.left + window.scrollX - padding) + "px";
+    highlightBox.style.width = (rect.width + padding*2) + "px";
+    highlightBox.style.height = (rect.height + padding*2) + "px";
+    highlightBox.style.display = "block";
+
+    const isLast = (i === steps.length - 1);
+    tooltip.innerHTML = `
+      <div style="margin-bottom:8px">${step.text || ""}</div>
+      <div style="text-align:right">
+        <button id="guideNextBtn" style="background:#0b74da;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer">
+          ${isLast ? "Selesai" : "Lanjut ➜"}
+        </button>
+      </div>
+    `;
+
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const tooltipTop = (spaceBelow > 140) ? (rect.bottom + window.scrollY + 10) : (rect.top + window.scrollY - 140 - 10);
+    let left = rect.left + window.scrollX;
+    if(left + 340 > window.innerWidth + window.scrollX) left = window.innerWidth + window.scrollX - 360;
+    if(left < 10) left = 10;
+
+    tooltip.style.top = tooltipTop + "px";
+    tooltip.style.left = left + "px";
+    tooltip.style.display = "block";
+
+    try { el.scrollIntoView({ behavior: "smooth", block: "center" }); } catch(e){}
+
+    document.getElementById("guideNextBtn").onclick = function(e){
+      e.preventDefault();
+      nextGuide();
+    }
+  }
+
+  function nextGuide(){
+    currentStep++;
+    if(currentStep >= window.guideSteps.length){
+      endGuide();
+    } else {
+      showStep(currentStep);
+    }
+  }
+
+  function endGuide(){
+    if(highlightBox){ highlightBox.remove(); highlightBox = null; }
+    if(tooltip){ tooltip.remove(); tooltip = null; }
+    const overlay = document.getElementById("guideOverlay");
+    if(overlay) overlay.style.display = "none";
+    currentStep = 0;
+    setTimeout(()=>{ alert("🎉 Tutorial selesai!"); }, 80);
+  }
+
+  function startGuide(){
+    const overlay = document.getElementById("guideOverlay");
+    if(overlay) overlay.style.display = "none";
+    currentStep = 0;
+    createGuideElements();
+    showStep(0);
+  }
+
+  function skipGuide(){
+    const overlay = document.getElementById("guideOverlay");
+    if(overlay) overlay.style.display = "none";
+    endGuide();
+  }
+
+  window.createGuideElements = createGuideElements;
+  window.showStep = showStep;
+  window.nextGuide = nextGuide;
+  window.endGuide = endGuide;
+  window.startGuide = startGuide;
+  window.skipGuide = skipGuide;
+})();
+</script>
 
 /* ---------- INIT ---------- */
 function init(){

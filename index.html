@@ -825,7 +825,7 @@
           </form>
 
           <h3>Restock Produk</h3>
-          <form id="formRestock" onsubmit="restockProduct();return false" class="flex" style="gap:var(--spacing-sm); flex-wrap:wrap; align-items:center">
+          <form id="formRestock" onsubmit="return restockProduct(event)" class="flex" style="gap:var(--spacing-sm); flex-wrap:wrap; align-items:center">
             <select id="restockName" required>
               <option value="">Pilih Produk...</option>
             </select>
@@ -1159,21 +1159,29 @@ function updateRestockDropdown(){
 }
 
 /* ---------- restock ---------- */
-function restockProduct(event){
-  if(event) event.preventDefault(); // cegah reload halaman
+function restockProduct(event) {
+  if (event) event.preventDefault(); // ⛔ cegah reload form
 
   const sku = document.getElementById("restockName").value;
-  const qty = parseInt(document.getElementById("restockQty").value);
-  if(!sku || !qty) return alert("Pilih produk & jumlah!");
-  
-  const p = products.find(x => x.sku === sku);
-  if(!p) return alert("Produk tidak ditemukan");
+  const qtyInput = document.getElementById("restockQty");
+  const qty = parseInt(qtyInput.value);
 
-  // tambahkan stok
+  if (!sku || !qty || qty <= 0) {
+    showToast("⚠️ Pilih produk dan isi jumlah yang benar!");
+    return false;
+  }
+
+  const p = products.find(x => x.sku === sku);
+  if (!p) {
+    showToast("❌ Produk tidak ditemukan!");
+    return false;
+  }
+
+  // Tambahkan stok
   p.qty += qty;
   localStorage.setItem("products", JSON.stringify(products));
 
-  // simpan riwayat restock
+  // Simpan riwayat restock
   restocks.push({
     date: getLocalDateTime(),
     sku: p.sku,
@@ -1183,12 +1191,17 @@ function restockProduct(event){
   });
   localStorage.setItem("restocks", JSON.stringify(restocks));
 
-  // perbarui tampilan
-  render();
-  document.getElementById("restockQty").value = "";
+  // Perbarui tampilan tabel restock
   loadRestock();
-  showToast("Stok berhasil ditambahkan!");
+  render();
+
+  // Reset input
+  qtyInput.value = "";
+  showToast("✅ Stok berhasil ditambahkan!");
+
+  return false; // pastikan form tidak reload
 }
+  
 /* ---------- CART & CHECKOUT ---------- */
 function addToCart(sku){
   const p=products.find(x=>x.sku===sku)

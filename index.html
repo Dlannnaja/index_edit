@@ -1887,6 +1887,35 @@ function renderFinalStock(){
 }
 
 /* ---------- INIT ---------- */
+  function openTab(id){
+  // remove active state
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(c=>c.classList.remove("active"));
+
+  // set active on the button (robust selector)
+  let btn = document.querySelector(`.tab-btn[onclick*="openTab('${id}')"]`);
+  if(!btn){
+    // fallback: match double quotes variant
+    btn = document.querySelector(`.tab-btn[onclick*='openTab("${id}")']`);
+  }
+  if(btn) btn.classList.add("active");
+
+  // show content
+  const content = document.getElementById(id);
+  if(content) content.classList.add("active");
+
+  // call appropriate loader so tables are populated when tab opens
+  if(id === 'restock'){
+    // populate restock table immediately
+    try { loadRestock(); } catch(e){ console.error('loadRestock error', e); }
+  } else if(id === 'stok'){
+    // render final stock table
+    try { renderFinalStock(); } catch(e){ console.error('renderFinalStock error', e); }
+  } else if(id === 'penjualan'){
+    // for sales tab, call loadSales to apply filters if any
+    try { loadSales(); } catch(e){ console.error('loadSales error', e); }
+  }
+}
 function init(){
   const autoPrintEl = document.getElementById('autoPrint')
   if(autoPrintEl) autoPrintEl.checked = false

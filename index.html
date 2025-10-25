@@ -1052,7 +1052,7 @@ function updateRestockDropdown(){
   if(!sel) return
   sel.innerHTML='<option value="">Pilih Produk...</option>'
   products.forEach(p=>{
-    const opt=document.createElement("option")
+    const opt=document.createElement('option')
     opt.value=p.sku; opt.textContent=p.name
     sel.appendChild(opt)
   })
@@ -1417,6 +1417,7 @@ let html5QrcodeScanner = null;
 let scanTarget = null;
 
 function openCamera(target) {
+  // ensure scanTarget is set so handleScan can behave differently
   scanTarget = target;
   const camModal = document.getElementById('cameraModal');
   camModal.style.display = 'flex';
@@ -1430,9 +1431,7 @@ function openCamera(target) {
 
   html5QrcodeScanner.start({ facingMode: "environment" }, config, msg => {
     handleScan(msg);
-    if (document.getElementById("scanMode")?.value === "single") {
-      // stopCamera handled in handleScan
-    }
+    // for sale scanning, we stop inside handleScan when mode=single
   }).catch(err => {
     console.error(err);
     alert("Gagal mengakses kamera: " + err);
@@ -1474,21 +1473,65 @@ function closeCameraAlert(){
   closeCamera()
 }
 
+/* ---------- REPLACED handleScan: mode-aware (sku/restock/sell) ---------- */
 function handleScan(msg) {
-  const sku = String(msg).trim()
-  const p = products.find(x=>x.sku===sku)
-  if(!p){
-    showCameraAlert("Produk tidak ditemukan di daftar. Tambahkan produk terlebih dahulu.")
-    return
-  }
-  if(p.qty <= 0){
-    showCameraAlert("Produk telah habis, isi stok dahulu")
-    return
+  const sku = String(msg).trim();
+
+  // Mode: filling SKU for Add Product form
+  if (scanTarget === 'sku') {
+    const skuInput = document.getElementById('sku');
+    if (skuInput) {
+      skuInput.value = sku;
+      // focus next field so user can continue entering product data
+      const nameInput = document.getElementById('name');
+      if (nameInput) nameInput.focus();
+      showToast('SKU dipindai: ' + sku, 1400);
+    }
+    // close camera after filling SKU
+    stopCamera();
+    return;
   }
 
-  addToCart(sku)
-  if(document.getElementById("scanMode")?.value === "single"){
-    stopCamera()
+  // Mode: restock selection (optional)
+  if (scanTarget === 'restock') {
+    const p = products.find(x => x.sku === sku);
+    if (!p) {
+      showCameraAlert("Produk tidak ditemukan di daftar. Tambahkan produk terlebih dahulu.");
+      return;
+    }
+    const sel = document.getElementById('restockName');
+    if (sel) {
+      // add option if not present
+      if (!Array.from(sel.options).some(o => o.value === sku)) {
+        const opt = document.createElement('option');
+        opt.value = sku;
+        opt.textContent = p.name;
+        sel.appendChild(opt);
+      }
+      sel.value = sku;
+      const qtyEl = document.getElementById('restockQty');
+      if (qtyEl) qtyEl.focus();
+      showToast('Produk dipilih untuk restock: ' + p.name, 1400);
+    }
+    stopCamera();
+    return;
+  }
+
+  // Default: sale-scan behavior (add to cart)
+  const p = products.find(x => x.sku === sku);
+  if (!p) {
+    showCameraAlert("Produk tidak ditemukan di daftar. Tambahkan produk terlebih dahulu.");
+    return;
+  }
+  if (p.qty <= 0) {
+    showCameraAlert("Produk telah habis, isi stok dahulu");
+    return;
+  }
+
+  addToCart(sku);
+
+  if (document.getElementById("scanMode")?.value === "single") {
+    stopCamera();
   }
 }
 
@@ -1688,7 +1731,7 @@ function startScan(target) { openCamera(target); }
         left = rect.right + window.scrollX + 12;
       } else if (spaceLeft > tooltipWidth + 20) {
         tooltipTop = topCentered;
-        left = rect.left + window.scrollX - tooltipWidth - 12;
+        left = rect.left + window.scrollY - tooltipWidth - 12;
       } else {
         if (spaceBelow > tooltipHeight + 20) {
           tooltipTop = rect.bottom + window.scrollY + 12;
@@ -1697,7 +1740,7 @@ function startScan(target) { openCamera(target); }
         } else {
           tooltipTop = topCentered;
         }
-        left = Math.min(Math.max(rect.left + window.scrollX - 40, 10), window.innerWidth + window.scrollX - (tooltipWidth + 40));
+        left = Math.min(Math.max(rect.left + window.scrollY - 40, 10), window.innerWidth + window.scrollX - (tooltipWidth + 40));
       }
     } else if (step.selector === '#btnStartScan') {
       tooltipWidth = 260;
@@ -1719,7 +1762,7 @@ function startScan(target) { openCamera(target); }
         } else {
           tooltipTop = window.scrollY + window.innerHeight / 2 - tooltipHeight / 2;
         }
-        left = rect.left + window.scrollX + (rect.width / 2) - (tooltipWidth / 2);
+        left = rect.left + window.scrollY + (rect.width / 2) - (tooltipWidth / 2);
       }
 
       const minLeft = window.scrollX + 8;

@@ -642,6 +642,48 @@
   button, .tab-btn, .pm-btn { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   @media print { #guideOverlay, #cameraModal, #paymentModal, #guideTooltip { display: none !important; } }
 
+  #startGuideBtn {
+    position: fixed;
+    bottom: 18px;
+    left: 18px;
+    background: linear-gradient(135deg, #0b74da, #094fa1);
+    color: #fff;
+    border: none;
+    border-radius: 40px;
+    padding: 10px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    z-index: 99999;
+    opacity: 0.9;
+    transition: all 0.25s ease;
+  }
+  #startGuideBtn:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+
+  /* ukuran menyesuaikan layar */
+  @media (max-width: 600px) {
+    #startGuideBtn {
+      font-size: 12px;
+      padding: 8px 14px;
+      bottom: 14px;
+      left: 14px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+    }
+  }
+
+  @media (min-width: 900px) {
+    #startGuideBtn {
+      font-size: 14px;
+      padding: 12px 18px;
+      bottom: 24px;
+      left: 24px;
+    }
+  }
+
   </style>
 
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>

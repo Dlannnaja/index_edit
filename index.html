@@ -1043,7 +1043,6 @@ function showToast(msg) {
   toast.className = "toast";
   toast.innerText = msg;
 
-  // gaya dasar
   Object.assign(toast.style, {
     position: "fixed",
     top: "25px",
@@ -1062,20 +1061,18 @@ function showToast(msg) {
   });
 
   document.body.appendChild(toast);
-
-  // animasi muncul
   setTimeout(() => {
     toast.style.opacity = "1";
     toast.style.transform = "translateX(-50%) translateY(0)";
   }, 50);
 
-  // animasi hilang
   setTimeout(() => {
     toast.style.opacity = "0";
     toast.style.transform = "translateX(-50%) translateY(-10px)";
     setTimeout(() => toast.remove(), 500);
   }, 2500);
 }
+
 
 /* ---------- render product list (dengan notif jika kosong) ---------- */
 function render(){
@@ -1167,17 +1164,19 @@ function updateRestockDropdown(){
 
 /* ---------- restock ---------- */
 function restockProduct(event) {
-  if (event) event.preventDefault(); // ⛔ cegah reload form
+  if (event) event.preventDefault(); // cegah reload halaman
 
   const sku = document.getElementById("restockName").value;
   const qtyInput = document.getElementById("restockQty");
   const qty = parseInt(qtyInput.value);
 
+  // Validasi input
   if (!sku || !qty || qty <= 0) {
     showToast("⚠️ Pilih produk dan isi jumlah yang benar!");
     return false;
   }
 
+  // Temukan produk yang sesuai
   const p = products.find(x => x.sku === sku);
   if (!p) {
     showToast("❌ Produk tidak ditemukan!");
@@ -1198,16 +1197,19 @@ function restockProduct(event) {
   });
   localStorage.setItem("restocks", JSON.stringify(restocks));
 
-  // Perbarui tampilan tabel restock
-  loadRestock();
-  render();
+  // Update tampilan tabel produk langsung (tanpa reload)
+  render(); // <- perbarui tampilan produk utama
+  loadRestock(); // <- perbarui tabel riwayat restock
 
-  // Reset input
+  // Kosongkan input jumlah restock
   qtyInput.value = "";
-  showToast("✅ Stok berhasil ditambahkan!");
+
+  // ✅ Tampilkan notifikasi berhasil
+  showToast(`✅ Stok "${p.name}" berhasil ditambahkan!`);
 
   return false; // pastikan form tidak reload
 }
+
   
 /* ---------- CART & CHECKOUT ---------- */
 function addToCart(sku){

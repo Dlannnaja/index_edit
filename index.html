@@ -1164,57 +1164,49 @@ function updateRestockDropdown(){
 
 /* ---------- restock ---------- */
 function restockProduct(event) {
-  if (event) event.preventDefault(); // cegah reload halaman
+  if (event) event.preventDefault();
 
   const sku = document.getElementById("restockName").value;
   const qtyInput = document.getElementById("restockQty");
   const qty = parseInt(qtyInput.value);
 
-  // Validasi input
   if (!sku || !qty || qty <= 0) {
     showRestockAlert("⚠️ Pilih produk dan isi jumlah yang benar!");
     return false;
   }
 
-  // Temukan produk
   const p = products.find(x => x.sku === sku);
   if (!p) {
     showRestockAlert("❌ Produk tidak ditemukan!");
     return false;
   }
 
-  // Tambahkan stok
+  // Tambah stok
   p.qty += qty;
   localStorage.setItem("products", JSON.stringify(products));
 
-  // Simpan riwayat restock (barang masuk)
-  const restockRecord = {
+  // Simpan laporan restock
+  let restocks = JSON.parse(localStorage.getItem("restocks")) || [];
+  restocks.push({
     date: getLocalDateTime(),
     sku: p.sku,
     name: p.name,
     qty,
     stockAfter: p.qty
-  };
-
-  // Pastikan array restocks ada
-  let restocks = JSON.parse(localStorage.getItem("restocks")) || [];
-  restocks.push(restockRecord);
+  });
   localStorage.setItem("restocks", JSON.stringify(restocks));
 
-  // Update tampilan
-  render();       // perbarui tabel produk utama
-  loadRestock();  // perbarui tabel laporan restock
-  qtyInput.value = ""; // kosongkan input
+  render();
+  loadRestock();
+  qtyInput.value = "";
 
-  // ✅ Tampilkan notifikasi khusus restock
   showRestockAlert(`✅ Anda berhasil menambahkan stok "${p.name}". Periksa kembali di daftar produk.`);
 
   return false;
 }
 
-/* 🔔 Notifikasi khusus untuk restock produk */
+/* === FUNGSI NOTIFIKASI KHUSUS RESTOCK === */
 function showRestockAlert(message) {
-  // hapus notifikasi lama jika masih ada
   const existing = document.getElementById("restockToast");
   if (existing) existing.remove();
 
@@ -1241,13 +1233,11 @@ function showRestockAlert(message) {
 
   document.body.appendChild(toast);
 
-  // animasi muncul
   setTimeout(() => {
     toast.style.opacity = "1";
     toast.style.transform = "translateX(-50%) translateY(0)";
   }, 50);
 
-  // animasi hilang
   setTimeout(() => {
     toast.style.opacity = "0";
     toast.style.transform = "translateX(-50%) translateY(-10px)";

@@ -1164,53 +1164,41 @@ function updateRestockDropdown(){
 
 /* ---------- restock ---------- */
 function restockProduct(event) {
-  if (event) event.preventDefault(); // cegah reload halaman
+  if (event) event.preventDefault();
 
   const sku = document.getElementById("restockName").value;
   const qtyInput = document.getElementById("restockQty");
   const qty = parseInt(qtyInput.value);
 
-  // Validasi input
   if (!sku || !qty || qty <= 0) {
     showRestockAlert("⚠️ Pilih produk dan isi jumlah yang benar!");
     return false;
   }
 
-  // Temukan produk
   const p = products.find(x => x.sku === sku);
   if (!p) {
     showRestockAlert("❌ Produk tidak ditemukan!");
     return false;
   }
 
-  // Tambahkan stok
   p.qty += qty;
   localStorage.setItem("products", JSON.stringify(products));
 
-  // Ambil data restock sebelumnya (jika ada)
   let restocks = JSON.parse(localStorage.getItem("restocks")) || [];
-
-  // Buat data restock baru
   const restockData = {
     date: getLocalDateTime(),
     sku: p.sku,
     name: p.name,
-    qty: qty,
+    qty,
     stockAfter: p.qty
   };
-
-  // Simpan ke daftar restock (barang masuk)
   restocks.push(restockData);
   localStorage.setItem("restocks", JSON.stringify(restocks));
 
-  // Update tampilan produk & laporan restock
-  render();       // update daftar produk
-  loadRestock();  // update tabel laporan barang masuk
-
-  // Kosongkan input jumlah
+  render();
+  loadRestock();
   qtyInput.value = "";
 
-  // ✅ Tampilkan notifikasi sukses restock
   showRestockAlert(`✅ Anda berhasil menambahkan stok "${p.name}". Periksa kembali di daftar produk.`);
 
   return false;
@@ -1332,24 +1320,38 @@ function savePrinterPreference(){
   showToast(sel.value ? 'Preferensi printer disimpan: ' + sel.value : 'Preferensi printer dikosongkan')
 }
 
-/* ---------- Restock load/export ---------- */
-function loadRestock(){
-  const tbl=document.querySelector("#restockTbl tbody")
-  tbl.innerHTML=""
+/* Fungsi bantu untuk ubah tanggal dari localStorage */
+function parseStoredDate(dateString) {
+  if (!dateString) return new Date();
+  // Jika sudah format ISO
+  if (dateString.includes("T")) return new Date(dateString);
+  // Jika format manual
+  const parts = dateString.split(/[-/ :]/);
+  return new Date(parts[0], parts[1] - 1, parts[2] || 1);
+}
 
-  restocks.forEach((r,i)=>{
-    const dObj = parseStoredDate(r.date)
-    const dDisplay = dObj ? dObj.toLocaleDateString('id-ID') : 'Invalid Date'
-    tbl.innerHTML+=`
-      <tr>
-        <td>${i+1}</td>
-        <td>${dDisplay}</td>
-        <td>${r.sku}</td>
-        <td>${r.name}</td>
-        <td>${r.qty}</td>
-        <td>${r.stockAfter}</td>
-      </tr>`
-  })
+/* ---------- Restock load/export ---------- */
+/* Perbaiki loadRestock agar aman tanpa error */
+function loadRestock() {
+  const restocks = JSON.parse(localStorage.getItem("restocks")) || [];
+  const tbody = document.querySelector("#restockTableBody");
+
+  if (!tbody) return; // kalau halaman bukan laporan, skip
+
+  tbody.innerHTML = "";
+
+  restocks.slice().reverse().forEach((r, i) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${r.date || "-"}</td>
+      <td>${r.sku || "-"}</td>
+      <td>${r.name || "-"}</td>
+      <td>${r.qty || 0}</td>
+      <td>${r.stockAfter || 0}</td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
 function exportRestock(){

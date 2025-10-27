@@ -742,6 +742,7 @@
             <button onclick="exportSales()" class="small ghost">Export CSV</button>
             <button onclick="printSales()" class="small ghost">Cetak</button>
             <button onclick="clearSales()" class="small ghost" title="Hapus laporan hari ini">Clear Laporan</button>
+            <button onclick="clearSalesByRange()" class="small ghost" title="Hapus laporan berdasarkan rentang tanggal">Clear Range</button>
           </div>
 
           <!-- table-wrapper ditambahkan di sini -->
@@ -1776,6 +1777,61 @@ function printReceipt(t){
   printWindow.document.close();
   printWindow.focus();
   printWindow.print();
+}
+  function clearSales() {
+  // konfirmasi sebelum hapus
+  if (!confirm("Yakin ingin menghapus semua data laporan penjualan?")) return;
+
+  // hapus semua data penjualan dari localStorage
+  localStorage.removeItem("sales");
+
+  // bersihkan tabel di halaman
+  const tbody = document.querySelector("#salesTbl tbody");
+  if (tbody) tbody.innerHTML = "";
+
+  // tampilkan notifikasi sukses
+  showSalesAlert("🗑️ Semua data laporan penjualan berhasil dihapus.");
+
+  // refresh tampilan
+  loadSales();
+}
+  function clearSalesByRange() {
+  const fromEl = document.getElementById("filterFrom");
+  const toEl = document.getElementById("filterTo");
+
+  // validasi input tanggal
+  if (!fromEl.value || !toEl.value) {
+    showSalesAlert("⚠️ Lengkapi tanggal From & To terlebih dahulu!");
+    return;
+  }
+
+  const start = new Date(fromEl.value);
+  const end = new Date(toEl.value);
+  if (start > end) {
+    showSalesAlert("⚠️ Rentang tanggal tidak valid!");
+    return;
+  }
+
+  const sales = JSON.parse(localStorage.getItem("sales")) || [];
+  if (!sales.length) {
+    showSalesAlert("📭 Tidak ada data penjualan untuk dihapus.");
+    return;
+  }
+
+  // filter hanya data di luar rentang (biar yang di range kehapus)
+  const kept = sales.filter(s => {
+    const d = new Date(s.date || s.dateDisplay || "");
+    return !(d >= new Date(start.setHours(0,0,0,0)) && d <= new Date(end.setHours(23,59,59,999)));
+  });
+
+  // simpan ulang data yang tersisa
+  localStorage.setItem("sales", JSON.stringify(kept));
+
+  // refresh tabel
+  loadSales();
+
+  // notifikasi sukses
+  showSalesAlert("🗑️ Data laporan penjualan dalam rentang tanggal berhasil dihapus.");
 }
 
 /* ---------- SCAN and GUIDE etc (unchanged) ---------- */

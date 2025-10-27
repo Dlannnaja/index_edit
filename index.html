@@ -1000,9 +1000,7 @@
       <div id="receiptPreviewContent" class="items"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
         <button onclick="printPendingReceipt()" id="printPreviewBtn">Cetak</button>
-        <!--
-        <button class="ghost" onclick="closeReceiptPreview()">Tutup</button> 
-        -->
+        <button class="ghost" onclick="closeReceiptPreview()">Tutup</button>
         <button onclick="finalizePendingSale()" id="finalizeBtn" style="background:#0b8b3e">Selesaikan Penjualan</button>
       </div>
     </div>
@@ -1647,9 +1645,9 @@ function openReceiptPreview(invoice){
 }
 
 /* close receipt preview */
-/*function closeReceiptPreview(){
+function closeReceiptPreview(){
   document.getElementById('receiptPreviewModal').style.display = 'none'
-} */
+}
 
 /* print pending receipt (does NOT finalize sale) */
 function printPendingReceipt(){

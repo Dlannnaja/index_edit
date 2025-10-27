@@ -1645,9 +1645,10 @@ function openReceiptPreview(invoice){
 }
 
 /* close receipt preview */
-function closeReceiptPreview() {
-  document.getElementById("receiptPreview")?.classList.remove("active");
+function closeReceiptPreview(){
+  document.getElementById('receiptPreviewModal').style.display = 'none'
 }
+
 /* print pending receipt (does NOT finalize sale) */
 function printPendingReceipt(){
   if(!pendingPaidInvoice) return alert("Tidak ada struk yang bisa dicetak.")

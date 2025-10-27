@@ -1353,15 +1353,47 @@ function loadRestock() {
     tbody.appendChild(tr);
   });
 }
+ /* === Tombol di Dashboard Laporan Restock (Barang Masuk) === */
 
-function exportRestock(){
-  if(restocks.length === 0) return alert("Tidak ada data restock");
-  let csv = "No;Tanggal;SKU;Nama;Jumlah;StokAkhir\n";
-  restocks.forEach((r,i)=>{
-    const d = getCsvDateFromRecord(r);
-    csv += `${i+1};"${d}";"${r.sku}";"${r.name}";"${r.qty}";"${r.stockAfter}"\n`;
+// tombol "Tampilkan"
+function exportRestockByMonth() {
+  loadRestock();
+}
+
+// tombol "Cetak"
+function printRestock() {
+  window.print();
+}
+
+// tombol "Clear Restock"
+function clearRestocks() {
+  if (!confirm("Yakin ingin menghapus semua data restock (barang masuk)?")) return;
+  localStorage.removeItem("restocks");
+  loadRestock();
+  showRestockAlert("🗑️ Semua data restock berhasil dihapus.");
+}
+
+// tombol "Download Bulanan"
+function exportRestockByRange() {
+  const restocks = JSON.parse(localStorage.getItem("restocks")) || [];
+  if (!restocks.length) {
+    alert("Belum ada data restock untuk diunduh!");
+    return;
+  }
+
+  // buat file CSV sederhana
+  let csv = "Tanggal,SKU,Nama,Jumlah,Stok Akhir\n";
+  restocks.forEach(r => {
+    csv += `${r.date},${r.sku},${r.name},${r.qty},${r.stockAfter}\n`;
   });
-  downloadCSV(csv, "laporan_restock_all.csv");
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "laporan_restock.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 /* ---------- PAYMENT FLOW (updated per request) ---------- */

@@ -1340,6 +1340,13 @@ function loadRestock() {
 
   tbody.innerHTML = "";
 
+  if (restocks.length === 0) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="6" style="text-align:center;padding:10px" class="muted">Belum ada data restock.</td>`;
+    tbody.appendChild(tr);
+    return;
+  }
+
   restocks.slice().reverse().forEach((r, i) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -1352,8 +1359,8 @@ function loadRestock() {
     `;
     tbody.appendChild(tr);
   });
-  showRestockAlert("📦 Laporan restock .");
 }
+  
   /* ======== TOMBOL TAMPILKAN ======== */
 function exportRestock() {
   const restocks = JSON.parse(localStorage.getItem("restocks")) || [];

@@ -2299,34 +2299,96 @@ function startScan(target) { openCamera(target); }
 
 /* ---------- REPORTS & CSV ---------- */
 /* loadSales now only shows finalized transactions (as requested) */
-function loadSales(){
-  const from=document.getElementById("filterFrom").value
-  const to=document.getElementById("filterTo").value
-  const tbl=document.querySelector("#salesTbl tbody")
-  tbl.innerHTML=""
+function loadSales() {
+  const fromEl = document.getElementById("filterFrom");
+  const toEl = document.getElementById("filterTo");
+  const from = fromEl && fromEl.value ? new Date(fromEl.value) : null;
+  const to   = toEl && toEl.value ? new Date(toEl.value) : null;
 
-  let counter = 1
-  sales.forEach((s)=>{
-    if(!s.finalized) return; // only include finalized sales
-    const dObj = new Date(s.date)
-    const d = s.dateDisplay || dObj.toLocaleString()
+  const sales = JSON.parse(localStorage.getItem("sales")) || [];
+  const tbody = document.querySelector("#salesTbl tbody");
+  if (!tbody) return;
 
-    let valid=true
-    if(from && dObj < new Date(from)) valid=false
-    if(to && dObj > new Date(to)) valid=false
+  tbody.innerHTML = "";
 
-    if(valid){
-      tbl.innerHTML+=`
-        <tr>
-          <td>${counter}</td>
-          <td>${d}</td>
-          <td>${s.invoice}</td>
-          <td>${s.items.map(x=>x.name+" x"+x.qty).join(", ")}</td>
-          <td>Rp ${s.total.toLocaleString()}</td>
-        </tr>`
-      counter++
+  // === FILTER DATA ===
+  let filtered = sales;
+
+  // Jika ada input tanggal, filter berdasarkan range
+  if (from || to) {
+    filtered = sales.filter(s => {
+      const date = s.date ? new Date(s.date) : (s.dateDisplay ? new Date(s.dateDisplay) : null);
+      if (!date || isNaN(date)) return false;
+      const startOK = from ? date >= new Date(from.setHours(0,0,0,0)) : true;
+      const endOK   = to   ? date <= new Date(to.setHours(23,59,59,999)) : true;
+      return startOK && endOK;
+    });
+  }
+
+  // === CEK DATA KOSONG ===
+  if (!filtered.length) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td colspan="5" style="text-align:center; color:#888; padding:12px;">
+        Tidak ada data penjualan untuk tanggal yang dipilih.
+      </td>`;
+    tbody.appendChild(tr);
+
+    // Jika tidak pilih tanggal sama sekali, artinya load semua → tapi kosong
+    if (!from && !to) {
+      showSalesAlert("📭 Belum ada penjualan hari ini.");
+    } else {
+      showSalesAlert("📭 Tidak ada data penjualan pada rentang tanggal tersebut.");
     }
-  })
+    return;
+  }
+
+  // === TAMPILKAN DATA ===
+  filtered.slice().reverse().forEach((s, i) => {
+    const itemsText = (s.items || []).map(it => `${it.name} x${it.qty}`).join(" ; ");
+    const dateDisplay = s.dateDisplay || s.date || "";
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${dateDisplay}</td>
+      <td>${s.invoice || "-"}</td>
+      <td style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+        ${itemsText}
+      </td>
+      <td style="text-align:right;">Rp ${Number(s.total || 0).toLocaleString()}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  showSalesAlert("✅ Laporan penjualan berhasil ditampilkan.");
+}
+
+  // ===========================
+// NOTIFIKASI KHUSUS LAPORAN PENJUALAN
+// ===========================
+function showSalesAlert(msg) {
+  let alertBox = document.getElementById("salesAlertBox");
+  if (!alertBox) {
+    alertBox = document.createElement("div");
+    alertBox.id = "salesAlertBox";
+    alertBox.style.position = "fixed";
+    alertBox.style.top = "20px";
+    alertBox.style.right = "20px";
+    alertBox.style.zIndex = "9999";
+    alertBox.style.padding = "10px 14px";
+    alertBox.style.background = "#007bff"; // warna biru lembut
+    alertBox.style.color = "#fff";
+    alertBox.style.borderRadius = "8px";
+    alertBox.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
+    alertBox.style.transition = "opacity 0.3s ease";
+    document.body.appendChild(alertBox);
+  }
+
+  alertBox.innerText = msg;
+  alertBox.style.opacity = "1";
+  setTimeout(() => {
+    alertBox.style.opacity = "0";
+  }, 2500);
 }
 
 /* export only finalized sales */

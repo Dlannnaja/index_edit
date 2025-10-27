@@ -1164,49 +1164,61 @@ function updateRestockDropdown(){
 
 /* ---------- restock ---------- */
 function restockProduct(event) {
-  if (event) event.preventDefault();
+  if (event) event.preventDefault(); // cegah reload halaman
 
   const sku = document.getElementById("restockName").value;
   const qtyInput = document.getElementById("restockQty");
   const qty = parseInt(qtyInput.value);
 
+  // Validasi input
   if (!sku || !qty || qty <= 0) {
     showRestockAlert("⚠️ Pilih produk dan isi jumlah yang benar!");
     return false;
   }
 
+  // Temukan produk
   const p = products.find(x => x.sku === sku);
   if (!p) {
     showRestockAlert("❌ Produk tidak ditemukan!");
     return false;
   }
 
-  // Tambah stok
+  // Tambahkan stok
   p.qty += qty;
   localStorage.setItem("products", JSON.stringify(products));
 
-  // Simpan laporan restock
+  // Ambil data restock sebelumnya (jika ada)
   let restocks = JSON.parse(localStorage.getItem("restocks")) || [];
-  restocks.push({
+
+  // Buat data restock baru
+  const restockData = {
     date: getLocalDateTime(),
     sku: p.sku,
     name: p.name,
-    qty,
+    qty: qty,
     stockAfter: p.qty
-  });
+  };
+
+  // Simpan ke daftar restock (barang masuk)
+  restocks.push(restockData);
   localStorage.setItem("restocks", JSON.stringify(restocks));
 
-  render();
-  loadRestock();
+  // Update tampilan produk & laporan restock
+  render();       // update daftar produk
+  loadRestock();  // update tabel laporan barang masuk
+
+  // Kosongkan input jumlah
   qtyInput.value = "";
 
+  // ✅ Tampilkan notifikasi sukses restock
   showRestockAlert(`✅ Anda berhasil menambahkan stok "${p.name}". Periksa kembali di daftar produk.`);
 
   return false;
 }
 
-/* === FUNGSI NOTIFIKASI KHUSUS RESTOCK === */
+/* === Fungsi Notifikasi Khusus Restock === */
 function showRestockAlert(message) {
+  // Hapus notifikasi lama jika masih ada
   const existing = document.getElementById("restockToast");
   if (existing) existing.remove();
 
@@ -1221,30 +1233,31 @@ function showRestockAlert(message) {
     transform: "translateX(-50%)",
     background: "linear-gradient(135deg, #0b74da, #094fa1)",
     color: "#fff",
-    padding: "10px 18px",
+    padding: "12px 20px",
     borderRadius: "10px",
     fontSize: "14px",
     fontWeight: "600",
     zIndex: 999999,
-    boxShadow: "0 6px 16px rgba(0,0,0,0.3)",
+    boxShadow: "0 6px 18px rgba(0,0,0,0.35)",
     opacity: 0,
     transition: "opacity 0.3s ease, transform 0.3s ease"
   });
 
   document.body.appendChild(toast);
 
+  // Animasi muncul
   setTimeout(() => {
     toast.style.opacity = "1";
     toast.style.transform = "translateX(-50%) translateY(0)";
   }, 50);
 
+  // Animasi hilang
   setTimeout(() => {
     toast.style.opacity = "0";
     toast.style.transform = "translateX(-50%) translateY(-10px)";
     setTimeout(() => toast.remove(), 400);
   }, 3000);
 }
-
   
 /* ---------- CART & CHECKOUT ---------- */
 function addToCart(sku){

@@ -1334,9 +1334,8 @@ function parseStoredDate(dateString) {
 /* Perbaiki loadRestock agar aman tanpa error */
 function loadRestock() {
   const restocks = JSON.parse(localStorage.getItem("restocks")) || [];
-  const tbody = document.querySelector("#restockTableBody");
-
-  if (!tbody) return; // kalau halaman bukan laporan, skip
+  const tbody = document.getElementById("restockTableBody");
+  if (!tbody) return;
 
   tbody.innerHTML = "";
 
@@ -1353,6 +1352,33 @@ function loadRestock() {
     tbody.appendChild(tr);
   });
 }
+  /* ======== TOMBOL TAMPILKAN ======== */
+function exportRestock() {
+  // cukup muat ulang tabel dari localStorage
+  loadRestock();
+  showRestockAlert("📦 Laporan restock berhasil ditampilkan.");
+}
+  function exportRestockCSV() {
+  const restocks = JSON.parse(localStorage.getItem("restocks")) || [];
+  if (!restocks.length) {
+    showRestockAlert("⚠️ Belum ada data restock untuk diekspor.");
+    return;
+  }
+
+  let csv = "Tanggal,SKU,Nama,Jumlah,Stok Akhir\n";
+  restocks.forEach(r => {
+    csv += `${r.date},${r.sku},${r.name},${r.qty},${r.stockAfter}\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "laporan_restock.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+  showRestockAlert("✅ File CSV restock berhasil diunduh.");
+}
  /* === Tombol di Dashboard Laporan Restock (Barang Masuk) === */
 
 // tombol "Tampilkan"
@@ -1360,9 +1386,35 @@ function exportRestockByMonth() {
   loadRestock();
 }
 
-// tombol "Cetak"
+/* ======== TOMBOL CETAK ======== */
 function printRestock() {
-  window.print();
+  const table = document.querySelector("#restockTableBody").closest("table");
+  if (!table) {
+    showRestockAlert("⚠️ Tidak ada tabel untuk dicetak.");
+    return;
+  }
+
+  const printWindow = window.open("", "_blank");
+  printWindow.document.write(`
+    <html>
+    <head>
+      <title>Laporan Restock</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #333; padding: 6px 8px; text-align: left; }
+        th { background: #f2f2f2; }
+        h2 { text-align: center; }
+      </style>
+    </head>
+    <body>
+      <h2>Laporan Restock (Barang Masuk)</h2>
+      ${table.outerHTML}
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.print();
 }
 
 // tombol "Clear Restock"

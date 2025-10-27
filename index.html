@@ -776,7 +776,7 @@
           <div class="table-wrapper" style="max-height:240px; margin-top: var(--spacing-sm)">
             <table id="restockTbl">
               <thead><tr><th>No</th><th>Tanggal</th><th>SKU</th><th>Nama</th><th>Jumlah</th><th>Stok Akhir</th></tr></thead>
-              <tbody></tbody>
+              <tbody id="restockTableBody"></tbody>
             </table>
           </div>
         </div>
@@ -1351,12 +1351,29 @@ function loadRestock() {
     `;
     tbody.appendChild(tr);
   });
+  showRestockAlert("📦 Laporan restock .");
 }
   /* ======== TOMBOL TAMPILKAN ======== */
 function exportRestock() {
-  // cukup muat ulang tabel dari localStorage
-  loadRestock();
-  showRestockAlert("📦 Laporan restock berhasil ditampilkan.");
+  const restocks = JSON.parse(localStorage.getItem("restocks")) || [];
+  if (!restocks.length) {
+    showRestockAlert("⚠️ Belum ada data restock untuk diekspor.");
+    return;
+  }
+
+  let csv = "Tanggal,SKU,Nama,Jumlah,Stok Akhir\n";
+  restocks.forEach(r => {
+    csv += `${r.date},${r.sku},${r.name},${r.qty},${r.stockAfter}\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "laporan_restock.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+  showRestockAlert("✅ File CSV restock berhasil diunduh.");
 }
   function exportRestockCSV() {
   const restocks = JSON.parse(localStorage.getItem("restocks")) || [];
@@ -1379,18 +1396,47 @@ function exportRestock() {
   URL.revokeObjectURL(url);
   showRestockAlert("✅ File CSV restock berhasil diunduh.");
 }
- /* === Tombol di Dashboard Laporan Restock (Barang Masuk) === */
 
-// tombol "Tampilkan"
+  /* ======== EXPORT RESTOCK BULANAN ======== */
 function exportRestockByMonth() {
-  loadRestock();
+  const monthInput = document.getElementById("restockMonth");
+  if (!monthInput || !monthInput.value) {
+    showRestockAlert("⚠️ Pilih bulan terlebih dahulu!");
+    return;
+  }
+
+  const selectedMonth = monthInput.value; // contoh: "2025-10"
+  const restocks = JSON.parse(localStorage.getItem("restocks")) || [];
+
+  // Filter berdasarkan bulan (format tanggal di restocks pakai getLocalDateTime)
+  const filtered = restocks.filter(r => r.date && r.date.startsWith(selectedMonth));
+
+  if (!filtered.length) {
+    showRestockAlert("📭 Tidak ada data restock pada bulan tersebut.");
+    return;
+  }
+
+  let csv = "Tanggal,SKU,Nama,Jumlah,Stok Akhir\n";
+  filtered.forEach(r => {
+    csv += `${r.date},${r.sku},${r.name},${r.qty},${r.stockAfter}\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `laporan_restock_${selectedMonth}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+
+  showRestockAlert(`✅ File CSV bulan ${selectedMonth} berhasil diunduh.`);
 }
 
 /* ======== TOMBOL CETAK ======== */
 function printRestock() {
-  const table = document.querySelector("#restockTableBody").closest("table");
+  const table = document.getElementById("restockTbl");
   if (!table) {
-    showRestockAlert("⚠️ Tidak ada tabel untuk dicetak.");
+    showRestockAlert("⚠️ Tabel laporan restock tidak ditemukan!");
     return;
   }
 
@@ -1427,27 +1473,50 @@ function clearRestocks() {
 
 // tombol "Download Bulanan"
 function exportRestockByRange() {
-  const restocks = JSON.parse(localStorage.getItem("restocks")) || [];
-  if (!restocks.length) {
-    alert("Belum ada data restock untuk diunduh!");
+  const fromInput = document.getElementById("restockExportFrom");
+  const toInput = document.getElementById("restockExportTo");
+
+  if (!fromInput.value || !toInput.value) {
+    showRestockAlert("⚠️ Lengkapi tanggal 'Dari' dan 'Sampai' terlebih dahulu!");
     return;
   }
 
-  // buat file CSV sederhana
+  const start = new Date(fromInput.value);
+  const end = new Date(toInput.value);
+  if (start > end) {
+    showRestockAlert("⚠️ Rentang tanggal tidak valid!");
+    return;
+  }
+
+  const restocks = JSON.parse(localStorage.getItem("restocks")) || [];
+
+  // Filter berdasarkan rentang tanggal
+  const filtered = restocks.filter(r => {
+    if (!r.date) return false;
+    const d = new Date(r.date);
+    return d >= start && d <= end;
+  });
+
+  if (!filtered.length) {
+    showRestockAlert("📭 Tidak ada data restock di rentang tanggal tersebut.");
+    return;
+  }
+
   let csv = "Tanggal,SKU,Nama,Jumlah,Stok Akhir\n";
-  restocks.forEach(r => {
+  filtered.forEach(r => {
     csv += `${r.date},${r.sku},${r.name},${r.qty},${r.stockAfter}\n`;
   });
 
   const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "laporan_restock.csv";
-  document.body.appendChild(link);
+  link.href = url;
+  link.download = `laporan_restock_${fromInput.value}_sd_${toInput.value}.csv`;
   link.click();
-  document.body.removeChild(link);
-}
+  URL.revokeObjectURL(url);
 
+  showRestockAlert("✅ File CSV berdasarkan rentang tanggal berhasil diunduh.");
+}
 /* ---------- PAYMENT FLOW (updated per request) ---------- */
 
 /* open payment modal */

@@ -713,7 +713,7 @@
 <body>
   <header>
     <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--spacing-md);flex-wrap:wrap">
-      <h2 style="margin:0;font-size:1.25rem">INDOCART</h2>
+      <h2 style="margin:0;font-size:1.25rem">Oleh2in</h2>
       <div style="display:flex;gap:var(--spacing-md);align-items:center">
         <div class="muted">Keranjang: <span id="cartCount">0</span> barang</div>
         <div class="badge" id="shopStatus">Offline</div>
@@ -1000,7 +1000,9 @@
       <div id="receiptPreviewContent" class="items"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
         <button onclick="printPendingReceipt()" id="printPreviewBtn">Cetak</button>
-        <button class="ghost" onclick="closeReceiptPreview()">Tutup</button>
+        <!--
+        <button class="ghost" onclick="closeReceiptPreview()">Tutup</button> 
+        -->
         <button onclick="finalizePendingSale()" id="finalizeBtn" style="background:#0b8b3e">Selesaikan Penjualan</button>
       </div>
     </div>
@@ -1645,9 +1647,9 @@ function openReceiptPreview(invoice){
 }
 
 /* close receipt preview */
-function closeReceiptPreview(){
+/*function closeReceiptPreview(){
   document.getElementById('receiptPreviewModal').style.display = 'none'
-}
+} */
 
 /* print pending receipt (does NOT finalize sale) */
 function printPendingReceipt(){
@@ -1663,34 +1665,49 @@ function printPendingReceipt(){
 }
 
 /* finalizePendingSale: mark sale as finalized and add to daily report. This does NOT change stock (already reduced on confirm). */
-function finalizePendingSale(){
-  if(!pendingPaidInvoice) return alert("Tidak ada transaksi untuk diselesaikan.")
-  const idx = sales.findIndex(s => s.invoice === pendingPaidInvoice)
-  if(idx === -1) return alert("Transaksi tidak ditemukan")
-  const tx = sales[idx]
-  if(tx.finalized){
-    showToast("Transaksi sudah diselesaikan.")
-    document.getElementById('receiptPreviewModal').style.display = 'none'
-    pendingPaidInvoice = null
-    localStorage.removeItem('pendingPaidInvoice')
-    renderCart(); renderFinalStock()
-    return
+function finalizePendingSale() {
+  // Ambil data penjualan yang sedang pending (misal dari localStorage)
+  const pendingSale = JSON.parse(localStorage.getItem("pendingSale")) || null;
+  if (!pendingSale || !pendingSale.items || !pendingSale.items.length) {
+    showToast("⚠️ Tidak ada transaksi yang perlu diselesaikan.");
+    return;
   }
 
-  tx.finalized = true
-  tx.status = 'completed'
-  tx.completedAt = getLocalDateTime()
-  sales[idx] = tx
-  localStorage.setItem('sales', JSON.stringify(sales))
+  // Ambil daftar produk
+  const products = JSON.parse(localStorage.getItem("products")) || [];
 
-  // clear pending, clear cart (sale has been finalized)
-  pendingPaidInvoice = null
-  localStorage.removeItem('pendingPaidInvoice')
-  cart = []
-  renderCart(); renderFinalStock(); loadRestock()
+  // Loop setiap item penjualan dan kurangi stok
+  pendingSale.items.forEach(soldItem => {
+    const product = products.find(p => p.sku === soldItem.sku);
+    if (product) {
+      product.qty = Math.max(0, product.qty - soldItem.qty); // pastikan gak negatif
+    }
+  });
 
-  document.getElementById('receiptPreviewModal').style.display = 'none'
-  showToast("Penjualan diselesaikan dan masuk ke laporan.")
+  // Simpan hasil pengurangan stok ke localStorage
+  localStorage.setItem("products", JSON.stringify(products));
+
+  // Simpan juga data penjualan ke laporan sales (kalau belum otomatis)
+  const sales = JSON.parse(localStorage.getItem("sales")) || [];
+  const saleRecord = {
+    date: new Date().toISOString(),
+    dateDisplay: new Date().toLocaleString("id-ID"),
+    invoice: pendingSale.invoice || `INV-${Date.now()}`,
+    items: pendingSale.items,
+    total: pendingSale.total || 0
+  };
+  sales.push(saleRecord);
+  localStorage.setItem("sales", JSON.stringify(sales));
+
+  // Hapus pending sale (karena sudah diselesaikan)
+  localStorage.removeItem("pendingSale");
+
+  // Update tampilan daftar produk langsung tanpa refresh
+  if (typeof render === "function") render();
+  else if (typeof loadProducts === "function") loadProducts();
+
+  // Notifikasi sukses
+  showToast("✅ Penjualan diselesaikan dan stok produk berhasil diperbarui.");
 }
 
 /* finishSale kept for backward compat (calls finalizePendingSale) */

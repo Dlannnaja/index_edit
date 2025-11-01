@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>INDOCART</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-  
+  <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="SB-Mid-client-0xTl1KKhM9Bqq_Bp"></script>
+  <!-- Tambahkan Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
   <style>
   :root {
     --bg: #f7f9fc;
@@ -17,12 +20,13 @@
     --radius: 10px;
     --font: "Poppins", system-ui, sans-serif;
 
-    /* Ukuran font dan spasi diperhalus */
-    --font-size-base: 13px;
-    --font-size-small: 11px;
-    --spacing-sm: 6px;
-    --spacing-md: 10px;
-    --spacing-lg: 14px;
+    /* Ukuran font dan spasi diperbesar */
+    --font-size-base: 15px;
+    --font-size-small: 13px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 18px;
+    --spacing-xl: 24px;
   }
 
   *, *::before, *::after {
@@ -36,6 +40,7 @@
     color: #111;
     overflow-x: hidden;
     font-size: var(--font-size-base);
+    min-height: 100vh;
   }
 
   header {
@@ -43,8 +48,12 @@
     color: #fff;
     padding: var(--spacing-lg) var(--spacing-md);
     box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100;
   }
-    /* --- Keranjang di header --- */
+  
+  /* --- Keranjang di header --- */
   header .muted {
     color: #ffffff !important;     /* ubah warna jadi putih terang */
     font-weight: 500;              /* sedikit tebal biar jelas */
@@ -63,22 +72,23 @@
 
   h2 {
     margin: var(--spacing-md) 0;
-    font-size: 1.4rem; /* dikit kecil */
+    font-size: 1.6rem; /* diperbesar */
   }
   h3 {
     margin: var(--spacing-md) 0;
-    font-size: 1.2rem;
+    font-size: 1.4rem; /* diperbesar */
   }
 
+  /* Perubahan utama: grid 2 kolom */
   .grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--spacing-lg);
   }
 
-  @media (min-width: 900px) {
+  @media (min-width: 1024px) {
     .grid {
-      grid-template-columns: 1fr 360px;
+      grid-template-columns: 2fr 1fr; /* Kolom kiri lebih lebar */
     }
   }
 
@@ -99,7 +109,7 @@
 
   .col {
     flex: 1;
-    min-width: 100px; /* dikit lebih kecil supaya muat */
+    min-width: 100px;
   }
 
   input[type="text"],
@@ -161,95 +171,93 @@
     font-size: var(--font-size-small);
   }
 
-  /* ----- default table style (kept) ----- */
+  /* Table styles diperbesar */
   table {
     width: 100%;
     border-collapse: collapse;
     font-size: var(--font-size-base);
     min-width: 100%;
   }
-    /* === Laporan Penjualan === */
-#salesTbl {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  min-width: 700px;
-}
+  
+  /* === Laporan Penjualan === */
+  #salesTbl {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    min-width: 700px;
+  }
 
-#salesTbl th, #salesTbl td {
-  padding: 10px;
-  border-bottom: 1px solid #f1f3f5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+  #salesTbl th, #salesTbl td {
+    padding: 12px;
+    border-bottom: 1px solid #f1f3f5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-#salesTbl th:nth-child(1), #salesTbl td:nth-child(1) { width: 6%; text-align: center; } /* No */
-#salesTbl th:nth-child(2), #salesTbl td:nth-child(2) { width: 25%; } /* Tanggal */
-#salesTbl th:nth-child(3), #salesTbl td:nth-child(3) { width: 20%; } /* Invoice */
-#salesTbl th:nth-child(4), #salesTbl td:nth-child(4) { width: 35%; } /* Item */
-#salesTbl th:nth-child(5), #salesTbl td:nth-child(5) { width: 14%; text-align: right; } /* Total */
+  #salesTbl th:nth-child(1), #salesTbl td:nth-child(1) { width: 6%; text-align: center; }
+  #salesTbl th:nth-child(2), #salesTbl td:nth-child(2) { width: 25%; }
+  #salesTbl th:nth-child(3), #salesTbl td:nth-child(3) { width: 20%; }
+  #salesTbl th:nth-child(4), #salesTbl td:nth-child(4) { width: 35%; }
+  #salesTbl th:nth-child(5), #salesTbl td:nth-child(5) { width: 14%; text-align: right; }
 
+  /* === Laporan Restock === */
+  #restockTbl {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    min-width: 700px;
+  }
 
-/* === Laporan Restock === */
-#restockTbl {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  min-width: 700px;
-}
+  #restockTbl th, #restockTbl td {
+    padding: 12px;
+    border-bottom: 1px solid #f1f3f5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-#restockTbl th, #restockTbl td {
-  padding: 10px;
-  border-bottom: 1px solid #f1f3f5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+  #restockTbl th:nth-child(1), #restockTbl td:nth-child(1) { width: 6%; text-align: center; }
+  #restockTbl th:nth-child(2), #restockTbl td:nth-child(2) { width: 18%; }
+  #restockTbl th:nth-child(3), #restockTbl td:nth-child(3) { width: 15%; }
+  #restockTbl th:nth-child(4), #restockTbl td:nth-child(4) { width: 30%; }
+  #restockTbl th:nth-child(5), #restockTbl td:nth-child(5) { width: 15%; text-align: center; }
+  #restockTbl th:nth-child(6), #restockTbl td:nth-child(6) { width: 16%; text-align: right; }
 
-#restockTbl th:nth-child(1), #restockTbl td:nth-child(1) { width: 6%; text-align: center; } /* No */
-#restockTbl th:nth-child(2), #restockTbl td:nth-child(2) { width: 18%; } /* Tanggal */
-#restockTbl th:nth-child(3), #restockTbl td:nth-child(3) { width: 15%; } /* SKU */
-#restockTbl th:nth-child(4), #restockTbl td:nth-child(4) { width: 30%; } /* Nama */
-#restockTbl th:nth-child(5), #restockTbl td:nth-child(5) { width: 15%; text-align: center; } /* Jumlah */
-#restockTbl th:nth-child(6), #restockTbl td:nth-child(6) { width: 16%; text-align: right; } /* Stok Akhir */
+  /* === Laporan Stok Akhir === */
+  #finalStockTbl {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    min-width: 650px;
+  }
 
+  #finalStockTbl th, #finalStockTbl td {
+    padding: 12px;
+    border-bottom: 1px solid #f1f3f5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-/* === Laporan Stok Akhir === */
-#finalStockTbl {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  min-width: 650px;
-}
+  #finalStockTbl th:nth-child(1), #finalStockTbl td:nth-child(1) { width: 6%; text-align: center; }
+  #finalStockTbl th:nth-child(2), #finalStockTbl td:nth-child(2) { width: 18%; }
+  #finalStockTbl th:nth-child(3), #finalStockTbl td:nth-child(3) { width: 36%; }
+  #finalStockTbl th:nth-child(4), #finalStockTbl td:nth-child(4) { width: 20%; text-align: center; }
+  #finalStockTbl th:nth-child(5), #finalStockTbl td:nth-child(5) { width: 20%; text-align: right; }
 
-#finalStockTbl th, #finalStockTbl td {
-  padding: 10px;
-  border-bottom: 1px solid #f1f3f5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+  /* Style seragam agar sama seperti tabel produk */
+  #salesTbl th, #restockTbl th, #finalStockTbl th {
+    background: #f9fbfd;
+    color: #333;
+    font-weight: 600;
+  }
 
-#finalStockTbl th:nth-child(1), #finalStockTbl td:nth-child(1) { width: 6%; text-align: center; } /* No */
-#finalStockTbl th:nth-child(2), #finalStockTbl td:nth-child(2) { width: 18%; } /* SKU */
-#finalStockTbl th:nth-child(3), #finalStockTbl td:nth-child(3) { width: 36%; } /* Nama */
-#finalStockTbl th:nth-child(4), #finalStockTbl td:nth-child(4) { width: 20%; text-align: center; } /* Stok */
-#finalStockTbl th:nth-child(5), #finalStockTbl td:nth-child(5) { width: 20%; text-align: right; } /* Harga */
-
-/* --- Style seragam agar sama seperti tabel produk --- */
-#salesTbl th, #restockTbl th, #finalStockTbl th {
-  background: #f9fbfd;
-  color: #333;
-  font-weight: 600;
-}
-
-#salesTbl tbody tr:nth-child(even),
-#restockTbl tbody tr:nth-child(even),
-#finalStockTbl tbody tr:nth-child(even) {
-  background: #fcfdff;
-}
-
+  #salesTbl tbody tr:nth-child(even),
+  #restockTbl tbody tr:nth-child(even),
+  #finalStockTbl tbody tr:nth-child(even) {
+    background: #fcfdff;
+  }
 
   th, td {
     padding: var(--spacing-sm);
@@ -279,50 +287,54 @@
     border-radius: var(--radius);
     overflow-x: auto;
   }
-    #cart table {
+  
+  #cart table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: fixed; /* Biar kolom ga pecah */
+    table-layout: fixed;
     word-wrap: break-word;
   }
 
-    #cart td {
+  #cart td {
     vertical-align: middle;
-    white-space: nowrap; /* Biar nama produk tetap 1 baris */
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-    #cart td:first-child {
+  #cart td:first-child {
     width: 65%;
   }
 
-    #cart td:nth-child(2) {
+  #cart td:nth-child(2) {
     text-align: right;
     width: 25%;
   }
 
-    #cart td:nth-child(3) {
+  #cart td:nth-child(3) {
     text-align: center;
     width: 10%;
   }
-    /* Rapi di semua perangkat */
-    .table-wrapper {
+  
+  /* Rapi di semua perangkat */
+  .table-wrapper {
     overflow-x: auto;
     width: 100%;
     -webkit-overflow-scrolling: touch;
   }
-    #tbl {
+  
+  #tbl {
     width: 100%;
     border-collapse: collapse;
-    table-layout: auto; /* biar kolom menyesuaikan konten */
-    min-width: 600px;   /* biar ga rusak di layar kecil */
+    table-layout: auto;
+    min-width: 600px;
   }
-    #tbl th, #tbl td {
+  
+  #tbl th, #tbl td {
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
-    padding: 8px;
+    padding: 10px;
     border-bottom: 1px solid #f1f3f5;
     text-align: left;
     vertical-align: middle;
@@ -416,7 +428,7 @@
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.65);
-    display: flex;
+    display: none;
     justify-content: center;
     align-items: center;
     z-index: 10000;
@@ -581,7 +593,7 @@
       --font-size-base-r: clamp(15px, 1.6vw, 16px);
       --guide-tooltip-width: 320px;
     }
-    .grid { grid-template-columns: 1fr 360px; }
+    .grid { grid-template-columns: 2fr 1fr; }
     button { width: auto; min-width: 120px; }
     button.small { min-width: 88px; }
     #cameraModal, #paymentModal { align-items: center; }
@@ -596,7 +608,7 @@
       --font-size-xl-r: 20px;
       --guide-tooltip-width: 340px;
     }
-    .grid { grid-template-columns: 1fr 360px; gap: 18px; }
+    .grid { grid-template-columns: 2fr 1fr; gap: 18px; }
     body { font-size: var(--font-size-base-r); }
     table { font-size: var(--font-size-base-r); min-width: 600px; }
     button { font-size: var(--font-size-base-r); padding: 10px 14px; }
@@ -611,7 +623,7 @@
       --font-size-xl-r: 22px;
       --guide-tooltip-width: 360px;
     }
-    .grid{ grid-template-columns: 1fr 360px; gap: 22px; }
+    .grid{ grid-template-columns: 2fr 1fr; gap: 22px; }
     button { padding: 10px 16px; }
     #salesTbl, #restockTbl, #finalStockTbl { min-width: 700px; }
   }
@@ -660,9 +672,9 @@
     opacity: 0.9;
     transition: all 0.25s ease;
     white-space: nowrap;
-    max-width: 90vw;           /* biar gak lebih dari 90% lebar layar */
-    overflow: hidden;          /* sembunyikan isi kalau kepanjangan */
-    text-overflow: ellipsis;   /* tambahkan "..." jika terlalu panjang */
+    max-width: 90vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   #startGuideBtn:hover {
     opacity: 1;
@@ -678,7 +690,7 @@
       left: 12px;
       border-radius: 30px;
       box-shadow: 0 3px 8px rgba(0,0,0,0.2);
-      max-width: 88vw; /* tambah ruang aman di kanan */
+      max-width: 88vw;
     }
   }
   
@@ -704,6 +716,278 @@
     }
   }
 
+  /* Product Grid Styles - Diperbesar */
+  .product-grid-container {
+    margin-top: var(--spacing-md);
+  }
+  
+  /* PERBAIKAN UTAMA: Product Search dengan icon yang benar */
+  .product-search {
+    margin-bottom: var(--spacing-md);
+    position: relative;
+    width: 100%;
+  }
+  
+  .product-search input {
+    width: 100%;
+    padding: 14px 14px 14px 45px; /* Padding kiri 45px untuk icon */
+    font-size: 16px;
+    border: 1px solid #dee2e6;
+    border-radius: var(--radius);
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .product-search input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(11, 116, 218, 0.15);
+  }
+  
+  .product-search::before {
+    content: "🔍";
+    position: absolute;
+    left: 15px; /* Posisi yang tepat untuk icon */
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 18px;
+    pointer-events: none; /* Agar icon tidak mengganggu input */
+    z-index: 1;
+  }
+  
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--spacing-md);
+    max-height: 500px;
+    overflow-y: auto;
+    padding: var(--spacing-sm);
+    border: 1px solid #e8eef8;
+    border-radius: var(--radius);
+  }
+  
+  .product-card {
+    background: #fff;
+    border: 1px solid #e8eef8;
+    border-radius: var(--radius);
+    padding: var(--spacing-md);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    position: relative;
+  }
+  
+  .product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+  
+  .product-card.selected {
+    border-color: var(--accent);
+    background: #f0f7ff;
+  }
+  
+  .product-name {
+    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .product-price {
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+    font-size: 16px;
+  }
+  
+  .product-stock {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .product-stock.low {
+    color: #e74c3c;
+    font-weight: 600;
+  }
+  
+  .product-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+  }
+  
+  .product-quantity {
+    width: 60px;
+    padding: 8px;
+    text-align: center;
+    font-size: 16px;
+  }
+  
+  .product-add-btn {
+    flex: 1;
+    padding: 8px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  /* PERBAIKAN: Category Tabs yang lebih besar */
+  .category-tabs {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: wrap;
+  }
+  
+  .category-tab {
+    padding: 16px 24px; /* Diperbesar lagi */
+    background: #f1f5f9;
+    border: none;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    white-space: nowrap;
+    min-width: 120px; /* Diperbesar lagi */
+    flex: 1;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+  
+  .category-tab:hover {
+    background: #e2e8f0;
+  }
+  
+  .category-tab.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 4px rgba(11, 116, 218, 0.2);
+  }
+
+  /* Compact cart styles - Lebih Kecil */
+  .compact-cart {
+    padding: var(--spacing-md);
+  }
+  
+  .compact-cart h3 {
+    margin-top: 0;
+    margin-bottom: var(--spacing-md);
+    font-size: 1.2rem;
+  }
+  
+  .compact-cart #cart {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .compact-cart .cart-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  
+  .compact-cart .cart-total {
+    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+    font-size: 15px;
+  }
+  
+  .compact-cart .discount-section {
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .compact-cart .discount-section input {
+    padding: 8px;
+    font-size: 14px;
+  }
+  
+  .compact-cart .printer-section {
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .compact-cart .printer-section select {
+    padding: 8px;
+    font-size: 14px;
+  }
+  
+  .compact-cart .checkout-buttons {
+    display: flex;
+    gap: var(--spacing-sm);
+  }
+  
+  .compact-cart .checkout-buttons button {
+    flex: 1;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  /* Scan buttons diperbesar */
+  .scan-buttons {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+  }
+  
+  .scan-buttons button {
+    padding: 14px 18px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  /* PERBAIKAN: Search Box untuk Daftar Produk */
+  .search-container {
+    position: relative;
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .search-container input {
+    width: 100%;
+    padding: 14px 14px 14px 45px; /* Padding kiri 45px untuk icon */
+    font-size: 16px;
+    border: 1px solid #dee2e6;
+    border-radius: var(--radius);
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    height: 50px; /* Tinggi yang lebih konsisten */
+  }
+  
+  .search-container input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(11, 116, 218, 0.15);
+  }
+  
+  .search-container::before {
+    content: "🔍";
+    position: absolute;
+    left: 15px; /* Posisi yang tepat untuk icon */
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 18px;
+    pointer-events: none; /* Agar icon tidak mengganggu input */
+    z-index: 1;
+  }
+
+  /* PERBAIKAN: Form Tambah Produk dengan kategori */
+  .form-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+    margin-top: var(--spacing-lg);
+    justify-content: flex-end; /* Memindahkan tombol ke kanan/bawah */
+  }
+
+  /* PERBAIKAN: Tabel Produk dengan kolom kategori */
+  #tbl th:nth-child(1), #tbl td:nth-child(1) { width: 10%; }
+  #tbl th:nth-child(2), #tbl td:nth-child(2) { width: 25%; }
+  #tbl th:nth-child(3), #tbl td:nth-child(3) { width: 15%; }
+  #tbl th:nth-child(4), #tbl td:nth-child(4) { width: 15%; }
+  #tbl th:nth-child(5), #tbl td:nth-child(5) { width: 20%; }
+  #tbl th:nth-child(6), #tbl td:nth-child(6) { width: 15%; }
 
   </style>
 
@@ -713,7 +997,7 @@
 <body>
   <header>
     <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--spacing-md);flex-wrap:wrap">
-      <h2 style="margin:0;font-size:1.25rem">Oleh2in</h2>
+      <h2 style="margin:0;font-size:1.5rem">INDOCART</h2>
       <div style="display:flex;gap:var(--spacing-md);align-items:center">
         <div class="muted">Keranjang: <span id="cartCount">0</span> barang</div>
         <div class="badge" id="shopStatus">Offline</div>
@@ -724,143 +1008,194 @@
   <main class="container">
     <div class="grid">
 
-      <!-- Dashboard Laporan -->
-      <div class="card">
-        <h2 style="font-size:1.5rem; margin-bottom: var(--spacing-md)">📊 Dashboard Laporan</h2>
-        <div class="tabs">
-          <button class="tab-btn active" onclick="openTab('penjualan')">Penjualan</button>
-          <button class="tab-btn" onclick="openTab('restock')">Restock</button>
-          <button class="tab-btn" onclick="openTab('stok')">Stok Akhir</button>
+      <!-- Kolom Kiri: Dashboard Laporan, Tambah/Edit Produk, dan Menu Produk Grid -->
+      <div>
+        <!-- Dashboard Laporan -->
+        <div class="card" style="margin-bottom: var(--spacing-lg);">
+          <h2 style="font-size:1.6rem; margin-bottom: var(--spacing-md)">📊 Dashboard Laporan</h2>
+          <div class="tabs">
+            <button class="tab-btn active" onclick="openTab('penjualan')">Penjualan</button>
+            <button class="tab-btn" onclick="openTab('restock')">Restock</button>
+            <button class="tab-btn" onclick="openTab('stok')">Stok Akhir</button>
+          </div>
+
+          <div id="penjualan" class="tab-content active">
+            <h3>Laporan Penjualan</h3>
+            <div class="flex">
+              <label class="muted">From <input id="filterFrom" type="date" /></label>
+              <label class="muted">To <input id="filterTo" type="date" /></label>
+              <button onclick="loadSales()" class="small">Tampilkan</button>
+              <button onclick="exportSales()" class="small ghost">Export CSV</button>
+              <button onclick="printSales()" class="small ghost">Cetak</button>
+              <button onclick="clearSales()" class="small ghost" title="Hapus laporan hari ini">Clear Laporan</button>
+              <button onclick="clearSalesByRange()" class="small ghost" title="Hapus laporan berdasarkan rentang tanggal">Clear Range</button>
+            </div>
+
+            <div class="table-wrapper" style="max-height:250px; margin-top: var(--spacing-sm)">
+              <table id="salesTbl">
+                <thead><tr><th>No</th><th>Tanggal</th><th>Invoice</th><th>Item</th><th>Total</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="restock" class="tab-content">
+            <h3>Laporan Restock (Barang Masuk)</h3>
+            <div class="flex" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+              <label class="muted">Dari <input id="filterRestockFrom" type="date" /></label>
+              <label class="muted">Sampai <input id="filterRestockTo" type="date" /></label>
+              <button onclick="loadRestock()" class="small">Tampilkan</button>
+              <button onclick="exportRestock()" class="small ghost">Export CSV Semua</button>
+              <button onclick="printRestock()" class="small ghost">Cetak</button>
+              <button onclick="clearRestocks()" class="small ghost">Clear Restock</button>
+            </div>
+
+            <div class="flex" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+              <label class="muted">Bulan: <input id="restockMonth" type="month" /></label>
+              <button class="small ghost" onclick="exportRestockByMonth()">Download Bulanan</button>
+
+              <label class="muted">Dari <input id="restockExportFrom" type="date" /></label>
+              <label class="muted">Sampai <input id="restockExportTo" type="date" /></label>
+              <button class="small ghost" onclick="exportRestockByRange()">Download Rentang</button>
+            </div>
+
+            <div class="table-wrapper" style="max-height:250px; margin-top: var(--spacing-sm)">
+              <table id="restockTbl">
+                <thead><tr><th>No</th><th>Tanggal</th><th>SKU</th><th>Nama</th><th>Jumlah</th><th>Stok Akhir</th></tr></thead>
+                <tbody id="restockTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="stok" class="tab-content">
+            <h3>Stok Akhir Produk</h3>
+
+            <div class="table-wrapper" style="max-height:250px; margin-top: var(--spacing-sm)">
+              <table id="finalStockTbl">
+                <thead><tr><th>No</th><th>SKU</th><th>Nama</th><th>Stok</th><th>Harga</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
-        <div id="penjualan" class="tab-content active">
-          <h3>Laporan Penjualan</h3>
-          <div class="flex">
-            <label class="muted">From <input id="filterFrom" type="date" /></label>
-            <label class="muted">To <input id="filterTo" type="date" /></label>
-            <button onclick="loadSales()" class="small">Tampilkan</button>
-            <button onclick="exportSales()" class="small ghost">Export CSV</button>
-            <button onclick="printSales()" class="small ghost">Cetak</button>
-            <button onclick="clearSales()" class="small ghost" title="Hapus laporan hari ini">Clear Laporan</button>
-            <button onclick="clearSalesByRange()" class="small ghost" title="Hapus laporan berdasarkan rentang tanggal">Clear Range</button>
-          </div>
-
-          <!-- table-wrapper ditambahkan di sini -->
-          <div class="table-wrapper" style="max-height:200px; margin-top: var(--spacing-sm)">
-            <table id="salesTbl">
-              <thead><tr><th>No</th><th>Tanggal</th><th>Invoice</th><th>Item</th><th>Total</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div id="restock" class="tab-content">
-          <h3>Laporan Restock (Barang Masuk)</h3>
-          <div class="flex" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
-            <button onclick="loadRestock()" class="small">Tampilkan</button>
-            <button onclick="exportRestock()" class="small ghost">Export CSV Semua</button>
-            <button onclick="printRestock()" class="small ghost">Cetak</button>
-            <button onclick="clearRestocks()" class="small ghost">Clear Restock</button>
-          </div>
-
-          <!-- export per bulan / range -->
-          <div class="flex" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
-            <label class="muted">Bulan: <input id="restockMonth" type="month" /></label>
-            <button class="small ghost" onclick="exportRestockByMonth()">Download Bulanan</button>
-
-            <label class="muted">Dari <input id="restockExportFrom" type="date" /></label>
-            <label class="muted">Sampai <input id="restockExportTo" type="date" /></label>
-            <button class="small ghost" onclick="exportRestockByRange()">Download Rentang</button>
-          </div>
-
-          <!-- table-wrapper ditambahkan di sini -->
-          <div class="table-wrapper" style="max-height:240px; margin-top: var(--spacing-sm)">
-            <table id="restockTbl">
-              <thead><tr><th>No</th><th>Tanggal</th><th>SKU</th><th>Nama</th><th>Jumlah</th><th>Stok Akhir</th></tr></thead>
-              <tbody id="restockTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div id="stok" class="tab-content">
-          <h3>Stok Akhir Produk</h3>
-
-          <!-- table-wrapper ditambahkan di sini -->
-          <div class="table-wrapper" style="max-height:200px; margin-top: var(--spacing-sm)">
-            <table id="finalStockTbl">
-              <thead><tr><th>No</th><th>SKU</th><th>Nama</th><th>Stok</th><th>Harga</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tambah / Edit Produk -->
-      <div class="card">
-        <section>
-          <h3>Tambah Produk</h3>
-          <form id="formProduct" onsubmit="submitProduct();return false" style="margin-bottom: var(--spacing-lg)">
-            <div class="row">
-              <div class="col">
-                <label class="muted">Kode Barang / SKU</label>
-                <div style="display:flex;gap:var(--spacing-sm)">
-                  <input id="sku" placeholder="Kode Barang" type="text" required pattern="\d*" />
-                  <button type="button" class="small" onclick="scanSku()" title="Scan Kode Barang">Scan</button>
+        <!-- Tambah / Edit Produk -->
+        <div class="card" style="margin-bottom: var(--spacing-lg);">
+          <section>
+            <h3>Tambah Produk</h3>
+            <form id="formProduct" onsubmit="submitProduct();return false" style="margin-bottom: var(--spacing-lg)">
+              <div class="row">
+                <div class="col">
+                  <label class="muted">Kode Barang / SKU</label>
+                  <div style="display:flex;gap:var(--spacing-sm)">
+                    <input id="sku" placeholder="Kode Barang" type="text" required />
+                    <button type="button" class="small" onclick="scanSku()" title="Scan Kode Barang">Scan</button>
+                  </div>
+                </div>
+                <div class="col">
+                  <label class="muted">Nama Produk</label>
+                  <input id="name" placeholder="Nama Produk" type="text" required />
                 </div>
               </div>
-              <div class="col">
-                <label class="muted">Nama Produk</label>
-                <input id="name" placeholder="Nama Produk" type="text" required />
+              <div class="row">
+                <div class="col">
+                  <label class="muted">Harga Jual (Rp)</label>
+                  <input id="price" placeholder="Harga Jual (Rp)" type="number" required />
+                </div>
+                <div class="col">
+                  <label class="muted">Stok (angka)</label>
+                  <input id="qty" placeholder="Stok (angka)" type="number" required />
+                </div>
               </div>
-            </div>
-            <div class="row">
-              <div class="col">
-                <label class="muted">Harga Jual (Rp)</label>
-                <input id="price" placeholder="Harga Jual (Rp)" type="number" required />
+              <div class="row">
+                <div class="col">
+                  <label class="muted">Kategori</label>
+                  <select id="category" required>
+                    <option value="">Pilih Kategori</option>
+                    <option value="makanan">Makanan</option>
+                    <option value="minuman">Minuman</option>
+                    <option value="snack">Snack</option>
+                    <option value="lainnya">Lainnya</option>
+                  </select>
+                </div>
               </div>
-              <div class="col">
-                <label class="muted">Stok (angka)</label>
-                <input id="qty" placeholder="Stok (angka)" type="number" required />
+              <div class="form-actions">
+                <button type="submit" id="formSubmitBtn">Tambah</button>
+                <button type="button" class="ghost" onclick="resetForm()">Reset</button>
+                <div class="muted" style="margin-left: auto; font-size: var(--font-size-small)">
+                  Jika nama sudah ada, stok akan <strong>dijumlahkan</strong>.
+                </div>
               </div>
-            </div>
-            <div style="display:flex;gap:var(--spacing-sm);flex-wrap:wrap;align-items:center">
-              <button type="submit" id="formSubmitBtn">Tambah</button>
-              <button type="button" class="ghost" onclick="resetForm()">Reset</button>
-              <div class="muted" style="margin-left: auto; font-size: var(--font-size-small)">
-                Jika nama sudah ada, stok akan <strong>dijumlahkan</strong>.
-              </div>
-            </div>
-          </form>
+            </form>
 
-          <h3>Restock Produk</h3>
-          <form id="formRestock" onsubmit="return restockProduct(event)" class="flex" style="gap:var(--spacing-sm); flex-wrap:wrap; align-items:center">
-            <select id="restockName" required>
-              <option value="">Pilih Produk...</option>
-            </select>
-            <input id="restockQty" placeholder="Jumlah Restock" type="number" required />
-            <button type="submit">Tambah Stok</button>
-          </form>
+            <h3>Restock Produk</h3>
+            <form id="formRestock" onsubmit="return restockProduct(event)" class="flex" style="gap:var(--spacing-sm); flex-wrap:wrap; align-items:center">
+              <select id="restockName" required>
+                <option value="">Pilih Produk...</option>
+              </select>
+              <input id="restockQty" placeholder="Jumlah Restock" type="number" required />
+              <button type="submit">Tambah Stok</button>
+            </form>
 
-          <h3>Daftar Produk</h3>
-          <input id="search" placeholder="Cari produk (Kode/Nama)..." oninput="render()" autocomplete="off"
-                 style="margin-bottom: var(--spacing-lg); width: 100%; padding: var(--spacing-sm);
-                        border-radius: var(--radius); border:1px solid #e8eef8" />
-          <div class="table-wrapper" style="max-height: 300px;">
-            <table id="tbl">
-              <thead><tr><th>SKU</th><th>Nama</th><th>Stok</th><th>Harga</th><th>Aksi</th></tr></thead>
-              <tbody></tbody>
-            </table>
+            <h3>Daftar Produk</h3>
+            <div class="search-container">
+              <input id="search" placeholder="Cari produk (Kode/Nama)..." oninput="render()" autocomplete="off" />
+            </div>
+            <div class="table-wrapper" style="max-height: 400px;">
+              <table id="tbl">
+                <thead><tr><th>SKU</th><th>Nama</th><th>Stok</th><th>Harga</th><th>Kategori</th><th>Aksi</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <!-- Menu Produk Grid -->
+        <div class="card">
+          <h3>Tambah Produk ke Keranjang</h3>
+          <div class="product-grid-container">
+            <div class="category-tabs">
+              <button class="category-tab active" onclick="filterByCategory('all')">Semua</button>
+              <button class="category-tab" onclick="filterByCategory('makanan')">Makanan</button>
+              <button class="category-tab" onclick="filterByCategory('minuman')">Minuman</button>
+              <button class="category-tab" onclick="filterByCategory('snack')">Snack</button>
+              <button class="category-tab" onclick="filterByCategory('lainnya')">Lainnya</button>
+            </div>
+            
+            <div class="product-search">
+              <input type="text" id="productSearchInput" placeholder="Cari produk..." oninput="filterProducts()">
+            </div>
+            
+            <div class="product-grid" id="productGrid">
+              <!-- Produk akan dimuat di sini dengan JavaScript -->
+            </div>
+            
+            <div class="scan-buttons">
+              <button id="btnStartScan" onclick="startScan('sell')">📷 Scan Barcode</button>
+              <button onclick="stopScan()" class="ghost">Stop Scan</button>
+            </div>
+            
+            <div class="muted note" style="margin-top: var(--spacing-md)">Pilih produk dari grid atau scan barcode untuk menambahkan ke keranjang.</div>
           </div>
-        </section>
+        </div>
       </div>
 
-      <!-- Sisi Kanan: Keranjang dan Scan Produk -->
-      <div class="card">
+      <!-- Kolom Kanan: Keranjang -->
+      <div class="card compact-cart">
         <h3>Keranjang (<span id="cartCount2">0</span>)</h3>
         <div id="cart"><i class="muted">Keranjang kosong</i></div>
-        <div class="flex" style="margin-top: var(--spacing-md); flex-direction: column; gap: var(--spacing-sm)">
-          <div class="note">Total: <strong id="total">Rp 0</strong></div>
-          <div style="width: 100%">
+        
+        <div class="cart-actions">
+          <div class="cart-total">Total: <strong id="total">Rp 0</strong></div>
+
+          <!-- DISCOUNT CONTROLS -->
+          <div class="discount-section">
+            <label class="muted">Diskon total belanja (%)</label>
+            <input type="number" id="discountTotalPercent" min="0" max="100" placeholder="10" oninput="applyDiscount()" />
+          </div>
+          
+          <!-- PRINTER SETTINGS -->
+          <div class="printer-section">
             <label><input type="checkbox" id="autoPrint" /> Cetak struk otomatis</label>
             <div class="printer-row">
               <select id="printerSelect">
@@ -871,34 +1206,16 @@
               </select>
               <button class="small ghost" onclick="savePrinterPreference()">Simpan</button>
             </div>
-            <div class="info-small">Jika auto print aktif: pastikan pilih & simpan printer. Jika tidak, proses cetak akan diblokir dan muncul peringatan.</div>
           </div>
-          <div style="width: 100%; margin-top: var(--spacing-md)">
-            <!-- tetap pakai id checkoutBtn supaya minimal perubahan -->
+          
+          <!-- CHECKOUT BUTTONS -->
+          <div class="checkout-buttons">
             <button id="checkoutBtn" onclick="checkout()" disabled>Bayar</button>
             <button class="ghost" onclick="clearCart()">Kosongkan</button>
           </div>
         </div>
       </div>
 
-      <div class="card">
-        <h3>Scan Produk</h3>
-        <div class="flex" style="gap: var(--spacing-sm); flex-wrap: wrap; margin-bottom: var(--spacing-sm)">
-          <button id="btnStartScan" onclick="startScan('sell')" class="small">Mulai Scan Jual</button>
-          <button id="btnStopScan" onclick="stopScan()" class="small ghost">Stop Scan</button>
-          <label class="muted" style="margin-left: auto">Mode:
-            <select id="scanMode" style="margin-left: var(--spacing-sm)">
-              <option value="single">1x auto-stop</option>
-              <option value="continuous">Multi-scan</option>
-            </select>
-          </label>
-        </div>
-        <div style="display:flex; gap:var(--spacing-sm); align-items:center; margin-bottom: var(--spacing-sm)">
-          <label><input type="checkbox" id="autoSell" /> <span class="muted">Auto-sell on scan</span></label>
-        </div>
-        <div class="muted note" style="margin-top: var(--spacing-sm)">Gunakan kamera ponsel. Pilih mode single jika ingin berhenti setelah 1 scan.</div>
-      </div>
-      
     </div>
   </main>
 
@@ -935,18 +1252,8 @@
     </div>
   </div>
 </div>
-<!-- Guide popup lama di-nonaktifkan -->
-<!--
-  <div id="guideOverlay">
-    <div id="guideBox">
-      <h3>Selamat Datang di POS Toko Sembako</h3>
-      <p>Klik mulai untuk tutorial singkat semua fitur, atau skip jika sudah hafal.</p>
-      <button onclick="startGuide()">Mulai</button>
-      <button onclick="skipGuide()">Skip</button>
-    </div>
-  </div>
-  -->
-  <!-- Tombol Floating "Mulai Panduan" -->
+
+<!-- Tombol Floating "Mulai Panduan" -->
 <button id="startGuideBtn" onclick="startGuide()" title="Mulai Panduan"
   style="
     position: fixed;
@@ -968,58 +1275,137 @@
   onmouseout="this.style.opacity=0.9"
 >📘 Mulai Panduan</button>
 
+<!-- payment modal -->
+<div id="paymentModal">
+  <div class="box">
+    <h3 style="margin-top:0">Pembayaran</h3>
+    <div id="pmTop" style="margin-bottom:8px" class="muted">Pilih metode pembayaran untuk menyelesaikan transaksi.</div>
 
-  <!-- payment modal -->
-  <div id="paymentModal">
-    <div class="box">
-      <h3 style="margin-top:0">Pembayaran</h3>
-      <div id="pmTop" style="margin-bottom:8px" class="muted">Pilih metode pembayaran untuk menyelesaikan transaksi.</div>
+    <div id="paymentMethods">
+      <div class="pm-btn" data-method="cash" onclick="selectPaymentMethod('cash', this)">Tunai</div>
+      <div class="pm-btn" data-method="transfer" onclick="selectPaymentMethod('transfer', this)">Transfer Bank</div>
+      <div class="pm-btn" data-method="card" onclick="selectPaymentMethod('card', this)">Kartu (EDC)</div>
+      <div class="pm-btn" data-method="qris" onclick="selectPaymentMethod('qris', this)">QRIS / e-Wallet</div>
+      <div class="pm-btn" data-method="midtrans" onclick="selectPaymentMethod('midtrans', this)">Pembayaran Online</div>
+    </div>
 
-      <div id="paymentMethods">
-        <div class="pm-btn" data-method="cash" onclick="selectPaymentMethod('cash', this)">Tunai</div>
-        <div class="pm-btn" data-method="transfer" onclick="selectPaymentMethod('transfer', this)">Transfer Bank</div>
-        <div class="pm-btn" data-method="card" onclick="selectPaymentMethod('card', this)">Kartu (EDC)</div>
-        <div class="pm-btn" data-method="qris" onclick="selectPaymentMethod('qris', this)">QRIS / e-Wallet</div>
-      </div>
+    <div id="paymentInfoBox" class="pay-instr">Total: <strong id="payTotal">Rp 0</strong></div>
 
-      <div id="paymentInfoBox" class="pay-instr">Total: <strong id="payTotal">Rp 0</strong></div>
+    <div style="display:flex;gap:8px">
+      <button onclick="confirmPayment()" id="confirmPayBtn">Konfirmasi Pembayaran</button>
+      <button class="ghost" onclick="closePaymentModal()">Batal</button>
+    </div>
 
-      <div style="display:flex;gap:8px">
-        <button onclick="confirmPayment()" id="confirmPayBtn">Konfirmasi Pembayaran</button>
-        <button class="ghost" onclick="closePaymentModal()">Batal</button>
-      </div>
+    <div id="payDebug" style="margin-top:10px" class="muted"></div>
+  </div>
+</div>
 
-      <div id="payDebug" style="margin-top:10px" class="muted"></div>
+<!-- receipt preview modal (shown after confirmPayment) -->
+<div id="receiptPreviewModal">
+  <div class="box">
+    <h3 style="margin:0 0 8px 0">Struk Pembayaran</h3>
+    <div id="receiptPreviewContent" class="items"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <button onclick="printPendingReceipt()" id="printPreviewBtn">Cetak</button>
+      <button class="ghost" onclick="closeReceiptPreview()">Tutup</button>
+      <button onclick="finalizePendingSale()" id="finalizeBtn" style="background:#0b8b3e">Selesaikan Penjualan</button>
     </div>
   </div>
+</div>
 
-  <!-- receipt preview modal (shown after confirmPayment) -->
-  <div id="receiptPreviewModal">
-    <div class="box">
-      <h3 style="margin:0 0 8px 0">Struk Pembayaran</h3>
-      <div id="receiptPreviewContent" class="items"></div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
-        <button onclick="printPendingReceipt()" id="printPreviewBtn">Cetak</button>
-        <button class="ghost" onclick="closeReceiptPreview()">Tutup</button>
-        <button onclick="finalizePendingSale()" id="finalizeBtn" style="background:#0b8b3e">Selesaikan Penjualan</button>
-      </div>
-    </div>
-  </div>
+<!-- receipt area template (hidden) -->
+<div id="receiptTemplate" style="display:none">
+  <div id="receiptArea"></div>
+</div>
 
-  <!-- receipt area template (hidden) -->
-  <div id="receiptTemplate" style="display:none">
-    <div id="receiptArea"></div>
-  </div>
+<!-- toast -->
+<div id="appToast" style="display:none"></div>
 
-  <!-- toast -->
-  <div id="appToast" style="display:none"></div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+  import { getDatabase, ref, set, get, onValue, remove } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBSlluMBjlbrQ8YOaHZuXyN-vzStVldckY",
+    authDomain: "oleh2in-pos-new.firebaseapp.com",
+    databaseURL: "https://oleh2in-pos-new-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "oleh2in-pos-new",
+    storageBucket: "oleh2in-pos-new.firebasestorage.app",
+    messagingSenderId: "942467917259",
+    appId: "1:942467917259:web:2ae8cd7040eece18cfc24e",
+    measurementId: "G-6Z0Z9M72XJ"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+  
+  // Export untuk digunakan di script utama
+  window.firebaseDB = {
+    database,
+    ref,
+    set,
+    get,
+    onValue,
+    remove
+  };
+</script>
 
 <script>
+
 /* ---------- data ---------- */
-let products = JSON.parse(localStorage.getItem('products')||'[]')
-let sales = JSON.parse(localStorage.getItem('sales')||'[]')
-let restocks = JSON.parse(localStorage.getItem('restocks')||'[]')
-let cart = []
+let products = [];
+let sales = [];
+let restocks = [];
+let cart = [];
+let isOnline = false;
+
+// ====== DISCOUNT VARIABLES & HELPERS ======
+let discountTotalPercent = 0;     // percentage applied to subtotal after per-product discounts
+
+function formatRupiahNumber(n){
+  if(!n) return "Rp 0";
+  return "Rp " + n.toLocaleString();
+}
+function parseRupiahString(s){
+  if(!s) return 0;
+  return parseInt((s+"").replace(/[^\d]/g,'')) || 0;
+}
+
+function applyDiscount(){
+  const pctEl = document.getElementById("discountTotalPercent");
+  discountTotalPercent = pctEl ? (parseFloat(pctEl.value) || 0) : 0;
+  // re-render cart to show updated totals
+  renderCart();
+}
+
+// compute subtotal, discounts and final total
+function computeCartTotals(){
+  let subtotalBefore = 0;
+  let perProductDiscountTotal = 0;
+
+  cart.forEach(c => {
+    const itemSubtotal = c.price * c.qty;
+    subtotalBefore += itemSubtotal;
+    // Hitung diskon berdasarkan properti 'discount' masing-masing item
+    const itemDiscountTotal = Math.min(itemSubtotal, c.discount * c.qty);
+    perProductDiscountTotal += itemDiscountTotal;
+  });
+
+  const afterPerProduct = subtotalBefore - perProductDiscountTotal;
+  const percentDiscountAmount = Math.round((discountTotalPercent / 100) * afterPerProduct);
+  let finalTotal = afterPerProduct - percentDiscountAmount;
+  if (finalTotal < 0) finalTotal = 0;
+
+  return {
+    subtotalBefore,
+    perProductDiscountTotal,
+    afterPerProduct,
+    percentDiscountAmount,
+    finalTotal
+  };
+}
+// ====== END DISCOUNT HELPERS ======
 
 // pendingPaidInvoice stored during session so user can finalize after paying
 let pendingPaidInvoice = localStorage.getItem('pendingPaidInvoice') || null
@@ -1074,6 +1460,140 @@ function showToast(msg) {
   }, 2500);
 }
 
+function showSalesAlert(message) {
+  showToast(message);
+}
+
+/* ---------- Firebase Functions ---------- */
+// Fungsi untuk mengambil data dari Firebase
+function loadProductsFromFirebase() {
+  const { database, ref, get, onValue } = window.firebaseDB;
+  
+  // Ambil data awal
+  get(ref(database, 'products')).then((snapshot) => {
+    if (snapshot.exists()) {
+      products = snapshot.val() || [];
+      render();
+      renderProductGrid();
+      updateRestockDropdown();
+    } else {
+      // Fallback ke localStorage jika Firebase kosong
+      products = JSON.parse(localStorage.getItem('products') || '[]');
+      render();
+      renderProductGrid();
+      updateRestockDropdown();
+    }
+  }).catch((error) => {
+    console.error("Error loading products:", error);
+    // Fallback ke localStorage jika Firebase gagal
+    products = JSON.parse(localStorage.getItem('products') || '[]');
+    render();
+    renderProductGrid();
+    updateRestockDropdown();
+  });
+  
+  // Listener untuk perubahan real-time
+  onValue(ref(database, 'products'), (snapshot) => {
+    if (snapshot.exists()) {
+      products = snapshot.val() || [];
+      render();
+      renderProductGrid();
+      updateRestockDropdown();
+    }
+  });
+}
+
+function loadSalesFromFirebase() {
+  const { database, ref, get, onValue } = window.firebaseDB;
+  
+  get(ref(database, 'sales')).then((snapshot) => {
+    if (snapshot.exists()) {
+      sales = snapshot.val() || [];
+      loadSales(false);
+    } else {
+      sales = JSON.parse(localStorage.getItem('sales') || '[]');
+      loadSales(false);
+    }
+  }).catch((error) => {
+    console.error("Error loading sales:", error);
+    sales = JSON.parse(localStorage.getItem('sales') || '[]');
+    loadSales(false);
+  });
+  
+  onValue(ref(database, 'sales'), (snapshot) => {
+    if (snapshot.exists()) {
+      sales = snapshot.val() || [];
+      loadSales(false);
+    }
+  });
+}
+
+function loadRestocksFromFirebase() {
+  const { database, ref, get, onValue } = window.firebaseDB;
+  
+  get(ref(database, 'restocks')).then((snapshot) => {
+    if (snapshot.exists()) {
+      restocks = snapshot.val() || [];
+      loadRestock(false);
+    } else {
+      restocks = JSON.parse(localStorage.getItem('restocks') || '[]');
+      loadRestock(false);
+    }
+  }).catch((error) => {
+    console.error("Error loading restocks:", error);
+    restocks = JSON.parse(localStorage.getItem('restocks') || '[]');
+    loadRestock(false);
+  });
+  
+  onValue(ref(database, 'restocks'), (snapshot) => {
+    if (snapshot.exists()) {
+      restocks = snapshot.val() || [];
+      loadRestock(false);
+    }
+  });
+}
+
+// Fungsi untuk menyimpan data ke Firebase
+function saveProductsToFirebase() {
+  const { database, ref, set } = window.firebaseDB;
+  set(ref(database, 'products'), products)
+    .then(() => {
+      console.log("Products saved to Firebase");
+      // Simpan ke localStorage sebagai backup
+      localStorage.setItem("products", JSON.stringify(products));
+    })
+    .catch((error) => {
+      console.error("Error saving products:", error);
+      // Fallback ke localStorage
+      localStorage.setItem("products", JSON.stringify(products));
+    });
+}
+
+function saveSalesToFirebase() {
+  const { database, ref, set } = window.firebaseDB;
+  set(ref(database, 'sales'), sales)
+    .then(() => {
+      console.log("Sales saved to Firebase");
+      localStorage.setItem("sales", JSON.stringify(sales));
+    })
+    .catch((error) => {
+      console.error("Error saving sales:", error);
+      localStorage.setItem("sales", JSON.stringify(sales));
+    });
+}
+
+function saveRestocksToFirebase() {
+  const { database, ref, set } = window.firebaseDB;
+  set(ref(database, 'restocks'), restocks)
+    .then(() => {
+      console.log("Restocks saved to Firebase");
+      localStorage.setItem("restocks", JSON.stringify(restocks));
+    })
+    .catch((error) => {
+      console.error("Error saving restocks:", error);
+      localStorage.setItem("restocks", JSON.stringify(restocks));
+    });
+}
 
 /* ---------- render product list (dengan notif jika kosong) ---------- */
 function render(){
@@ -1090,6 +1610,7 @@ function render(){
         <td>${p.name}</td>
         <td>${p.qty}</td>
         <td>Rp ${p.price.toLocaleString()}</td>
+        <td>${p.category || '-'}</td>
         <td class="actions">
           <button class="small" onclick="editProduct('${p.sku}')">Edit</button>
           <button class="small ghost" onclick="deleteProduct('${p.sku}')">Hapus</button>
@@ -1099,10 +1620,11 @@ function render(){
   })
   if(matched === 0){
     const tr=document.createElement("tr")
-    tr.innerHTML = `<td colspan="5" class="muted" style="text-align:center;padding:14px">Tidak ada produk yang sesuai</td>`
+    tr.innerHTML = `<td colspan="6" class="muted" style="text-align:center;padding:14px">Tidak ada produk yang sesuai</td>`
     tbl.appendChild(tr)
   }
   updateRestockDropdown()
+  renderProductGrid() // Update product grid
 }
 
 /* ---------- product CRUD ---------- */
@@ -1111,19 +1633,21 @@ function submitProduct(){
   const name = document.getElementById("name").value.trim()
   const price = parseInt(document.getElementById("price").value)
   const qty = parseInt(document.getElementById("qty").value)
-  if(!sku || !name || !price || !qty) return alert("Lengkapi data!")
+  const category = document.getElementById("category").value
+  if(!sku || !name || !price || !qty || !category) return alert("Lengkapi data!")
   
   const exist = products.find(p => p.sku === sku)
   if(exist){
     exist.qty += qty
     exist.price = price
+    exist.category = category
   } else {
-    products.push({sku, name, price, qty})
+    products.push({sku, name, price, qty, category})
   }
 
-  localStorage.setItem("products", JSON.stringify(products))
-  render()
-  resetForm()
+  saveProductsToFirebase();
+  render();
+  resetForm();
   showToast("Berhasil ditambahkan!")
 }
 
@@ -1132,6 +1656,7 @@ function resetForm(){
   document.getElementById("name").value=""
   document.getElementById("price").value=""
   document.getElementById("qty").value=""
+  document.getElementById("category").value=""
   document.getElementById("formSubmitBtn").textContent="Tambah"
 }
 
@@ -1142,14 +1667,15 @@ function editProduct(sku){
   document.getElementById("name").value=p.name
   document.getElementById("price").value=p.price
   document.getElementById("qty").value=p.qty
+  document.getElementById("category").value=p.category || ""
   document.getElementById("formSubmitBtn").textContent="Update"
 }
 
 function deleteProduct(sku){
   if(!confirm("Hapus produk ini?")) return
-  products=products.filter(p=>p.sku!==sku)
-  localStorage.setItem("products",JSON.stringify(products))
-  render()
+  products = products.filter(p=>p.sku!==sku);
+  saveProductsToFirebase();
+  render();
 }
 
 function updateRestockDropdown(){
@@ -1163,6 +1689,87 @@ function updateRestockDropdown(){
   })
 }
 
+/* ---------- Product Grid Functions ---------- */
+let currentCategory = 'all';
+let selectedProduct = null;
+
+function renderProductGrid() {
+  const grid = document.getElementById("productGrid");
+  const searchValue = document.getElementById("productSearchInput").value.toLowerCase().trim();
+  
+  // Filter products based on category and search
+  let filteredProducts = products.filter(p => {
+    const matchesCategory = currentCategory === 'all' || (p.category && p.category === currentCategory);
+    const matchesSearch = p.name.toLowerCase().includes(searchValue) || p.sku.toLowerCase().includes(searchValue);
+    return matchesCategory && matchesSearch;
+  });
+  
+  grid.innerHTML = "";
+  
+  if (filteredProducts.length === 0) {
+    grid.innerHTML = '<div class="muted" style="text-align:center;padding:20px">Tidak ada produk yang sesuai</div>';
+    return;
+  }
+  
+  filteredProducts.forEach(p => {
+    const card = document.createElement("div");
+    card.className = "product-card";
+    if (selectedProduct && selectedProduct.sku === p.sku) {
+      card.classList.add("selected");
+    }
+    
+    // Determine stock status
+    const stockClass = p.qty <= 5 ? "low" : "";
+    
+    card.innerHTML = `
+      <div class="product-name">${p.name}</div>
+      <div class="product-price">${formatRupiahNumber(p.price)}</div>
+      <div class="product-stock ${stockClass}">Stok: ${p.qty}</div>
+      <div class="product-actions">
+        <input type="number" class="product-quantity" id="qty-${p.sku}" value="1" min="1" max="${p.qty}">
+        <button class="product-add-btn" onclick="addProductFromGrid('${p.sku}')">Tambah</button>
+      </div>
+    `;
+    
+    card.onclick = function(e) {
+      // Don't select if clicking on input or button
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+      selectProduct(p.sku);
+    };
+    
+    grid.appendChild(card);
+  });
+}
+
+function selectProduct(sku) {
+  selectedProduct = products.find(p => p.sku === sku);
+  renderProductGrid();
+}
+
+function filterByCategory(category) {
+  currentCategory = category;
+  
+  // Update active tab
+  document.querySelectorAll('.category-tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  
+  renderProductGrid();
+}
+
+function filterProducts() {
+  renderProductGrid();
+}
+
+function addProductFromGrid(sku) {
+  const qtyInput = document.getElementById(`qty-${sku}`);
+  const qty = parseInt(qtyInput.value) || 1;
+  
+  addToCart(sku, qty);
+  qtyInput.value = 1; // Reset quantity input
+}
+  
 /* ---------- restock ---------- */
 function restockProduct(event) {
   if (event) event.preventDefault();
@@ -1183,9 +1790,8 @@ function restockProduct(event) {
   }
 
   p.qty += qty;
-  localStorage.setItem("products", JSON.stringify(products));
+  saveProductsToFirebase();
 
-  let restocks = JSON.parse(localStorage.getItem("restocks")) || [];
   const restockData = {
     date: getLocalDateTime(),
     sku: p.sku,
@@ -1194,10 +1800,9 @@ function restockProduct(event) {
     stockAfter: p.qty
   };
   restocks.push(restockData);
-  localStorage.setItem("restocks", JSON.stringify(restocks));
+  saveRestocksToFirebase();
 
   render();
-  loadRestock();
   qtyInput.value = "";
 
   showRestockAlert(`✅ Anda berhasil menambahkan stok "${p.name}". Periksa kembali di daftar produk.`);
@@ -1249,54 +1854,105 @@ function showRestockAlert(message) {
 }
   
 /* ---------- CART & CHECKOUT ---------- */
-function addToCart(sku){
-  const p=products.find(x=>x.sku===sku)
-  if(!p) return alert("Produk tidak ditemukan")
-  if(p.qty <= 0) return alert("Produk telah habis, isi stok dahulu")
-  const cartItem=cart.find(c=>c.sku===sku)
-  if(cartItem){
-    if(cartItem.qty>=p.qty) return alert("Stok tidak cukup")
-    cartItem.qty+=1
-  }else{
-    cart.push({sku:p.sku,name:p.name,price:p.price,qty:1})
+function addToCart(sku, qty = 1){
+  const p = products.find(x => x.sku === sku);
+  if (!p) return alert("Produk tidak ditemukan");
+  if (p.qty <= 0) return alert("Produk telah habis, isi stok dahulu");
+
+  if (pendingPaidInvoice) {
+    pendingPaidInvoice = null;
+    localStorage.removeItem('pendingPaidInvoice');
+    showToast("Transaksi sebelumnya dibatalkan. Memulai transaksi baru.");
   }
-  renderCart()
+
+  const cartItem = cart.find(c => c.sku === sku);
+  if (cartItem) {
+    if (cartItem.qty + qty > p.qty) return alert("Stok tidak cukup");
+    cartItem.qty += qty;
+  } else {
+    // Tambahkan properti 'discount: 0' saat produk baru ditambahkan
+    cart.push({ sku: p.sku, name: p.name, price: p.price, qty: qty, discount: 0 });
+  }
+  renderCart();
+}
+
+function updateItemDiscount(sku, discountValue) {
+  const item = cart.find(c => c.sku === sku);
+  if (item) {
+    // Pastikan nilai diskon tidak negatif
+    const discount = Math.max(0, parseInt(discountValue) || 0);
+    item.discount = discount;
+    renderCart(); // Render ulang keranjang untuk memperbarui total
+  }
 }
 
 function renderCart(){
-  const el=document.getElementById("cart")
-  const count=document.getElementById("cartCount")
-  const count2=document.getElementById("cartCount2")
-  const checkoutBtn=document.getElementById("checkoutBtn")
-  if(cart.length===0){
-    el.innerHTML='<i class="muted">Keranjang kosong</i>';count.textContent="0";count2.textContent="0"; checkoutBtn.disabled=true;document.getElementById("total").textContent="Rp 0"; return
+  const el = document.getElementById("cart");
+  const count = document.getElementById("cartCount");
+  const count2 = document.getElementById("cartCount2");
+  const checkoutBtn = document.getElementById("checkoutBtn");
+  if (cart.length === 0) {
+    el.innerHTML = '<i class="muted">Keranjang kosong</i>';
+    count.textContent = "0"; count2.textContent = "0";
+    checkoutBtn.disabled = true;
+    document.getElementById("total").textContent = "Rp 0";
+    return;
   }
-  let html="<table style='width:100%'>", total=0
-  cart.forEach((c,i)=>{
-    total+=c.price*c.qty
+
+  let html = "<table style='width:100%'>";
+  const totals = computeCartTotals();
+
+  cart.forEach((c) => {
+    const originalSubtotal = c.price * c.qty;
+    const itemDiscountTotal = c.discount * c.qty;
+    const finalSubtotal = originalSubtotal - itemDiscountTotal;
+
     html += `
     <tr>
-    <td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-      ${c.name} <span style="color:#6b7280;">x${c.qty}</span>
-    </td>
-    <td style="text-align:right;">Rp ${(c.price*c.qty).toLocaleString()}</td>
-    <td style="text-align:center;">
-      <button class="small ghost" onclick="removeFromCart('${c.sku}')">-</button>
-    </td>
-  </tr>`;
-  })
-  html+="</table>"
-  el.innerHTML=html
-  count.textContent=cart.length
-  count2.textContent=cart.length
-  checkoutBtn.disabled=false
-  document.getElementById("total").textContent="Rp "+total.toLocaleString()
+      <td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+        ${c.name} <span style="color:#6b7280;">x${c.qty}</span>
+      </td>
+      <td style="text-align:right;">Rp ${finalSubtotal.toLocaleString()}</td>
+      <td style="text-align:center;">
+        <button class="small ghost" onclick="removeFromCart('${c.sku}')">-</button>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="3" style="padding: 0; font-size: 11px;">
+        <div style="display:flex; align-items:center; gap:4px;">
+          <span class="muted">Promo:</span>
+          <input type="number" 
+                 value="${c.discount}" 
+                 onchange="updateItemDiscount('${c.sku}', this.value)"
+                 style="width:80px; padding:2px; font-size:11px; text-align:right;"
+                 placeholder="0">
+          <span class="muted">/unit</span>
+        </div>
+      </td>
+    </tr>`;
+  });
 
-  // if there is a pending paid invoice for this cart, show "Selesaikan Penjualan" label
-  if(pendingPaidInvoice){
-    document.getElementById("checkoutBtn").textContent = "Selesaikan Penjualan"
+  html += "</table>";
+
+  // Tampilkan total diskon per produk
+  if (totals.perProductDiscountTotal > 0) {
+    html += `<div style="margin-top:6px;color:#16a34a;font-weight:600">Total potongan promo: -${formatRupiahNumber(totals.perProductDiscountTotal)}</div>`;
+  }
+  // Tampilkan total diskon persen
+  if (totals.percentDiscountAmount > 0) {
+    html += `<div style="margin-top:4px;color:#16a34a;font-weight:600">Potongan diskon total: -${formatRupiahNumber(totals.percentDiscountAmount)} (${discountTotalPercent}%)</div>`;
+  }
+
+  el.innerHTML = html;
+  count.textContent = cart.length;
+  count2.textContent = cart.length;
+  checkoutBtn.disabled = false;
+  document.getElementById("total").textContent = "Rp " + totals.finalTotal.toLocaleString();
+
+  if (pendingPaidInvoice) {
+    document.getElementById("checkoutBtn").textContent = "Selesaikan Penjualan";
   } else {
-    document.getElementById("checkoutBtn").textContent = "Bayar"
+    document.getElementById("checkoutBtn").textContent = "Bayar";
   }
 }
 
@@ -1333,21 +1989,55 @@ function parseStoredDate(dateString) {
 
 /* ---------- Restock load/export ---------- */
 /* Perbaiki loadRestock agar aman tanpa error */
-function loadRestock() {
-  const restocks = JSON.parse(localStorage.getItem("restocks")) || [];
+function loadRestock(showNotification = true) {
   const tbody = document.getElementById("restockTableBody");
   if (!tbody) return;
 
-  tbody.innerHTML = "";
+  // Ambil nilai dari filter
+  const from = document.getElementById("filterRestockFrom").value;
+  const to = document.getElementById("filterRestockTo").value;
+  const month = document.getElementById("restockMonth").value;
 
-  if (restocks.length === 0) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="6" style="text-align:center;padding:10px" class="muted">Belum ada data restock.</td>`;
-    tbody.appendChild(tr);
+  // 1. Validasi: Cek apakah ada filter yang dipilih
+  if (!from && !to && !month) {
+    if (showNotification) {
+      showRestockAlert("⚠️ Silahkan pilih rentan tanggal/bulan/tahun dahulu sesuai data yang mau anda cari.");
+    }
+    // Tampilkan pesan di tabel
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:10px" class="muted">Pilih filter tanggal untuk melihat laporan.</td></tr>`;
     return;
   }
 
-  restocks.slice().reverse().forEach((r, i) => {
+  tbody.innerHTML = "";
+
+  // 2. Filter data berdasarkan input
+  let filteredRestocks = restocks;
+
+  if (from || to) {
+    const startDate = from ? new Date(from) : new Date('1970-01-01');
+    const endDate = to ? new Date(to) : new Date('2999-12-31');
+    endDate.setHours(23, 59, 59, 999);
+
+    filteredRestocks = restocks.filter(r => {
+      if (!r.date) return false;
+      const restockDate = new Date(r.date);
+      return restockDate >= startDate && restockDate <= endDate;
+    });
+  } else if (month) {
+    filteredRestocks = restocks.filter(r => r.date && r.date.startsWith(month));
+  }
+
+  // 3. Tampilkan hasil yang sudah difilter
+  if (filteredRestocks.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:10px" class="muted">Tidak ada data restock pada periode yang dipilih.</td></tr>`;
+    if (showNotification) {
+      showRestockAlert("📭 Tidak ada data restok pada periode yang dipilih.");
+    }
+    return;
+  }
+
+  // Jika ada data, tampilkan di tabel
+  filteredRestocks.slice().reverse().forEach((r, i) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${i + 1}</td>
@@ -1359,32 +2049,14 @@ function loadRestock() {
     `;
     tbody.appendChild(tr);
   });
+
+  if (showNotification) {
+    showRestockAlert("✅ Laporan restok ditampilkan.");
+  }
 }
   
-  /* ======== TOMBOL TAMPILKAN ======== */
+/* ======== TOMBOL TAMPILKAN ======== */
 function exportRestock() {
-  const restocks = JSON.parse(localStorage.getItem("restocks")) || [];
-  if (!restocks.length) {
-    showRestockAlert("⚠️ Belum ada data restock untuk diekspor.");
-    return;
-  }
-
-  let csv = "Tanggal,SKU,Nama,Jumlah,Stok Akhir\n";
-  restocks.forEach(r => {
-    csv += `${r.date},${r.sku},${r.name},${r.qty},${r.stockAfter}\n`;
-  });
-
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "laporan_restock.csv";
-  link.click();
-  URL.revokeObjectURL(url);
-  showRestockAlert("✅ File CSV restock berhasil diunduh.");
-}
-  function exportRestockCSV() {
-  const restocks = JSON.parse(localStorage.getItem("restocks")) || [];
   if (!restocks.length) {
     showRestockAlert("⚠️ Belum ada data restock untuk diekspor.");
     return;
@@ -1405,7 +2077,28 @@ function exportRestock() {
   showRestockAlert("✅ File CSV restock berhasil diunduh.");
 }
 
-  /* ======== EXPORT RESTOCK BULANAN ======== */
+function exportRestockCSV() {
+  if (!restocks.length) {
+    showRestockAlert("⚠️ Belum ada data restock untuk diekspor.");
+    return;
+  }
+
+  let csv = "Tanggal,SKU,Nama,Jumlah,Stok Akhir\n";
+  restocks.forEach(r => {
+    csv += `${r.date},${r.sku},${r.name},${r.qty},${r.stockAfter}\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "laporan_restock.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+  showRestockAlert("✅ File CSV restock berhasil diunduh.");
+}
+
+/* ======== EXPORT RESTOCK BULANAN ======== */
 function exportRestockByMonth() {
   const monthInput = document.getElementById("restockMonth");
   if (!monthInput || !monthInput.value) {
@@ -1413,10 +2106,9 @@ function exportRestockByMonth() {
     return;
   }
 
-  const selectedMonth = monthInput.value; // contoh: "2025-10"
-  const restocks = JSON.parse(localStorage.getItem("restocks")) || [];
+  const selectedMonth = monthInput.value;
 
-  // Filter berdasarkan bulan (format tanggal di restocks pakai getLocalDateTime)
+  // Filter berdasarkan bulan
   const filtered = restocks.filter(r => r.date && r.date.startsWith(selectedMonth));
 
   if (!filtered.length) {
@@ -1474,8 +2166,16 @@ function printRestock() {
 // tombol "Clear Restock"
 function clearRestocks() {
   if (!confirm("Yakin ingin menghapus semua data restock (barang masuk)?")) return;
-  localStorage.removeItem("restocks");
-  loadRestock();
+  
+  restocks = [];
+  saveRestocksToFirebase();
+  
+  // Kosongkan tabel secara manual dan tampilkan pesan
+  const tbody = document.getElementById("restockTableBody");
+  if (tbody) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:10px" class="muted">Belum ada data restock.</td></tr>`;
+  }
+  
   showRestockAlert("🗑️ Semua data restock berhasil dihapus.");
 }
 
@@ -1495,8 +2195,6 @@ function exportRestockByRange() {
     showRestockAlert("⚠️ Rentang tanggal tidak valid!");
     return;
   }
-
-  const restocks = JSON.parse(localStorage.getItem("restocks")) || [];
 
   // Filter berdasarkan rentang tanggal
   const filtered = restocks.filter(r => {
@@ -1525,6 +2223,7 @@ function exportRestockByRange() {
 
   showRestockAlert("✅ File CSV berdasarkan rentang tanggal berhasil diunduh.");
 }
+
 /* ---------- PAYMENT FLOW (updated per request) ---------- */
 
 /* open payment modal */
@@ -1541,8 +2240,8 @@ function checkout(){
   selectedPaymentMethod = null
   document.querySelectorAll('.pm-btn').forEach(b=>b.classList.remove('active'))
   document.getElementById('payDebug').textContent = ''
-  const total = cart.reduce((s,i)=>s + i.price*i.qty, 0)
-  document.getElementById('payTotal').textContent = "Rp " + total.toLocaleString()
+  const totals = computeCartTotals();
+  document.getElementById('payTotal').textContent = "Rp " + totals.finalTotal.toLocaleString()
   document.getElementById('paymentModal').style.display = 'flex'
 }
 
@@ -1562,7 +2261,9 @@ function selectPaymentMethod(method, el){
   if(method === 'transfer') info = 'Transfer bank: Tunjukkan nomor VA / rekening ke pembeli. Konfirmasi manual atau otomatis melalui gateway.'
   if(method === 'card') info = 'Kartu/EDC: Lakukan pembayaran melalui mesin EDC (fisik).'
   if(method === 'qris') info = 'QRIS / e-wallet: Tampilkan QR untuk dipindai pembeli. Setelah terbayar, konfirmasi.'
-  document.getElementById('paymentInfoBox').innerHTML = `<div class="pay-instr">${info}</div><div>Total: <strong id="payTotal">Rp ${cart.reduce((s,i)=>s+i.price*i.qty,0).toLocaleString()}</strong></div>`
+  if(method === 'midtrans') info = 'Pembayaran online: Proses pembayaran melalui berbagai metode digital (kartu kredit, e-wallet, dll).'
+  const totals = computeCartTotals();
+  document.getElementById('paymentInfoBox').innerHTML = `<div class="pay-instr">${info}</div><div>Total: <strong id="payTotal">Rp ${totals.finalTotal.toLocaleString()}</strong></div>`
 }
 
 /* confirm payment: immediately reduce stock, create pending transaction, show receipt preview (print allowed), but DO NOT finalize sale yet */
@@ -1570,31 +2271,103 @@ function confirmPayment(){
   if(!selectedPaymentMethod) return alert("Pilih metode pembayaran terlebih dahulu")
   if(cart.length === 0) return alert("Keranjang kosong")
 
-  // disable button briefly
+  // Jika metode pembayaran adalah Midtrans (bukan tunai)
+  if(selectedPaymentMethod === 'midtrans') {
+    const totals = computeCartTotals();
+    const total = totals.finalTotal;
+    
+    // Buat data transaksi untuk Midtrans
+    const transactionData = {
+      transaction_details: {
+        order_id: 'INV' + Date.now(),
+        gross_amount: total
+      },
+      item_details: cart.map(item => ({
+        id: item.sku,
+        price: item.price,
+        quantity: item.qty,
+        name: item.name
+      })),
+      customer_details: {
+        first_name: "Customer",
+        email: "customer@example.com",
+        phone: "08123456789"
+      }
+    };
+    
+    // Request snap token ke server Anda
+    fetch('https://your-server.com/get-snap-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(transactionData)
+    })
+    .then(response => response.json())
+    .then(data => {
+      // Buka popup pembayaran Midtrans
+      window.snap.pay(data.token, {
+        onSuccess: function(result) {
+          // Pembayaran berhasil
+          processSuccessfulPayment(result, transactionData);
+        },
+        onPending: function(result) {
+          // Pembayaran pending
+          showToast("Pembayaran sedang diproses");
+        },
+        onError: function(result) {
+          // Pembayaran gagal
+          showToast("Pembayaran gagal: " + result.status_message);
+        },
+        onClose: function() {
+          // Popup ditutup tanpa pembayaran
+          showToast("Pembayaran dibatalkan");
+        }
+      });
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      showToast("Terjadi kesalahan saat memproses pembayaran");
+    });
+  } else {
+    // Proses pembayaran tunai seperti biasa
+    processCashPayment();
+  }
+}
+
+// Fungsi untuk memproses pembayaran tunai
+function processCashPayment() {
   const btn = document.getElementById('confirmPayBtn')
   btn.disabled = true
   btn.textContent = "Memproses..."
   setTimeout(()=> {
-    // create invoice and transaction
     const invoice = 'INV' + Date.now()
     const now = new Date()
     const date = now.toISOString()
     const dateDisplay = now.toLocaleString()
-    const total = cart.reduce((s,i)=>s + i.price*i.qty, 0)
+    const totals = computeCartTotals();
+    const total = totals.finalTotal;
 
     const transaction = {
       invoice,
       date,
       dateDisplay,
-      items: JSON.parse(JSON.stringify(cart)), // snapshot of items
+      items: JSON.parse(JSON.stringify(cart)),
       total,
+      discountTotalPercent: discountTotalPercent,
+      totalsBreakdown: {
+        subtotalBefore: totals.subtotalBefore,
+        perProductDiscountTotal: totals.perProductDiscountTotal,
+        percentDiscountAmount: totals.percentDiscountAmount,
+        finalTotal: totals.finalTotal
+      },
       method: selectedPaymentMethod,
-      status: 'paid',      // already paid
+      status: 'paid',
       finalized: false,
       completedAt: null
     }
 
-    // 1) reduce stock immediately (per request)
+    // Kurangi stok
     transaction.items.forEach(it => {
       const p = products.find(x=>x.sku===it.sku)
       if(p){
@@ -1602,26 +2375,75 @@ function confirmPayment(){
       }
     })
 
-    // 2) save products & sales (save as pending sale in sales list)
+    // Simpan transaksi
     sales.push(transaction)
-    localStorage.setItem('sales', JSON.stringify(sales))
-    localStorage.setItem('products', JSON.stringify(products))
+    saveSalesToFirebase();
+    saveProductsToFirebase();
 
-    // 3) mark pendingPaidInvoice so UI shows "Selesaikan Penjualan"
     pendingPaidInvoice = invoice
     localStorage.setItem('pendingPaidInvoice', invoice)
 
-    // 4) close payment modal and show receipt preview modal with transaction details
     btn.disabled = false
     btn.textContent = "Konfirmasi Pembayaran"
     closePaymentModal()
-    renderCart(); renderFinalStock(); loadRestock()
+    renderCart(); renderFinalStock(); loadSales();
 
-    // open preview
     openReceiptPreview(invoice)
-
     showToast("Pembayaran tercatat. Cetak struk atau selesaikan penjualan untuk memasukkan laporan.")
   }, 700)
+}
+
+// Fungsi untuk memproses pembayaran Midtrans berhasil
+function processSuccessfulPayment(result, transactionData) {
+  const invoice = transactionData.transaction_details.order_id;
+  const now = new Date();
+  const date = now.toISOString();
+  const dateDisplay = now.toLocaleString();
+  const totals = computeCartTotals();
+  const total = totals.finalTotal;
+
+  const transaction = {
+    invoice,
+    date,
+    dateDisplay,
+    items: JSON.parse(JSON.stringify(cart)),
+    total,
+    discountTotalPercent: discountTotalPercent,
+    totalsBreakdown: {
+      subtotalBefore: totals.subtotalBefore,
+      perProductDiscountTotal: totals.perProductDiscountTotal,
+      percentDiscountAmount: totals.percentDiscountAmount,
+      finalTotal: totals.finalTotal
+    },
+    method: 'midtrans',
+    status: 'paid',
+    finalized: true,
+    completedAt: getLocalDateTime(),
+    paymentResult: result
+  };
+
+  // Kurangi stok
+  transaction.items.forEach(it => {
+    const p = products.find(x=>x.sku===it.sku);
+    if(p){
+      p.qty = Math.max(0, p.qty - it.qty);
+    }
+  });
+
+  // Simpan transaksi
+  sales.push(transaction);
+  saveSalesToFirebase();
+  saveProductsToFirebase();
+
+  // Bersihkan keranjang
+  cart = [];
+  renderCart();
+  renderFinalStock();
+  loadSales();
+
+  // Tampilkan struk
+  openReceiptPreview(invoice);
+  showToast("Pembayaran berhasil! Struk telah dicetak.");
 }
 
 /* open receipt preview modal for given invoice */
@@ -1630,15 +2452,33 @@ function openReceiptPreview(invoice){
   if(!tx) return alert("Transaksi tidak ditemukan")
   const modal = document.getElementById('receiptPreviewModal')
   const content = document.getElementById('receiptPreviewContent')
+
+  // build items with original price struck and discounted price
+  let itemsHtml = `<table style="width:100%;margin-top:8px;border-collapse:collapse">
+      <thead><tr><th style="text-align:left">Nama</th><th style="text-align:center">Qty</th><th style="text-align:right">Harga Normal</th></tr></thead>
+      <tbody>`
+  tx.items.forEach(i=>{
+    const normal = i.price * i.qty;
+    // --- PERBAIKAN: Gunakan diskon dari item (i.discount) ---
+    const perItemDiscount = Math.min(normal, (i.discount || 0) * i.qty);
+    const afterPerItem = normal - perItemDiscount;
+    itemsHtml += `<tr><td>${i.name}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right"><del>Rp ${normal.toLocaleString()}</del><br/>Rp ${afterPerItem.toLocaleString()}${perItemDiscount>0?` <small style=\"color:#16a34a\">(-${formatRupiahNumber(perItemDiscount)})</small>`:''}</td></tr>`;
+  })
+  itemsHtml += `</tbody></table>`;
+
+  let summaryHtml = `<div style="text-align:right;margin-top:8px;font-weight:600">Subtotal sebelum diskon: Rp ${tx.totalsBreakdown.subtotalBefore.toLocaleString()}</div>`;
+  if(tx.totalsBreakdown.perProductDiscountTotal > 0){
+    summaryHtml += `<div style="text-align:right;color:#16a34a">Potongan per produk: -${formatRupiahNumber(tx.totalsBreakdown.perProductDiscountTotal)}</div>`;
+  }
+  if(tx.totalsBreakdown.percentDiscountAmount > 0){
+    summaryHtml += `<div style="text-align:right;color:#16a34a">Diskon total belanja (${tx.discountTotalPercent}%): -${formatRupiahNumber(tx.totalsBreakdown.percentDiscountAmount)}</div>`;
+  }
+  summaryHtml += `<div style="text-align:right;margin-top:6px;font-size:1.1rem">Total akhir: Rp ${tx.totalsBreakdown.finalTotal.toLocaleString()}</div>`;
+
   content.innerHTML = `<div class="muted">Invoice: <strong>${tx.invoice}</strong></div>
     <div class="muted">Tanggal: ${tx.dateDisplay || tx.date}</div>
-    <table style="width:100%;margin-top:8px;border-collapse:collapse">
-      <thead><tr><th style="text-align:left">Nama</th><th style="text-align:center">Qty</th><th style="text-align:right">Subtotal</th></tr></thead>
-      <tbody>
-        ${tx.items.map(i=>`<tr><td>${i.name}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">Rp ${(i.price*i.qty).toLocaleString()}</td></tr>`).join('')}
-      </tbody>
-    </table>
-    <div style="text-align:right;margin-top:8px;font-weight:600">Total: Rp ${tx.total.toLocaleString()}</div>
+    ${itemsHtml}
+    ${summaryHtml}
     <div style="margin-top:6px" class="muted">Metode: ${tx.method || '-'}</div>
   `
   document.getElementById('receiptPreviewModal').style.display = 'flex'
@@ -1647,6 +2487,7 @@ function openReceiptPreview(invoice){
 /* close receipt preview */
 function closeReceiptPreview(){
   document.getElementById('receiptPreviewModal').style.display = 'none'
+  showToast("✅ Proses penjualan selesai. Struk telah dicatat di laporan.")
 }
 
 /* print pending receipt (does NOT finalize sale) */
@@ -1663,49 +2504,37 @@ function printPendingReceipt(){
 }
 
 /* finalizePendingSale: mark sale as finalized and add to daily report. This does NOT change stock (already reduced on confirm). */
-function finalizePendingSale() {
-  // Ambil data penjualan yang sedang pending (misal dari localStorage)
-  const pendingSale = JSON.parse(localStorage.getItem("pendingSale")) || null;
-  if (!pendingSale || !pendingSale.items || !pendingSale.items.length) {
-    showToast("⚠️ Tidak ada transaksi yang perlu diselesaikan.");
-    return;
+function finalizePendingSale(){
+  if(!pendingPaidInvoice) return alert("Tidak ada transaksi untuk diselesaikan.")
+  const idx = sales.findIndex(s => s.invoice === pendingPaidInvoice)
+  if(idx === -1) return alert("Transaksi tidak ditemukan")
+  const tx = sales[idx]
+  if(tx.finalized){
+    showToast("Transaksi sudah diselesaikan.")
+    document.getElementById('receiptPreviewModal').style.display = 'none'
+    pendingPaidInvoice = null
+    localStorage.removeItem('pendingPaidInvoice')
+    renderCart(); render(); renderFinalStock();
+    return
   }
 
-  // Ambil daftar produk
-  const products = JSON.parse(localStorage.getItem("products")) || [];
+  tx.finalized = true
+  tx.status = 'completed'
+  tx.completedAt = getLocalDateTime()
+  sales[idx] = tx
+  saveSalesToFirebase()
 
-  // Loop setiap item penjualan dan kurangi stok
-  pendingSale.items.forEach(soldItem => {
-    const product = products.find(p => p.sku === soldItem.sku);
-    if (product) {
-      product.qty = Math.max(0, product.qty - soldItem.qty); // pastikan gak negatif
-    }
-  });
+  // clear pending, clear cart (sale has been finalized)
+  pendingPaidInvoice = null
+  localStorage.removeItem('pendingPaidInvoice')
+  cart = []
 
-  // Simpan hasil pengurangan stok ke localStorage
-  localStorage.setItem("products", JSON.stringify(products));
+  renderFinalStock();
+  renderCart();
+  render();
 
-  // Simpan juga data penjualan ke laporan sales (kalau belum otomatis)
-  const sales = JSON.parse(localStorage.getItem("sales")) || [];
-  const saleRecord = {
-    date: new Date().toISOString(),
-    dateDisplay: new Date().toLocaleString("id-ID"),
-    invoice: pendingSale.invoice || `INV-${Date.now()}`,
-    items: pendingSale.items,
-    total: pendingSale.total || 0
-  };
-  sales.push(saleRecord);
-  localStorage.setItem("sales", JSON.stringify(sales));
-
-  // Hapus pending sale (karena sudah diselesaikan)
-  localStorage.removeItem("pendingSale");
-
-  // Update tampilan daftar produk langsung tanpa refresh
-  if (typeof render === "function") render();
-  else if (typeof loadProducts === "function") loadProducts();
-
-  // Notifikasi sukses
-  showToast("✅ Penjualan diselesaikan dan stok produk berhasil diperbarui.");
+  document.getElementById('receiptPreviewModal').style.display = 'none'
+  showToast("Penjualan diselesaikan.")
 }
 
 /* finishSale kept for backward compat (calls finalizePendingSale) */
@@ -1723,7 +2552,7 @@ function finishSale(invoice){
   tx.status = 'completed'
   tx.completedAt = getLocalDateTime()
   sales[idx] = tx
-  localStorage.setItem('sales', JSON.stringify(sales))
+  saveSalesToFirebase()
 
   // clear pending
   pendingPaidInvoice = null
@@ -1734,6 +2563,7 @@ function finishSale(invoice){
 }
 
 /* ---------- print receipt (opens print dialog) ---------- */
+
 function printReceipt(t){
   let html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;padding:8px">`
   html += `<h3 style="margin:4px 0">Struk Pembelian</h3>`
@@ -1742,12 +2572,24 @@ function printReceipt(t){
   html += `<div>Metode: ${t.method || '-'}</div>`
   html += `<hr/>`
   html += `<table style="width:100%;border-collapse:collapse;font-size:12px">`
-  html += `<tr><th align="left">Nama</th><th>Qty</th><th align="right">Subtotal</th></tr>`
+  html += `<tr><th align="left">Nama</th><th>Qty</th><th align="right">Harga</th></tr>`
   t.items.forEach(i=>{
-    html += `<tr><td>${i.name}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">Rp ${(i.price*i.qty).toLocaleString()}</td></tr>`
+    const normal = i.price * i.qty;
+    // --- PERBAIKAN: Gunakan diskon dari item (i.discount) ---
+    const perItemDiscount = Math.min(normal, (i.discount || 0) * i.qty);
+    const afterPerItem = normal - perItemDiscount;
+    html += `<tr><td>${i.name}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right"><del>Rp ${normal.toLocaleString()}</del><br/>Rp ${afterPerItem.toLocaleString()}${perItemDiscount>0?` (-${formatRupiahNumber(perItemDiscount)})`:''}</td></tr>`
   })
   html += `</table><hr/>`
-  html += `<h4 style="text-align:right;margin:6px 0">Total: Rp ${t.total.toLocaleString()}</h4>`
+  // summary
+  html += `<div style="text-align:right">Subtotal sebelum diskon: Rp ${t.totalsBreakdown.subtotalBefore.toLocaleString()}</div>`
+  if(t.totalsBreakdown.perProductDiscountTotal > 0){
+    html += `<div style="text-align:right;color:#16a34a">Potongan per produk: -${formatRupiahNumber(t.totalsBreakdown.perProductDiscountTotal)}</div>`
+  }
+  if(t.totalsBreakdown.percentDiscountAmount > 0){
+    html += `<div style="text-align:right;color:#16a34a">Diskon total belanja (${t.discountTotalPercent}%): -${formatRupiahNumber(t.totalsBreakdown.percentDiscountAmount)}</div>`
+  }
+  html += `<h4 style="text-align:right;margin:6px 0">Total akhir: Rp ${t.totalsBreakdown.finalTotal.toLocaleString()}</h4>`
   html += `</div>`
 
   const w = window.open("","_blank","width=400,height=600")
@@ -1766,7 +2608,7 @@ function printReceipt(t){
   }
 }
 
-  function printSales() {
+function printSales() {
   const table = document.getElementById("salesTbl");
   if (!table) {
     showSalesAlert("⚠️ Tabel laporan penjualan tidak ditemukan.");
@@ -1800,12 +2642,18 @@ function printReceipt(t){
   printWindow.focus();
   printWindow.print();
 }
-  function clearSales() {
+
+function clearSales() {
+  if (sales.length === 0) {
+    showSalesAlert("Tidak ada data yang dapat dihapus, silahkan lakukan penjualan.");
+    return;
+  }
+    
   // konfirmasi sebelum hapus
   if (!confirm("Yakin ingin menghapus semua data laporan penjualan?")) return;
 
-  // hapus semua data penjualan dari localStorage
-  localStorage.removeItem("sales");
+  sales = [];
+  saveSalesToFirebase();
 
   // bersihkan tabel di halaman
   const tbody = document.querySelector("#salesTbl tbody");
@@ -1813,11 +2661,9 @@ function printReceipt(t){
 
   // tampilkan notifikasi sukses
   showSalesAlert("🗑️ Semua data laporan penjualan berhasil dihapus.");
-
-  // refresh tampilan
-  loadSales();
 }
-  function clearSalesByRange() {
+
+function clearSalesByRange() {
   const fromEl = document.getElementById("filterFrom");
   const toEl = document.getElementById("filterTo");
 
@@ -1834,12 +2680,6 @@ function printReceipt(t){
     return;
   }
 
-  const sales = JSON.parse(localStorage.getItem("sales")) || [];
-  if (!sales.length) {
-    showSalesAlert("📭 Tidak ada data penjualan untuk dihapus.");
-    return;
-  }
-
   // filter hanya data di luar rentang (biar yang di range kehapus)
   const kept = sales.filter(s => {
     const d = new Date(s.date || s.dateDisplay || "");
@@ -1847,7 +2687,8 @@ function printReceipt(t){
   });
 
   // simpan ulang data yang tersisa
-  localStorage.setItem("sales", JSON.stringify(kept));
+  saveSalesToFirebase();
+  sales = kept;
 
   // refresh tabel
   loadSales();
@@ -1983,12 +2824,69 @@ function handleScan(msg) {
 function scanSku() { openCamera("sku"); }
 function startScan(target) { openCamera(target); }
 
+/* ============================================================
+   🔹 SUPPORT ALAT SCANNER BARCODE (USB / Bluetooth / External)
+   ============================================================ */
+
+let scannerBuffer = "";
+let scannerTimer = null;
+
+// Deteksi input dari alat scanner (emulasi keyboard)
+document.addEventListener("keydown", function (e) {
+  const active = document.activeElement;
+  const activeTag = active ? active.tagName.toLowerCase() : "";
+
+  // Jika mengetik manual di input atau textarea, abaikan
+  if (activeTag === "input" || activeTag === "textarea") return;
+
+  // Jika scanner mengirim "Enter", artinya scan selesai
+  if (e.key === "Enter") {
+    let scannedCode = scannerBuffer.trim();
+    // buang karakter aneh dari hasil scanner (Shift, ctrl code, dsb)
+    scannedCode = scannedCode.replace(/shift|ctrl|alt|\(|\)|[^\w\-]/gi, "");
+    scannerBuffer = "";
+    if (!scannedCode) return;
+
+    // Cek apakah sedang di mode tambah produk (input SKU)
+    const skuInput = document.getElementById("sku");
+    if (skuInput && document.hasFocus && skuInput === document.activeElement) {
+      skuInput.value = scannedCode;
+      showToast(`📦 SKU diisi: ${scannedCode}`);
+      return;
+    }
+
+    // Kalau tidak, berarti sedang mode penjualan → cari produk
+    const product = products.find(p => p.sku === scannedCode);
+    if (product) {
+      addToCart(product.sku);
+      showToast(`✅ ${product.name} ditambahkan ke keranjang`);
+    } else {
+      showToast(`⚠️ Produk dengan kode "${scannedCode}" tidak ditemukan`);
+    }
+    return;
+  }
+
+  // Gabungkan karakter hasil scan ke buffer (scanner cepat <300ms)
+  if (scannerTimer) clearTimeout(scannerTimer);
+  scannerBuffer += e.key;
+  scannerTimer = setTimeout(() => (scannerBuffer = ""), 300);
+});
+
+function scanSku() {
+  try {
+    openCamera("sku");
+  } catch (err) {
+    showToast("📷 Kamera tidak tersedia, gunakan alat scanner fisik.");
+  }
+}
+
 /* === GUIDE INTERAKTIF (IIFE) simplified reference (kept as before) === */
 (function(){
   window.guideSteps = window.guideSteps || [
     { selector: "#formProduct", text: "🧾 Tambahkan produk baru di sini. Isi kode, nama, harga, dan stok." },
     { selector: "#formRestock", text: "📦 Tambah stok barang yang sudah ada dengan form Restock ini." },
     { selector: "#tbl", text: "📋 Daftar semua produk kamu muncul di tabel ini. Bisa diedit atau dihapus." },
+    { selector: "#productGrid", text: "🛒 Pilih produk dari grid untuk menambahkan ke keranjang secara manual." },
     { selector: "#btnStartScan", text: "📸 Gunakan fitur Scan untuk menambah produk ke keranjang lewat kamera." },
     { selector: "#cart", text: "🛒 Semua barang yang kamu jual akan muncul di keranjang ini." },
     { selector: "#checkoutBtn", text: "💰 Setelah selesai, tekan tombol ini untuk menyelesaikan penjualan (setelah bayar)." },
@@ -2314,96 +3212,68 @@ function startScan(target) { openCamera(target); }
 
 /* ---------- REPORTS & CSV ---------- */
 /* loadSales now only shows finalized transactions (as requested) */
-function loadSales() {
-  const fromEl = document.getElementById("filterFrom");
-  const toEl = document.getElementById("filterTo");
-  const from = fromEl && fromEl.value ? new Date(fromEl.value) : null;
-  const to   = toEl && toEl.value ? new Date(toEl.value) : null;
+function loadSales(showNotification = true) {
+  const from = document.getElementById("filterFrom").value;
+  const to = document.getElementById("filterTo").value;
+  const tbl = document.querySelector("#salesTbl tbody");
+  if (!tbl) return;
 
-  const sales = JSON.parse(localStorage.getItem("sales")) || [];
-  const tbody = document.querySelector("#salesTbl tbody");
-  if (!tbody) return;
+  tbl.innerHTML = "";
 
-  tbody.innerHTML = "";
+  // 1. Validasi: Cek apakah ada filter yang dipilih
+  if (!from && !to) {
+    if (showNotification) {
+      showToast("⚠️ Silahkan pilih rentan tanggal untuk menampilkan laporan penjualan.");
+    }
+    // Tampilkan pesan di tabel
+    tbl.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:10px" class="muted">Pilih filter tanggal untuk melihat laporan.</td></tr>`;
+    return;
+  }
 
-  // === FILTER DATA ===
-  let filtered = sales;
+  let counter = 1;
+  let foundData = false;
 
-  // Jika ada input tanggal, filter berdasarkan range
+  // 2. Filter data berdasarkan input
+  let filteredSales = sales.filter(s => s.finalized);
+
   if (from || to) {
-    filtered = sales.filter(s => {
-      const date = s.date ? new Date(s.date) : (s.dateDisplay ? new Date(s.dateDisplay) : null);
-      if (!date || isNaN(date)) return false;
-      const startOK = from ? date >= new Date(from.setHours(0,0,0,0)) : true;
-      const endOK   = to   ? date <= new Date(to.setHours(23,59,59,999)) : true;
-      return startOK && endOK;
+    const startDate = from ? new Date(from) : new Date('1970-01-01');
+    const endDate = to ? new Date(to) : new Date('2999-12-31');
+    endDate.setHours(23, 59, 59, 999);
+
+    filteredSales = filteredSales.filter(s => {
+      const dObj = new Date(s.date);
+      return dObj >= startDate && dObj <= endDate;
     });
   }
 
-  // === CEK DATA KOSONG ===
-  if (!filtered.length) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td colspan="5" style="text-align:center; color:#888; padding:12px;">
-        Tidak ada data penjualan untuk tanggal yang dipilih.
-      </td>`;
-    tbody.appendChild(tr);
-
-    // Jika tidak pilih tanggal sama sekali, artinya load semua → tapi kosong
-    if (!from && !to) {
-      showSalesAlert("📭 Belum ada penjualan hari ini.");
-    } else {
-      showSalesAlert("📭 Tidak ada data penjualan pada rentang tanggal tersebut.");
+  // 3. Tampilkan hasil yang sudah difilter
+  if (filteredSales.length === 0) {
+    tbl.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:10px" class="muted">Tidak ada data penjualan pada periode yang dipilih.</td></tr>`;
+    if (showNotification) {
+      showToast("📭 Tidak ada data penjualan pada periode yang dipilih.");
     }
     return;
   }
 
-  // === TAMPILKAN DATA ===
-  filtered.slice().reverse().forEach((s, i) => {
-    const itemsText = (s.items || []).map(it => `${it.name} x${it.qty}`).join(" ; ");
-    const dateDisplay = s.dateDisplay || s.date || "";
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${i + 1}</td>
-      <td>${dateDisplay}</td>
-      <td>${s.invoice || "-"}</td>
-      <td style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-        ${itemsText}
-      </td>
-      <td style="text-align:right;">Rp ${Number(s.total || 0).toLocaleString()}</td>
-    `;
-    tbody.appendChild(tr);
+  // Jika ada data, tampilkan di tabel
+  filteredSales.forEach((s) => {
+    const dObj = new Date(s.date);
+    const d = s.dateDisplay || dObj.toLocaleString();
+    tbl.innerHTML += `
+      <tr>
+        <td>${counter}</td>
+        <td>${d}</td>
+        <td>${s.invoice}</td>
+        <td>${s.items.map(x => x.name + " x" + x.qty).join(", ")}</td>
+        <td>Rp ${s.total.toLocaleString()}</td>
+      </tr>`;
+    counter++;
   });
 
-  showSalesAlert("✅ Laporan penjualan berhasil ditampilkan.");
-}
-
-  // ===========================
-// NOTIFIKASI KHUSUS LAPORAN PENJUALAN
-// ===========================
-function showSalesAlert(msg) {
-  let alertBox = document.getElementById("salesAlertBox");
-  if (!alertBox) {
-    alertBox = document.createElement("div");
-    alertBox.id = "salesAlertBox";
-    alertBox.style.position = "fixed";
-    alertBox.style.top = "20px";
-    alertBox.style.right = "20px";
-    alertBox.style.zIndex = "9999";
-    alertBox.style.padding = "10px 14px";
-    alertBox.style.background = "#007bff"; // warna biru lembut
-    alertBox.style.color = "#fff";
-    alertBox.style.borderRadius = "8px";
-    alertBox.style.boxShadow = "0 2px 6px rgba(0,0,0,0.2)";
-    alertBox.style.transition = "opacity 0.3s ease";
-    document.body.appendChild(alertBox);
+  if (showNotification) {
+    showToast("✅ Laporan penjualan ditampilkan.");
   }
-
-  alertBox.innerText = msg;
-  alertBox.style.opacity = "1";
-  setTimeout(() => {
-    alertBox.style.opacity = "0";
-  }, 2500);
 }
 
 /* export only finalized sales */
@@ -2446,7 +3316,7 @@ function renderFinalStock(){
 }
 
 /* ---------- INIT ---------- */
-  function openTab(id){
+function openTab(id){
   // remove active state
   document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
   document.querySelectorAll(".tab-content").forEach(c=>c.classList.remove("active"));
@@ -2462,19 +3332,17 @@ function renderFinalStock(){
   // show content
   const content = document.getElementById(id);
   if(content) content.classList.add("active");
-
-  // call appropriate loader so tables are populated when tab opens
-  if(id === 'restock'){
-    // populate restock table immediately
-    try { loadRestock(); } catch(e){ console.error('loadRestock error', e); }
-  } else if(id === 'stok'){
-    // render final stock table
-    try { renderFinalStock(); } catch(e){ console.error('renderFinalStock error', e); }
-  } else if(id === 'penjualan'){
-    // for sales tab, call loadSales to apply filters if any
-    try { loadSales(); } catch(e){ console.error('loadSales error', e); }
+  
+  // Load data based on active tab
+  if(id === 'penjualan') {
+    loadSales(false); 
+  } else if(id === 'restock') {
+    loadRestock(false);
+  } else if(id === 'stok') {
+    renderFinalStock();
   }
 }
+
 function init(){
   const autoPrintEl = document.getElementById('autoPrint')
   if(autoPrintEl) autoPrintEl.checked = false
@@ -2507,14 +3375,256 @@ function init(){
       }
     }
   })
-  if(updated) localStorage.setItem("sales", JSON.stringify(sales))
+  if(updated) saveSalesToFirebase();
 
-  render(); renderFinalStock(); loadRestock(); setInterval(renderFinalStock,5000)
+  renderFinalStock();
+  setInterval(renderFinalStock, 5000);
+  renderProductGrid(); // Initialize product grid
+  
+  // Muat data laporan di awal agar tabel tidak kosong saat pertama kali dibuka
+  loadSales(false);
+  loadRestock(false);
+  
+  // Deteksi status koneksi
+  const { database, ref, onValue } = window.firebaseDB;
+  const connectedRef = ref(database, '.info/connected');
+  onValue(connectedRef, (snap) => {
+    if (snap.val() === true) {
+      document.getElementById('shopStatus').textContent = 'Online';
+      document.getElementById('shopStatus').style.background = '#10b981';
+      isOnline = true;
+    } else {
+      document.getElementById('shopStatus').textContent = 'Offline';
+      document.getElementById('shopStatus').style.background = '#ef4444';
+      isOnline = false;
+    }
+  });
+  
   const guideOv = document.getElementById("guideOverlay");
   if(guideOv) guideOv.style.display = "flex";
 }
 
-init()
+// Load data dari Firebase saat halaman dimuat
+document.addEventListener('DOMContentLoaded', function() {
+  // Tunggu hingga Firebase dimuat
+  setTimeout(() => {
+    if (window.firebaseDB) {
+      loadProductsFromFirebase();
+      loadSalesFromFirebase();
+      loadRestocksFromFirebase();
+      init();
+    } else {
+      // Fallback ke localStorage jika Firebase tidak tersedia
+      products = JSON.parse(localStorage.getItem('products') || '[]');
+      sales = JSON.parse(localStorage.getItem('sales') || '[]');
+      restocks = JSON.parse(localStorage.getItem('restocks') || '[]');
+      init();
+    }
+  }, 1000);
+});
+
+/* ======= CLIENT STRONG-HARDENING ======= */
+(function(){
+  'use strict';
+
+  // small toast fallback
+  const _toast = (typeof showToast === 'function') ? showToast : (m=>alert(m));
+
+  // quick helper: safe JSON parse
+  const safeParse = (s, def)=>{ try{ return JSON.parse(s); }catch(e){ return def; }};
+
+  // ----- 0) Build authoritative snapshots from current localStorage (if any) -----
+  const __snapshots = {
+    products: safeParse(localStorage.getItem('products'), []),
+    sales: safeParse(localStorage.getItem('sales'), []),
+    restocks: safeParse(localStorage.getItem('restocks'), [])
+  };
+  try {
+    Object.defineProperty(window, '__SNAPSHOTS', { value: JSON.parse(JSON.stringify(__snapshots)), writable:false, configurable:false });
+  } catch(e){}
+
+  // ----- 1) Prevent iframe embedding -----
+  try { if (window.top !== window.self) { document.documentElement.innerHTML = '<div style="padding:20px;font-family:Arial">Unauthorized frame</div>'; throw 'iframe'; } } catch(e){}
+
+  // ----- 2) Disable context menu and many shortcuts (best-effort) -----
+  document.addEventListener('contextmenu', function(e){ if(!e.shiftKey) e.preventDefault(); }, {capture:true});
+  document.addEventListener('keydown', function(e){
+    if(e.shiftKey) return; // allow override by power user
+    const K = (e.key||'').toUpperCase();
+    if (K === 'F12' || (e.ctrlKey && e.shiftKey && (K==='I'||K==='J'||K==='C')) || (e.ctrlKey && (K==='U'||K==='S'||K==='A')) ){
+      e.preventDefault(); e.stopPropagation();
+      _toast('Akses devtools dibatasi. Tekan Shift+F12 jika perlu.');
+    }
+  }, {capture:true});
+
+  // ----- 3) Aggressive console override: throw unless allowConsole true -----
+  (function(){
+    try {
+      const orig = {
+        log: console.log.bind(console),
+        warn: console.warn.bind(console),
+        error: console.error.bind(console),
+        info: console.info.bind(console)
+      };
+      Object.defineProperty(window, '__console_originals', { value: orig, enumerable:false, writable:false, configurable:false });
+      console.log = function(){
+        if(window.__ALLOW_CONSOLE === true) return orig.log.apply(console, arguments);
+        throw new Error('console disabled');
+      };
+      console.warn = console.error = console.info = function(){ throw new Error('console disabled'); };
+    } catch(e){}
+  })();
+
+  // ----- 4) Devtools detection using multiple heuristics -----
+  (function(){
+    let devOpen = false;
+    function check() {
+      // heuristic 1: dimension diff
+      const dim = (window.outerWidth - window.innerWidth) + (window.outerHeight - window.innerHeight);
+      // heuristic 2: breakpoint via toString debugger trick
+      let opened = dim > 160;
+      try {
+        const start = Date.now();
+        // trigger debugger to see if paused (not reliable in all browsers)
+        // Use a toString monkey: see if console is intercepted
+        const f = function(){};
+        const s = f.toString();
+        if(s && s.length>0) {} // no-op
+      } catch(e){}
+      if(opened && !devOpen){ devOpen = true; handleDevOpen(); }
+      if(!opened && devOpen){ devOpen = false; handleDevClose(); }
+    }
+    function handleDevOpen(){
+      if(document.getElementById('__devtrap')) return;
+      const el = document.createElement('div');
+      el.id='__devtrap';
+      el.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);background:#ffefef;color:#900;padding:8px;border-radius:6px;z-index:2147483647;font-weight:700';
+      el.innerText='Warning: DevTools detected — actions may be blocked';
+      document.body.appendChild(el);
+      // blur & slow down
+      document.body.style.filter = 'blur(1px)';
+      // block UI interactivity (best-effort)
+      document.body.style.pointerEvents = 'none';
+      // after short delay, restore pointer to allow closing devtools by user
+      setTimeout(()=>{ document.body.style.pointerEvents = 'auto'; }, 3500);
+    }
+    function handleDevClose(){
+      const el=document.getElementById('__devtrap'); if(el) el.remove();
+      document.body.style.filter='';
+    }
+    setInterval(check, 700);
+    window.addEventListener('resize', check, {passive:true});
+  })();
+
+  // ----- 5) Monitor localStorage changes: restore snapshot when modified -----
+  (function(){
+    const watchedKeys = ['products'];
+    // keep initial JSON strings
+    const baseline = {};
+    watchedKeys.forEach(k => baseline[k] = localStorage.getItem(k));
+    // on storage event (other tab) or via polling, restore if unexpected
+    window.addEventListener('storage', function(e){
+      if(!watchedKeys.includes(e.key)) return;
+      // if new value diverges a lot from snapshot, restore
+      try {
+        const newVal = e.newValue;
+        const snap = baseline[e.key];
+        if(!snap && newVal) {
+          // unexpected write -> log and restore
+          if(baseline[e.key] !== null) localStorage.setItem(e.key, baseline[e.key]);
+        } else if(snap && newVal !== snap){
+          // try to parse and compare length; if shorter or obviously tampered, restore
+          if(newVal && newVal.length < 20) {
+            localStorage.setItem(e.key, baseline[e.key]);
+            _toast('Penyimpanan dicegah: perubahan tidak sah pada '+e.key);
+          }
+        }
+      } catch(ex){}
+    });
+    // polling fallback
+    setInterval(()=> {
+      try {
+        watchedKeys.forEach(k=>{
+          const cur = localStorage.getItem(k);
+          if(cur === null && baseline[k] !== null) {
+            localStorage.setItem(k, baseline[k]);
+            _toast('Pencegahan perubahan lokal untuk '+k);
+          }
+        });
+      } catch(e){}
+    }, 2000);
+  })();
+
+  // ----- 6) Mutation observer: detect new script tags / DOM tampering -----
+  (function(){
+    const whitelist = new Set();
+    // gather current script srcs
+    document.querySelectorAll('script').forEach(s=>{
+      if(s.src) whitelist.add(s.src);
+      else whitelist.add(s.innerHTML ? s.innerHTML.slice(0,120) : '');
+    });
+    const mo = new MutationObserver((mutations)=>{
+      for(const m of mutations){
+        if(m.type==='childList'){
+          m.addedNodes.forEach(node=>{
+            if(node.tagName && node.tagName.toLowerCase()==='script'){
+              // if new script has src not in whitelist, remove and warn
+              const txt = node.src || (node.innerHTML ? node.innerHTML.slice(0,120) : '');
+              if(!whitelist.has(node.src) && !whitelist.has(txt)){
+                try{ node.remove(); }catch(e){}
+                _toast('Skrip mencurigakan diblokir.');
+              }
+            }
+          });
+        }
+      }
+    });
+    mo.observe(document.documentElement || document.body, { childList:true, subtree:true });
+  })();
+
+  // ----- 7) Freeze important globals (friction) -----
+  (function(){
+    try {
+      if(window.products) Object.freeze(window.products);
+      if(window.sales) Object.freeze(window.sales);
+      // create read-only snapshots (again)
+      if(!window.__PRODUCTS_SNAPSHOT) Object.defineProperty(window, '__PRODUCTS_SNAPSHOT', { value: JSON.parse(JSON.stringify(window.products||[])), writable:false, configurable:false });
+      if(!window.__SALES_SNAPSHOT) Object.defineProperty(window, '__SALES_SNAPSHOT', { value: JSON.parse(JSON.stringify(window.sales||[])), writable:false, configurable:false });
+    } catch(e){}
+  })();
+
+  // ----- 8) Remove any sourceMappingURL comments in inline scripts (best-effort) -----
+  (function(){
+    try {
+      document.querySelectorAll('script').forEach(s=>{
+        if(s.innerHTML && s.innerHTML.includes('sourceMappingURL')) {
+          s.innerHTML = s.innerHTML.replace(/\/\/[#\s]*sourceMappingURL=.*$/m, '');
+        }
+      });
+    } catch(e){}
+  })();
+
+  // ----- 9) Safe wrapper for critical actions (client side check only) -----
+  window.__secureAction = async function(actionName, payload){
+    const token = sessionStorage.getItem('session_token');
+    if(!token) {
+      _toast('Aksi terlindungi. Silakan login.');
+      throw new Error('Unauthorized');
+    }
+    // developer: replace with server call
+    return fetch('/api/secure-action', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
+      body: JSON.stringify({ action: actionName, payload })
+    }).then(r=>r.json());
+  };
+
+  // final notice
+  _toast('Proteksi klien: mode agresif aktif. Ingat: pindahkan logika sensitif ke server untuk keamanan nyata.');
+
+})();
+/* ===== END STRONG-HARDENING ===== */
+
 </script>
 </body>
 </html>

@@ -2295,39 +2295,63 @@ function confirmPayment(){
       }
     };
     
-    // Request snap token ke server Anda
-    fetch('https://oleh2inpos-backend.onrender.com/get-snap-token', {
+    // Ganti dengan URL backend Anda
+    const backendUrl = 'https://indocart-backend.vercel.app/get-snap-token'; // Ganti dengan URL backend Anda
+    
+    // Tambahkan loading state
+    const btn = document.getElementById('confirmPayBtn');
+    btn.disabled = true;
+    btn.textContent = "Menghubungkan server...";
+    
+    fetch(backendUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(transactionData)
     })
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
     .then(data => {
-      // Buka popup pembayaran Midtrans
-      window.snap.pay(data.token, {
-        onSuccess: function(result) {
-          // Pembayaran berhasil
-          processSuccessfulPayment(result, transactionData);
-        },
-        onPending: function(result) {
-          // Pembayaran pending
-          showToast("Pembayaran sedang diproses");
-        },
-        onError: function(result) {
-          // Pembayaran gagal
-          showToast("Pembayaran gagal: " + result.status_message);
-        },
-        onClose: function() {
-          // Popup ditutup tanpa pembayaran
-          showToast("Pembayaran dibatalkan");
-        }
-      });
+      if (data.success) {
+        // Buka popup pembayaran Midtrans
+        window.snap.pay(data.token, {
+          onSuccess: function(result) {
+            // Pembayaran berhasil
+            processSuccessfulPayment(result, transactionData);
+          },
+          onPending: function(result) {
+            // Pembayaran pending
+            showToast("Pembayaran sedang diproses");
+          },
+          onError: function(result) {
+            // Pembayaran gagal
+            showToast("Pembayaran gagal: " + result.status_message);
+          },
+          onClose: function() {
+            // Popup ditutup tanpa pembayaran
+            showToast("Pembayaran dibatalkan");
+          }
+        });
+      } else {
+        throw new Error(data.error || 'Failed to get token');
+      }
     })
     .catch(error => {
       console.error('Error:', error);
-      showToast("Terjadi kesalahan saat memproses pembayaran");
+      showToast("Terjadi kesalahan: " + error.message);
+      // Fallback ke metode pembayaran manual
+      closePaymentModal();
+      selectedPaymentMethod = null;
+    })
+    .finally(() => {
+      // Restore button state
+      btn.disabled = false;
+      btn.textContent = "Konfirmasi Pembayaran";
     });
   } else {
     // Proses pembayaran tunai seperti biasa

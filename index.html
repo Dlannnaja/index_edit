@@ -2296,7 +2296,7 @@ function confirmPayment(){
     };
     
     // Ganti dengan URL backend Anda
-    const backendUrl = 'https://indocart-backend.vercel.app/get-snap-token'; // Ganti dengan URL backend Anda
+    const backendUrl = 'https://oleh2inpos-backend.onrender.com/get-snap-token'; // Ganti dengan URL backend Anda
     
     // Tambahkan loading state
     const btn = document.getElementById('confirmPayBtn');
@@ -2311,39 +2311,51 @@ function confirmPayment(){
       body: JSON.stringify(transactionData)
     })
     .then(response => {
+      console.log('🔍 DEBUG: Response status:', response.status);
+      console.log('🔍 DEBUG: Response headers:', response.headers);
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       return response.json();
     })
     .then(data => {
+      console.log('🔍 DEBUG: Response data:', data);
+      
       if (data.success) {
+        console.log('🔍 DEBUG: Got token, opening Snap popup');
+        
         // Buka popup pembayaran Midtrans
         window.snap.pay(data.token, {
           onSuccess: function(result) {
-            // Pembayaran berhasil
+            console.log('🔍 DEBUG: Payment success:', result);
             processSuccessfulPayment(result, transactionData);
           },
           onPending: function(result) {
-            // Pembayaran pending
+            console.log('🔍 DEBUG: Payment pending:', result);
             showToast("Pembayaran sedang diproses");
           },
           onError: function(result) {
-            // Pembayaran gagal
+            console.log('🔍 DEBUG: Payment error:', result);
             showToast("Pembayaran gagal: " + result.status_message);
           },
           onClose: function() {
-            // Popup ditutup tanpa pembayaran
+            console.log('🔍 DEBUG: Payment popup closed');
             showToast("Pembayaran dibatalkan");
           }
         });
       } else {
+        console.error('🔍 DEBUG: Backend returned error:', data);
         throw new Error(data.error || 'Failed to get token');
       }
     })
     .catch(error => {
-      console.error('Error:', error);
+      console.error('🔍 DEBUG: Fetch error:', error);
       showToast("Terjadi kesalahan: " + error.message);
+      
+      // Tampilkan error detail
+      alert('Error Detail: ' + error.message + '\n\nCoba coba coba cek console.log untuk detail lengkap');
+      
       // Fallback ke metode pembayaran manual
       closePaymentModal();
       selectedPaymentMethod = null;

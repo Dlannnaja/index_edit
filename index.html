@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>INDOCART</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-  <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="SB-Mid-client-0xTl1KKhM9Bqq_Bp"></script>
+  <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="SB-Mid-client-fvOCSkh7us8t74ZF"></script>
   <!-- Tambahkan Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-analytics-compat.js"></script>
   <style>
   :root {
     --bg: #f7f9fc;
@@ -1292,7 +1293,7 @@
     <div id="paymentInfoBox" class="pay-instr">Total: <strong id="payTotal">Rp 0</strong></div>
 
     <div style="display:flex;gap:8px">
-      <button onclick="confirmPayment()" id="confirmPayBtn">Konfirmasi Pembayaran</button>
+      <button id="confirmPayBtn">Konfirmasi Pembayaran</button>
       <button class="ghost" onclick="closePaymentModal()">Batal</button>
     </div>
 
@@ -1321,34 +1322,33 @@
 <!-- toast -->
 <div id="appToast" style="display:none"></div>
 
+<!-- Firebase Modular SDK -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-  import { getDatabase, ref, set, get, onValue, remove } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-analytics.js";
+  import { getDatabase, ref, set, get, onValue, remove } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyBSlluMBjlbrQ8YOaHZuXyN-vzStVldckY",
-    authDomain: "oleh2in-pos-new.firebaseapp.com",
-    databaseURL: "https://oleh2in-pos-new-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "oleh2in-pos-new",
-    storageBucket: "oleh2in-pos-new.firebasestorage.app",
-    messagingSenderId: "942467917259",
-    appId: "1:942467917259:web:2ae8cd7040eece18cfc24e",
-    measurementId: "G-6Z0Z9M72XJ"
+    apiKey: "AIzaSyBlK7yXuLNK2Ms1iUBnvXIvr6rGHJ3UoTA",
+    authDomain: "oleh2in-pos-v2.firebaseapp.com",
+    databaseURL: "https://oleh2in-pos-v2-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "oleh2in-pos-v2",
+    storageBucket: "oleh2in-pos-v2.firebasestorage.app",
+    messagingSenderId: "878660961111",
+    appId: "1:878660961111:web:d02e32193ca1539d3e3412",
+    measurementId: "G-T6F0L6QE03"
   };
 
-  // Initialize Firebase
+  // Inisialisasi Firebase
   const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
   const database = getDatabase(app);
-  
-  // Export untuk digunakan di script utama
-  window.firebaseDB = {
-    database,
-    ref,
-    set,
-    get,
-    onValue,
-    remove
-  };
+
+  // ✅ Simpan ke window agar bisa diakses script lain
+  window.firebaseDB = { database, ref, set, get, onValue, remove };
+
+  // ✅ Tambahkan event 'firebase-ready' setelah siap
+  window.dispatchEvent(new Event('firebase-ready'));
 </script>
 
 <script>
@@ -2271,7 +2271,7 @@ function confirmPayment(){
   if(!selectedPaymentMethod) return alert("Pilih metode pembayaran terlebih dahulu")
   if(cart.length === 0) return alert("Keranjang kosong")
 
-  // Jika metode pembayaran adalah Midtrans (bukan tunai)
+  // Jika metode pembayaran adalah Midtrans
   if(selectedPaymentMethod === 'midtrans') {
     const totals = computeCartTotals();
     const total = totals.finalTotal;
@@ -2296,23 +2296,33 @@ function confirmPayment(){
     };
     
     // Ganti dengan URL backend Anda
-    const backendUrl = 'https://oleh2inpos-backend.onrender.com/get-snap-token'; // Ganti dengan URL backend Anda
+    const backendUrl = 'https://oleh2inpos-backend.onrender.com/get-snap-token';
     
     // Tambahkan loading state
     const btn = document.getElementById('confirmPayBtn');
     btn.disabled = true;
     btn.textContent = "Menghubungkan server...";
+
+    console.log("🧩 DEBUG transactionData:", transactionData);
+    console.log("🧩 DEBUG body yang dikirim:", {
+      transaction_details: transactionData.transaction_details,
+      item_details: transactionData.item_details,
+      customer_details: transactionData.customer_details
+    });
     
     fetch(backendUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(transactionData)
+      body: JSON.stringify({
+    transaction_details: transactionData.transaction_details,
+    item_details: transactionData.item_details,
+    customer_details: transactionData.customer_details
     })
+  })
     .then(response => {
       console.log('🔍 DEBUG: Response status:', response.status);
-      console.log('🔍 DEBUG: Response headers:', response.headers);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -2320,41 +2330,52 @@ function confirmPayment(){
       return response.json();
     })
     .then(data => {
-      console.log('🔍 DEBUG: Response data:', data);
+  console.log('🔍 DEBUG: Response data:', data);
+  
+  if (data.success) {
+    console.log('🔍 DEBUG: Got token, checking for Snap library...');
+    
+    // ✅ TAMBAHKAN PEMERIKSAAN INI
+    if (typeof window.snap !== 'undefined' && window.snap.pay) {
+      console.log('🔍 DEBUG: Snap library is ready, opening popup.');
       
-      if (data.success) {
-        console.log('🔍 DEBUG: Got token, opening Snap popup');
-        
-        // Buka popup pembayaran Midtrans
-        window.snap.pay(data.token, {
-          onSuccess: function(result) {
-            console.log('🔍 DEBUG: Payment success:', result);
-            processSuccessfulPayment(result, transactionData);
-          },
-          onPending: function(result) {
-            console.log('🔍 DEBUG: Payment pending:', result);
-            showToast("Pembayaran sedang diproses");
-          },
-          onError: function(result) {
-            console.log('🔍 DEBUG: Payment error:', result);
-            showToast("Pembayaran gagal: " + result.status_message);
-          },
-          onClose: function() {
-            console.log('🔍 DEBUG: Payment popup closed');
-            showToast("Pembayaran dibatalkan");
-          }
-        });
-      } else {
-        console.error('🔍 DEBUG: Backend returned error:', data);
-        throw new Error(data.error || 'Failed to get token');
-      }
-    })
+      // Buka popup pembayaran Midtrans
+      window.snap.pay(data.token, {
+        onSuccess: function(result) {
+          console.log('🔍 DEBUG: Payment success:', result);
+          processSuccessfulPayment(result, transactionData);
+        },
+        onPending: function(result) {
+          console.log('🔍 DEBUG: Payment pending:', result);
+          showToast("Pembayaran sedang diproses");
+        },
+        onError: function(result) {
+          console.log('🔍 DEBUG: Payment error:', result);
+          showToast("Pembayaran gagal: " + result.status_message);
+        },
+        onClose: function() {
+          console.log('🔍 DEBUG: Payment popup closed');
+          showToast("Pembayaran dibatalkan");
+        }
+      });
+    } else {
+      // ✅ TAMPILKAN ERROR JIKA LIBRARY TIDAK TERDEFINISI
+      console.error('❌ ERROR: Midtrans Snap.js is not loaded!');
+      alert('Error: Library pembayaran Midtrans tidak dimuat. Silakan refresh halaman dan coba lagi.');
+      
+      // Kembalikan tombol ke keadaan semula
+      const btn = document.getElementById('confirmPayBtn');
+      btn.disabled = false;
+      btn.textContent = "Konfirmasi Pembayaran";
+    }
+  } else {
+    console.error('🔍 DEBUG: Backend returned error:', data);
+    throw new Error(data.error || 'Failed to get token');
+  }
+})
     .catch(error => {
       console.error('🔍 DEBUG: Fetch error:', error);
       showToast("Terjadi kesalahan: " + error.message);
-      
-      // Tampilkan error detail
-      alert('Error Detail: ' + error.message + '\n\nCoba coba coba cek console.log untuk detail lengkap');
       
       // Fallback ke metode pembayaran manual
       closePaymentModal();
@@ -2382,7 +2403,7 @@ function processCashPayment() {
     const date = now.toISOString()
     const dateDisplay = now.toLocaleString()
     const totals = computeCartTotals();
-    const total = totals.finalTotal;
+    const total = totals.finalTotal
 
     const transaction = {
       invoice,
@@ -2479,7 +2500,7 @@ function processSuccessfulPayment(result, transactionData) {
 
   // Tampilkan struk
   openReceiptPreview(invoice);
-  showToast("Pembayaran berhasil! Struk telah dicetak.");
+  showToast("Pembayaran berhasil! Struk telah dicatat.");
 }
 
 /* open receipt preview modal for given invoice */
@@ -3459,207 +3480,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }, 1000);
 });
 
-/* ======= CLIENT STRONG-HARDENING ======= */
-(function(){
-  'use strict';
-
-  // small toast fallback
-  const _toast = (typeof showToast === 'function') ? showToast : (m=>alert(m));
-
-  // quick helper: safe JSON parse
-  const safeParse = (s, def)=>{ try{ return JSON.parse(s); }catch(e){ return def; }};
-
-  // ----- 0) Build authoritative snapshots from current localStorage (if any) -----
-  const __snapshots = {
-    products: safeParse(localStorage.getItem('products'), []),
-    sales: safeParse(localStorage.getItem('sales'), []),
-    restocks: safeParse(localStorage.getItem('restocks'), [])
-  };
-  try {
-    Object.defineProperty(window, '__SNAPSHOTS', { value: JSON.parse(JSON.stringify(__snapshots)), writable:false, configurable:false });
-  } catch(e){}
-
-  // ----- 1) Prevent iframe embedding -----
-  try { if (window.top !== window.self) { document.documentElement.innerHTML = '<div style="padding:20px;font-family:Arial">Unauthorized frame</div>'; throw 'iframe'; } } catch(e){}
-
-  // ----- 2) Disable context menu and many shortcuts (best-effort) -----
-  document.addEventListener('contextmenu', function(e){ if(!e.shiftKey) e.preventDefault(); }, {capture:true});
-  document.addEventListener('keydown', function(e){
-    if(e.shiftKey) return; // allow override by power user
-    const K = (e.key||'').toUpperCase();
-    if (K === 'F12' || (e.ctrlKey && e.shiftKey && (K==='I'||K==='J'||K==='C')) || (e.ctrlKey && (K==='U'||K==='S'||K==='A')) ){
-      e.preventDefault(); e.stopPropagation();
-      _toast('Akses devtools dibatasi. Tekan Shift+F12 jika perlu.');
-    }
-  }, {capture:true});
-
-  // ----- 3) Aggressive console override: throw unless allowConsole true -----
-  (function(){
-    try {
-      const orig = {
-        log: console.log.bind(console),
-        warn: console.warn.bind(console),
-        error: console.error.bind(console),
-        info: console.info.bind(console)
-      };
-      Object.defineProperty(window, '__console_originals', { value: orig, enumerable:false, writable:false, configurable:false });
-      console.log = function(){
-        if(window.__ALLOW_CONSOLE === true) return orig.log.apply(console, arguments);
-        throw new Error('console disabled');
-      };
-      console.warn = console.error = console.info = function(){ throw new Error('console disabled'); };
-    } catch(e){}
-  })();
-
-  // ----- 4) Devtools detection using multiple heuristics -----
-  (function(){
-    let devOpen = false;
-    function check() {
-      // heuristic 1: dimension diff
-      const dim = (window.outerWidth - window.innerWidth) + (window.outerHeight - window.innerHeight);
-      // heuristic 2: breakpoint via toString debugger trick
-      let opened = dim > 160;
-      try {
-        const start = Date.now();
-        // trigger debugger to see if paused (not reliable in all browsers)
-        // Use a toString monkey: see if console is intercepted
-        const f = function(){};
-        const s = f.toString();
-        if(s && s.length>0) {} // no-op
-      } catch(e){}
-      if(opened && !devOpen){ devOpen = true; handleDevOpen(); }
-      if(!opened && devOpen){ devOpen = false; handleDevClose(); }
-    }
-    function handleDevOpen(){
-      if(document.getElementById('__devtrap')) return;
-      const el = document.createElement('div');
-      el.id='__devtrap';
-      el.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);background:#ffefef;color:#900;padding:8px;border-radius:6px;z-index:2147483647;font-weight:700';
-      el.innerText='Warning: DevTools detected — actions may be blocked';
-      document.body.appendChild(el);
-      // blur & slow down
-      document.body.style.filter = 'blur(1px)';
-      // block UI interactivity (best-effort)
-      document.body.style.pointerEvents = 'none';
-      // after short delay, restore pointer to allow closing devtools by user
-      setTimeout(()=>{ document.body.style.pointerEvents = 'auto'; }, 3500);
-    }
-    function handleDevClose(){
-      const el=document.getElementById('__devtrap'); if(el) el.remove();
-      document.body.style.filter='';
-    }
-    setInterval(check, 700);
-    window.addEventListener('resize', check, {passive:true});
-  })();
-
-  // ----- 5) Monitor localStorage changes: restore snapshot when modified -----
-  (function(){
-    const watchedKeys = ['products'];
-    // keep initial JSON strings
-    const baseline = {};
-    watchedKeys.forEach(k => baseline[k] = localStorage.getItem(k));
-    // on storage event (other tab) or via polling, restore if unexpected
-    window.addEventListener('storage', function(e){
-      if(!watchedKeys.includes(e.key)) return;
-      // if new value diverges a lot from snapshot, restore
-      try {
-        const newVal = e.newValue;
-        const snap = baseline[e.key];
-        if(!snap && newVal) {
-          // unexpected write -> log and restore
-          if(baseline[e.key] !== null) localStorage.setItem(e.key, baseline[e.key]);
-        } else if(snap && newVal !== snap){
-          // try to parse and compare length; if shorter or obviously tampered, restore
-          if(newVal && newVal.length < 20) {
-            localStorage.setItem(e.key, baseline[e.key]);
-            _toast('Penyimpanan dicegah: perubahan tidak sah pada '+e.key);
-          }
-        }
-      } catch(ex){}
-    });
-    // polling fallback
-    setInterval(()=> {
-      try {
-        watchedKeys.forEach(k=>{
-          const cur = localStorage.getItem(k);
-          if(cur === null && baseline[k] !== null) {
-            localStorage.setItem(k, baseline[k]);
-            _toast('Pencegahan perubahan lokal untuk '+k);
-          }
-        });
-      } catch(e){}
-    }, 2000);
-  })();
-
-  // ----- 6) Mutation observer: detect new script tags / DOM tampering -----
-  (function(){
-    const whitelist = new Set();
-    // gather current script srcs
-    document.querySelectorAll('script').forEach(s=>{
-      if(s.src) whitelist.add(s.src);
-      else whitelist.add(s.innerHTML ? s.innerHTML.slice(0,120) : '');
-    });
-    const mo = new MutationObserver((mutations)=>{
-      for(const m of mutations){
-        if(m.type==='childList'){
-          m.addedNodes.forEach(node=>{
-            if(node.tagName && node.tagName.toLowerCase()==='script'){
-              // if new script has src not in whitelist, remove and warn
-              const txt = node.src || (node.innerHTML ? node.innerHTML.slice(0,120) : '');
-              if(!whitelist.has(node.src) && !whitelist.has(txt)){
-                try{ node.remove(); }catch(e){}
-                _toast('Skrip mencurigakan diblokir.');
-              }
-            }
-          });
-        }
-      }
-    });
-    mo.observe(document.documentElement || document.body, { childList:true, subtree:true });
-  })();
-
-  // ----- 7) Freeze important globals (friction) -----
-  (function(){
-    try {
-      if(window.products) Object.freeze(window.products);
-      if(window.sales) Object.freeze(window.sales);
-      // create read-only snapshots (again)
-      if(!window.__PRODUCTS_SNAPSHOT) Object.defineProperty(window, '__PRODUCTS_SNAPSHOT', { value: JSON.parse(JSON.stringify(window.products||[])), writable:false, configurable:false });
-      if(!window.__SALES_SNAPSHOT) Object.defineProperty(window, '__SALES_SNAPSHOT', { value: JSON.parse(JSON.stringify(window.sales||[])), writable:false, configurable:false });
-    } catch(e){}
-  })();
-
-  // ----- 8) Remove any sourceMappingURL comments in inline scripts (best-effort) -----
-  (function(){
-    try {
-      document.querySelectorAll('script').forEach(s=>{
-        if(s.innerHTML && s.innerHTML.includes('sourceMappingURL')) {
-          s.innerHTML = s.innerHTML.replace(/\/\/[#\s]*sourceMappingURL=.*$/m, '');
-        }
-      });
-    } catch(e){}
-  })();
-
-  // ----- 9) Safe wrapper for critical actions (client side check only) -----
-  window.__secureAction = async function(actionName, payload){
-    const token = sessionStorage.getItem('session_token');
-    if(!token) {
-      _toast('Aksi terlindungi. Silakan login.');
-      throw new Error('Unauthorized');
-    }
-    // developer: replace with server call
-    return fetch('/api/secure-action', {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
-      body: JSON.stringify({ action: actionName, payload })
-    }).then(r=>r.json());
-  };
-
-  // final notice
-  _toast('Proteksi klien: mode agresif aktif. Ingat: pindahkan logika sensitif ke server untuk keamanan nyata.');
-
-})();
-/* ===== END STRONG-HARDENING ===== */
 
 function testMidtransPayment() {
   console.log('🔍 Testing Midtrans integration...');
@@ -3735,7 +3555,7 @@ function debugMidtrans() {
   console.log('=== Midtrans Debug ====');
   
   // Test backend connection
-  fetch('https://indocart-backend.vercel.app/test')
+  fetch('https://oleh2inpos-backend.onrender.com/test')
     .then(res => res.json())
     .then(data => {
       console.log('Backend OK:', data);
@@ -3765,3 +3585,6 @@ function debugMidtrans() {
 </script>
 </body>
 </html>
+
+
+

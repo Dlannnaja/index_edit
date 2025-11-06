@@ -1293,7 +1293,7 @@
     <div id="paymentInfoBox" class="pay-instr">Total: <strong id="payTotal">Rp 0</strong></div>
 
     <div style="display:flex;gap:8px">
-      <button id="confirmPayBtn">Konfirmasi Pembayaran</button>
+      <button id="confirmPayBtn" onclick="confirmPayment()">Konfirmasi Pembayaran</button>
       <button class="ghost" onclick="closePaymentModal()">Batal</button>
     </div>
 
@@ -1321,6 +1321,7 @@
 
 <!-- toast -->
 <div id="appToast" style="display:none"></div>
+
 
 <!-- Firebase Modular SDK -->
 <script type="module">
@@ -2266,11 +2267,19 @@ function selectPaymentMethod(method, el){
   document.getElementById('paymentInfoBox').innerHTML = `<div class="pay-instr">${info}</div><div>Total: <strong id="payTotal">Rp ${totals.finalTotal.toLocaleString()}</strong></div>`
 }
 
+let isProcessingPayment = false; // 🔒 mencegah klik ganda
+  
 /* confirm payment: immediately reduce stock, create pending transaction, show receipt preview (print allowed), but DO NOT finalize sale yet */
 function confirmPayment(){
-  if(!selectedPaymentMethod) return alert("Pilih metode pembayaran terlebih dahulu")
-  if(cart.length === 0) return alert("Keranjang kosong")
+  if (isProcessingPayment) {
+    console.warn("⏳ Pembayaran sedang diproses, abaikan klik ganda");
+    return;
+  }
+  isProcessingPayment = true; // aktifkan flag
 
+  if (!selectedPaymentMethod) return alert("Pilih metode pembayaran terlebih dahulu");
+  if (cart.length === 0) return alert("Keranjang kosong");
+  
   // Jika metode pembayaran adalah Midtrans
   if(selectedPaymentMethod === 'midtrans') {
     const totals = computeCartTotals();
@@ -2315,12 +2324,14 @@ function confirmPayment(){
       headers: {
         'Content-Type': 'application/json'
       },
+      // KODE YANG BENAR
       body: JSON.stringify({
-    transaction_details: transactionData.transaction_details,
-    item_details: transactionData.item_details,
-    customer_details: transactionData.customer_details
+      order_id: transactionData.transaction_details.order_id,
+      gross_amount: transactionData.transaction_details.gross_amount,
+      item_details: transactionData.item_details,
+      customer_details: transactionData.customer_details
+        })
     })
-  })
     .then(response => {
       console.log('🔍 DEBUG: Response status:', response.status);
       
@@ -2334,6 +2345,7 @@ function confirmPayment(){
   
   if (data.success) {
     console.log('🔍 DEBUG: Got token, checking for Snap library...');
+    console.log("🎟 Token yang diterima:", data.token);
     
     // ✅ TAMBAHKAN PEMERIKSAAN INI
     if (typeof window.snap !== 'undefined' && window.snap.pay) {
@@ -2383,6 +2395,7 @@ function confirmPayment(){
     })
     .finally(() => {
       // Restore button state
+      isProcessingPayment = false;
       btn.disabled = false;
       btn.textContent = "Konfirmasi Pembayaran";
     });
@@ -3585,6 +3598,3 @@ function debugMidtrans() {
 </script>
 </body>
 </html>
-
-
-

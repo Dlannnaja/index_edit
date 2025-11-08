@@ -1418,6 +1418,7 @@ let sales = [];
 let restocks = [];
 let cart = [];
 let isOnline = false;
+let currentTransactionInvoice = null;
 
 // ====== DISCOUNT VARIABLES & HELPERS ======
 let discountTotalPercent = 0;     // percentage applied to subtotal after per-product discounts
@@ -2365,8 +2366,14 @@ function confirmPayment(){
   }
   isProcessingPayment = true;
 
-  if (!selectedPaymentMethod) return alert("Pilih metode pembayaran terlebih dahulu");
-  if (cart.length === 0) return alert("Keranjang kosong");
+  if (!selectedPaymentMethod) {
+    isProcessingPayment = false;
+    return alert("Pilih metode pembayaran terlebih dahulu");
+  }
+  if (cart.length === 0) {
+    isProcessingPayment = false;
+    return alert("Keranjang kosong");
+  }
   
   // Validasi khusus untuk pembayaran tunai
   if (selectedPaymentMethod === 'cash') {
@@ -2381,139 +2388,105 @@ function confirmPayment(){
   }
   
   if(selectedPaymentMethod === 'midtrans') {
-  const totals = computeCartTotals();
-  const total = totals.finalTotal;
-  
-  // Jika total adalah 0, tidak perlu melanjutkan ke Midtrans
-  if (total <= 0) {
-    showToast("Total pembayaran tidak valid. Mohon periksa kembali diskon Anda.");
-    isProcessingPayment = false;
-    btn.disabled = false;
-    btn.textContent = "Konfirmasi Pembayaran";
-    return;
-  }
-
-  const orderId = 'INV' + Date.now();
-  
-  // PERBAIKAN: Buat item_details yang mencerminkan informasi keranjang
-  const itemDetails = [];
-  
-  // Tambahkan setiap item dari keranjang dengan informasi diskon
-  cart.forEach(item => {
-    const originalPrice = item.price;
-    const perItemDiscount = item.discount || 0;
-    const discountedPrice = originalPrice - perItemDiscount;
+    const totals = computeCartTotals();
+    const total = totals.finalTotal;
     
-    // Jika ada diskon per item, tambahkan sebagai item terpisah
-    if (perItemDiscount > 0) {
-      itemDetails.push({
-        id: item.sku,
-        price: originalPrice,
-        quantity: item.qty,
-        name: item.name
-      });
+    if (total <= 0) {
+      showToast("Total pembayaran tidak valid. Mohon periksa kembali diskon Anda.");
+      isProcessingPayment = false;
+      return;
+    }
+
+    // PERBAIKAN 4: Nonaktifkan field diskon selama proses pembayaran
+    document.getElementById('discountTotalPercent').disabled = true;
+
+    const orderId = 'INV' + Date.now();
+    
+    const itemDetails = [];
+    cart.forEach(item => {
+      const originalPrice = item.price;
+      const perItemDiscount = item.discount || 0;
+      const discountedPrice = originalPrice - perItemDiscount;
       
-      itemDetails.push({
-        id: `DISK-${item.sku}`,
-        price: -perItemDiscount,
-        quantity: item.qty,
-        name: `Diskon ${item.name}`
-      });
-    } else {
-      itemDetails.push({
-        id: item.sku,
-        price: originalPrice,
-        quantity: item.qty,
-        name: item.name
-      });
-    }
-  });
-  
-  // Jika ada diskon persentase, tambahkan sebagai item terpisah
-  if (totals.percentDiscountAmount > 0) {
-    itemDetails.push({
-      id: 'DISK-PERCENT',
-      price: -totals.percentDiscountAmount,
-      quantity: 1,
-      name: `Diskon ${discountTotalPercent}%`
-    });
-  }
-  
-  // Buat data transaksi untuk Midtrans
-  const transactionData = {
-    transaction_details: {
-      order_id: orderId,
-      gross_amount: total
-    },
-    item_details: itemDetails,
-    customer_details: {
-      first_name: "Customer",
-      email: "customer@example.com",
-      phone: "08123456789"
-    }
-  };
-    
-  const backendUrl = 'https://oleh2inpos-backend.onrender.com/get-snap-token';
-  
-  const btn = document.getElementById('confirmPayBtn');
-  btn.disabled = true;
-  btn.textContent = "Menghubungkan server...";
-
-  fetch(backendUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(transactionData)
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  })
-  .then(data => {
-    if (data.success) {
-      if (typeof window.snap !== 'undefined' && window.snap.pay) {
-        window.snap.pay(data.token, {
-          onSuccess: function(result) {
-            console.log('Pembayaran Midtrans berhasil:', result);
-            processSuccessfulPayment(result, transactionData);
-          },
-          onPending: function(result) {
-            console.log('Pembayaran Midtrans pending:', result);
-            showToast("Pembayaran sedang diproses oleh pihak ketiga.");
-          },
-          onError: function(result) {
-            console.log('Pembayaran Midtrans gagal:', result);
-            showToast("Pembayaran gagal: " + result.status_message);
-          },
-          onClose: function() {
-            console.log('Popup Midtrans ditutup oleh user');
-            showToast("Pembayaran dibatalkan.");
-          }
-        });
+      if (perItemDiscount > 0) {
+        itemDetails.push({ id: item.sku, price: originalPrice, quantity: item.qty, name: item.name });
+        itemDetails.push({ id: `DISK-${item.sku}`, price: -perItemDiscount, quantity: item.qty, name: `Diskon ${item.name}` });
       } else {
-        console.error('Midtrans Snap.js is not loaded!');
-        alert('Error: Library pembayaran Midtrans tidak dimuat. Silakan refresh halaman dan coba lagi.');
+        itemDetails.push({ id: item.sku, price: originalPrice, quantity: item.qty, name: item.name });
       }
-    } else {
-      throw new Error(data.error || 'Failed to get token');
-    }
-  })
-  .catch(error => {
-    console.error('Fetch error:', error);
-    showToast("Terjadi kesalahan: " + error.message);
-  })
-  .finally(() => {
-    isProcessingPayment = false;
-    btn.disabled = false;
-    btn.textContent = "Konfirmasi Pembayaran";
     });
-    } else {
-    processCashPayment();
+    
+    if (totals.percentDiscountAmount > 0) {
+      itemDetails.push({ id: 'DISK-PERCENT', price: -totals.percentDiscountAmount, quantity: 1, name: `Diskon ${discountTotalPercent}%` });
     }
+    
+    const transactionData = {
+      transaction_details: { order_id: orderId, gross_amount: total },
+      item_details: itemDetails,
+      customer_details: { first_name: "Customer", email: "customer@example.com", phone: "08123456789" }
+    };
+      
+    const backendUrl = 'https://oleh2inpos-backend.onrender.com/get-snap-token';
+    const btn = document.getElementById('confirmPayBtn');
+    btn.disabled = true;
+    btn.textContent = "Menghubungkan server...";
+
+    fetch(backendUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(transactionData) })
+    .then(response => {
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        // PERBAIKAN 1: Tutup modal pembayaran sebelum membuka popup Midtrans
+        closePaymentModal();
+
+        if (typeof window.snap !== 'undefined' && window.snap.pay) {
+          window.snap.pay(data.token, {
+            onSuccess: function(result) {
+              console.log('Pembayaran Midtrans berhasil:', result);
+              // PERBAIKAN 2: Simpan invoice transaksi saat ini
+              currentTransactionInvoice = orderId;
+              processSuccessfulPayment(result, transactionData);
+            },
+            onPending: function(result) {
+              console.log('Pembayaran Midtrans pending:', result);
+              showToast("Pembayaran sedang diproses oleh pihak ketiga.");
+            },
+            onError: function(result) {
+              console.log('Pembayaran Midtrans gagal:', result);
+              showToast("Pembayaran gagal: " + result.status_message);
+              // PERBAIKAN 4: Aktifkan kembali field diskon jika gagal
+              document.getElementById('discountTotalPercent').disabled = false;
+            },
+            onClose: function() {
+              console.log('Popup Midtrans ditutup oleh user');
+              // PERBAIKAN 4: Aktifkan kembali field diskon jika ditutup
+              document.getElementById('discountTotalPercent').disabled = false;
+            }
+          });
+        } else {
+          throw new Error('Midtrans Snap.js is not loaded!');
+        }
+      } else {
+        throw new Error(data.error || 'Failed to get token');
+      }
+    })
+    .catch(error => {
+      console.error('Fetch error:', error);
+      showToast("Terjadi kesalahan: " + error.message);
+      // PERBAIKAN 4: Aktifkan kembali field diskon jika error
+      document.getElementById('discountTotalPercent').disabled = false;
+    })
+    .finally(() => {
+      isProcessingPayment = false;
+      btn.disabled = false;
+      btn.textContent = "Konfirmasi Pembayaran";
+    });
+  } else {
+    processCashPayment();
   }
+}
 function testMidtransConnection() {
   console.log('🔍 Testing Midtrans connection...');
   
@@ -2603,7 +2576,7 @@ function processCashPayment() {
     btn.disabled = false
     btn.textContent = "Konfirmasi Pembayaran"
     closePaymentModal()
-    renderCart(); renderFinalStock(); loadSales();
+    renderCart(); renderFinalStock();
 
     openReceiptPreview(invoice)
     showToast("Pembayaran tercatat. Cetak struk atau selesaikan penjualan untuk memasukkan laporan.")
@@ -2654,31 +2627,34 @@ function processSuccessfulPayment(result, transactionData) {
   saveSalesToFirebase();
   saveProductsToFirebase();
 
-  // Bersihkan keranjang
+  // PERBAIKAN 3: Kosongkan keranjang
   cart = [];
   renderCart();
   renderFinalStock();
-  loadSales();
 
-  // Tampilkan struk
-  openReceiptPreview(invoice);
+  // PERBAIKAN 4: Reset field diskon
+  document.getElementById('discountTotalPercent').value = '';
+  document.getElementById('discountTotalPercent').disabled = false;
+  discountTotalPercent = 0;
+
+  // PERBAIKAN 2: Tampilkan struk hanya dengan satu notifikasi
+  openReceiptPreview(invoice, { finalized: true });
   showToast("Pembayaran berhasil! Struk telah dicatat.");
 }
 
 /* open receipt preview modal for given invoice */
-function openReceiptPreview(invoice){
+  function openReceiptPreview(invoice, options = {}){
   const tx = sales.find(s=>s.invoice===invoice)
   if(!tx) return alert("Transaksi tidak ditemukan")
   const modal = document.getElementById('receiptPreviewModal')
   const content = document.getElementById('receiptPreviewContent')
+  const finalizeBtn = document.getElementById('finalizeBtn');
 
-  // build items with original price struck and discounted price
   let itemsHtml = `<table style="width:100%;margin-top:8px;border-collapse:collapse">
       <thead><tr><th style="text-align:left">Nama</th><th style="text-align:center">Qty</th><th style="text-align:right">Harga Normal</th></tr></thead>
       <tbody>`
   tx.items.forEach(i=>{
     const normal = i.price * i.qty;
-    // --- PERBAIKAN: Gunakan diskon dari item (i.discount) ---
     const perItemDiscount = Math.min(normal, (i.discount || 0) * i.qty);
     const afterPerItem = normal - perItemDiscount;
     itemsHtml += `<tr><td>${i.name}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right"><del>Rp ${normal.toLocaleString()}</del><br/>Rp ${afterPerItem.toLocaleString()}${perItemDiscount>0?` <small style=\"color:#16a34a\">(-${formatRupiahNumber(perItemDiscount)})</small>`:''}</td></tr>`;
@@ -2694,11 +2670,10 @@ function openReceiptPreview(invoice){
   }
   summaryHtml += `<div style="text-align:right;margin-top:6px;font-size:1.1rem">Total akhir: Rp ${tx.totalsBreakdown.finalTotal.toLocaleString()}</div>`;
   
-  // Tambahkan informasi tunai dan kembalian jika metode pembayaran tunai
   if(tx.method === 'cash' && tx.cashAmount) {
     summaryHtml += `<div style="text-align:right;margin-top:4px;font-weight:600">Uang Tunai: Rp ${tx.cashAmount.toLocaleString()}</div>`;
     if(tx.changeAmount > 0) {
-      summaryHtml += `<div style="text-align:right;margin-top:4px;color:#16a34a;font-weight:700;font-size:1.2rem">Kembalian: Rp ${tx.changeAmount.toLocaleString()}</div>`;
+      summaryHtml += `<div style="text-align:right;color:#16a34a;font-weight:700;font-size:1.2rem">Kembalian: Rp ${tx.changeAmount.toLocaleString()}</div>`;
     }
   }
 
@@ -2708,12 +2683,43 @@ function openReceiptPreview(invoice){
     ${summaryHtml}
     <div style="margin-top:6px" class="muted">Metode: ${tx.method || '-'}</div>
   `
-  document.getElementById('receiptPreviewModal').style.display = 'flex'
+
+  if (tx.finalized || options.finalized) {
+    finalizeBtn.style.display = 'none';
+  } else {
+    finalizeBtn.style.display = 'inline-block';
+  }
+
+  // PERBAIKAN 5: Ubah tombol cetak untuk memanggil fungsi baru
+  setTimeout(() => {
+    const printBtn = document.getElementById('printPreviewBtn');
+    if(printBtn) {
+      printBtn.setAttribute('onclick', `printReceiptByInvoice('${invoice}')`);
+    }
+  }, 10);
+
+  modal.style.display = 'flex'
+}
+
+function printReceiptByInvoice(invoice) {
+  const tx = sales.find(s=>s.invoice===invoice);
+  if(!tx) {
+    alert("Transaksi tidak ditemukan.");
+    return;
+  }
+  try {
+    printReceipt(tx);
+    showToast("Dialog cetak terbuka.");
+  } catch(e) {
+    alert("Gagal membuka dialog cetak: " + e);
+  }
 }
 
 /* close receipt preview */
 function closeReceiptPreview(){
   document.getElementById('receiptPreviewModal').style.display = 'none'
+  // PERBAIKAN 6: Reset invoice transaksi saat ini
+  currentTransactionInvoice = null;
   showToast("✅ Proses penjualan selesai. Struk telah dicatat di laporan.")
 }
 

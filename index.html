@@ -2288,6 +2288,15 @@ function confirmPayment(){
   const totals = computeCartTotals();
   const total = totals.finalTotal;
   
+  // Jika total adalah 0, tidak perlu melanjutkan ke Midtrans
+  if (total <= 0) {
+    showToast("Total pembayaran tidak valid. Mohon periksa kembali diskon Anda.");
+    isProcessingPayment = false;
+    btn.disabled = false;
+    btn.textContent = "Konfirmasi Pembayaran";
+    return;
+  }
+
   const orderId = 'INV' + Date.now();
   
   // Menghitung total sebelum diskon persentase
@@ -2298,28 +2307,41 @@ function confirmPayment(){
   // Menghitung jumlah diskon persentase
   const percentageDiscountAmount = totals.percentDiscountAmount;
   
-  // Membagi diskon persentase ke setiap item secara proporsional
-  const itemDetails = cart.map(item => {
-    const originalPrice = item.price;
-    const perItemDiscount = item.discount || 0;
-    const discountedPrice = originalPrice - perItemDiscount;
-    
-    // Menghitung proporsi item dalam total sebelum diskon persentase
-    const itemProportion = (discountedPrice * item.qty) / beforePercentageDiscount;
-    
-    // Menghitung diskon persentase untuk item ini
-    const itemPercentageDiscount = Math.round(percentageDiscountAmount * itemProportion);
-    
-    // Menghitung harga akhir per item
-    const finalPrice = Math.max(0, discountedPrice - Math.round(itemPercentageDiscount / item.qty));
-    
-    return {
+  let itemDetails;
+
+  // --- PERBAIKAN KRUSIAL: Hindari pembagian dengan nol ---
+  if (beforePercentageDiscount > 0) {
+    // Normal: Bagi diskon persentase ke setiap item secara proporsional
+    itemDetails = cart.map(item => {
+      const originalPrice = item.price;
+      const perItemDiscount = item.discount || 0;
+      const discountedPrice = originalPrice - perItemDiscount;
+      
+      // Menghitung proporsi item dalam total sebelum diskon persentase
+      const itemProportion = (discountedPrice * item.qty) / beforePercentageDiscount;
+      
+      // Menghitung diskon persentase untuk item ini
+      const itemPercentageDiscount = Math.round(percentageDiscountAmount * itemProportion);
+      
+      // Menghitung harga akhir per item
+      const finalPrice = Math.max(0, discountedPrice - Math.round(itemPercentageDiscount / item.qty));
+      
+      return {
+        id: item.sku,
+        price: finalPrice,
+        quantity: item.qty,
+        name: item.name
+      };
+    });
+  } else {
+    // Kasus khusus: Jika total sebelum diskon adalah 0, buat item dengan harga 0
+    itemDetails = cart.map(item => ({
       id: item.sku,
-      price: finalPrice,
+      price: 0,
       quantity: item.qty,
-      name: item.name
-    };
-  });
+      name: item.name + " (Diskon 100%)"
+    }));
+  }
   
   // Buat data transaksi untuk Midtrans
   const transactionData = {
@@ -2335,81 +2357,81 @@ function confirmPayment(){
     }
   };
     
-    // ✅ PERBAIKAN: Gunakan URL backend yang benar
-    const backendUrl = 'https://oleh2inpos-backend.onrender.com/get-snap-token';
-    
-    const btn = document.getElementById('confirmPayBtn');
-    btn.disabled = true;
-    btn.textContent = "Menghubungkan server...";
+  // ✅ PERBAIKAN: Gunakan URL backend yang benar
+  const backendUrl = 'https://oleh2inpos-backend.onrender.com/get-snap-token';
+  
+  const btn = document.getElementById('confirmPayBtn');
+  btn.disabled = true;
+  btn.textContent = "Menghubungkan server...";
 
-    console.log("🧩 DEBUG transactionData:", transactionData);
+  console.log("🧩 DEBUG transactionData:", transactionData);
+  
+  // ✅ PERBAIKAN: Kirim data yang benar
+  fetch(backendUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(transactionData) // Kirim object lengkap
+  })
+  .then(response => {
+    console.log('🔍 DEBUG: Response status:', response.status);
     
-    // ✅ PERBAIKAN: Kirim data yang benar
-    fetch(backendUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(transactionData) // Kirim object lengkap
-    })
-    .then(response => {
-      console.log('🔍 DEBUG: Response status:', response.status);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log('🔍 DEBUG: Response data:', data);
+    
+    if (data.success) {
+      console.log('🔍 DEBUG: Got token, checking for Snap library...');
+      console.log("🎟 Token yang diterima:", data.token);
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return response.json();
-    })
-    .then(data => {
-      console.log('🔍 DEBUG: Response data:', data);
-      
-      if (data.success) {
-        console.log('🔍 DEBUG: Got token, checking for Snap library...');
-        console.log("🎟 Token yang diterima:", data.token);
+      // ✅ PERBAIKAN: Tunggu Snap library terload
+      if (typeof window.snap !== 'undefined' && window.snap.pay) {
+        console.log('🔍 DEBUG: Snap library is ready, opening popup.');
         
-        // ✅ PERBAIKAN: Tunggu Snap library terload
-        if (typeof window.snap !== 'undefined' && window.snap.pay) {
-          console.log('🔍 DEBUG: Snap library is ready, opening popup.');
-          
-          // Buka popup pembayaran Midtrans
-          window.snap.pay(data.token, {
-            onSuccess: function(result) {
-              console.log('🔍 DEBUG: Payment success:', result);
-              processSuccessfulPayment(result, transactionData);
-            },
-            onPending: function(result) {
-              console.log('🔍 DEBUG: Payment pending:', result);
-              showToast("Pembayaran sedang diproses");
-            },
-            onError: function(result) {
-              console.log('🔍 DEBUG: Payment error:', result);
-              showToast("Pembayaran gagal: " + result.status_message);
-            },
-            onClose: function() {
-              console.log('🔍 DEBUG: Payment popup closed');
-              showToast("Pembayaran dibatalkan");
-            }
-          });
-        } else {
-          console.error('❌ ERROR: Midtrans Snap.js is not loaded!');
-          alert('Error: Library pembayaran Midtrans tidak dimuat. Silakan refresh halaman dan coba lagi.');
-        }
+        // Buka popup pembayaran Midtrans
+        window.snap.pay(data.token, {
+          onSuccess: function(result) {
+            console.log('🔍 DEBUG: Payment success:', result);
+            processSuccessfulPayment(result, transactionData);
+          },
+          onPending: function(result) {
+            console.log('🔍 DEBUG: Payment pending:', result);
+            showToast("Pembayaran sedang diproses");
+          },
+          onError: function(result) {
+            console.log('🔍 DEBUG: Payment error:', result);
+            showToast("Pembayaran gagal: " + result.status_message);
+          },
+          onClose: function() {
+            console.log('🔍 DEBUG: Payment popup closed');
+            showToast("Pembayaran dibatalkan");
+          }
+        });
       } else {
-        console.error('🔍 DEBUG: Backend returned error:', data);
-        throw new Error(data.error || 'Failed to get token');
+        console.error('❌ ERROR: Midtrans Snap.js is not loaded!');
+        alert('Error: Library pembayaran Midtrans tidak dimuat. Silakan refresh halaman dan coba lagi.');
       }
-    })
-    .catch(error => {
-      console.error('🔍 DEBUG: Fetch error:', error);
-      showToast("Terjadi kesalahan: " + error.message);
-    })
-    .finally(() => {
-      isProcessingPayment = false;
-      btn.disabled = false;
-      btn.textContent = "Konfirmasi Pembayaran";
-    });
-  } else {
-    processCashPayment();
+    } else {
+      console.error('🔍 DEBUG: Backend returned error:', data);
+      throw new Error(data.error || 'Failed to get token');
+    }
+  })
+  .catch(error => {
+    console.error('🔍 DEBUG: Fetch error:', error);
+    showToast("Terjadi kesalahan: " + error.message);
+  })
+  .finally(() => {
+    isProcessingPayment = false;
+    btn.disabled = false;
+    btn.textContent = "Konfirmasi Pembayaran";
+  });
+} else {
+  processCashPayment();
   }
 }
 function testMidtransConnection() {

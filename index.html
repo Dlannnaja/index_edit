@@ -2285,29 +2285,55 @@ function confirmPayment(){
   if (cart.length === 0) return alert("Keranjang kosong");
   
   if(selectedPaymentMethod === 'midtrans') {
-    const totals = computeCartTotals();
-    const total = totals.finalTotal;
+  const totals = computeCartTotals();
+  const total = totals.finalTotal;
+  
+  const orderId = 'INV' + Date.now();
+  
+  // Menghitung total sebelum diskon persentase
+  const beforePercentageDiscount = cart.reduce((sum, item) => {
+    return sum + (item.price - (item.discount || 0)) * item.qty;
+  }, 0);
+  
+  // Menghitung jumlah diskon persentase
+  const percentageDiscountAmount = totals.percentDiscountAmount;
+  
+  // Membagi diskon persentase ke setiap item secara proporsional
+  const itemDetails = cart.map(item => {
+    const originalPrice = item.price;
+    const perItemDiscount = item.discount || 0;
+    const discountedPrice = originalPrice - perItemDiscount;
     
-    const orderId = 'INV' + Date.now();
+    // Menghitung proporsi item dalam total sebelum diskon persentase
+    const itemProportion = (discountedPrice * item.qty) / beforePercentageDiscount;
     
-    // Buat data transaksi untuk Midtrans
-    const transactionData = {
-      transaction_details: {
-        order_id: orderId,
-        gross_amount: total
-      },
-      item_details: cart.map(item => ({
-        id: item.sku,
-        price: item.price,
-        quantity: item.qty,
-        name: item.name
-      })),
-      customer_details: {
-        first_name: "Customer",
-        email: "customer@example.com",
-        phone: "08123456789"
-      }
+    // Menghitung diskon persentase untuk item ini
+    const itemPercentageDiscount = Math.round(percentageDiscountAmount * itemProportion);
+    
+    // Menghitung harga akhir per item
+    const finalPrice = Math.max(0, discountedPrice - Math.round(itemPercentageDiscount / item.qty));
+    
+    return {
+      id: item.sku,
+      price: finalPrice,
+      quantity: item.qty,
+      name: item.name
     };
+  });
+  
+  // Buat data transaksi untuk Midtrans
+  const transactionData = {
+    transaction_details: {
+      order_id: orderId,
+      gross_amount: total
+    },
+    item_details: itemDetails,
+    customer_details: {
+      first_name: "Customer",
+      email: "customer@example.com",
+      phone: "08123456789"
+    }
+  };
     
     // ✅ PERBAIKAN: Gunakan URL backend yang benar
     const backendUrl = 'https://oleh2inpos-backend.onrender.com/get-snap-token';

@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>INDOCART</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-  <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="SB-Mid-client-fvOCSkh7us8t74ZF"></script>
+  <script src="https://app.sandbox.midtrans.com/snap/snap.js" 
+        data-client-key="SB-Mid-client-fvOCSkh7us8t74ZF"
+        onload="console.log('✅ Snap.js loaded successfully')"
+        onerror="console.error('❌ Failed to load Snap.js')">
+</script>
   <!-- Tambahkan Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
@@ -2275,20 +2279,21 @@ function confirmPayment(){
     console.warn("⏳ Pembayaran sedang diproses, abaikan klik ganda");
     return;
   }
-  isProcessingPayment = true; // aktifkan flag
+  isProcessingPayment = true;
 
   if (!selectedPaymentMethod) return alert("Pilih metode pembayaran terlebih dahulu");
   if (cart.length === 0) return alert("Keranjang kosong");
   
-  // Jika metode pembayaran adalah Midtrans
   if(selectedPaymentMethod === 'midtrans') {
     const totals = computeCartTotals();
     const total = totals.finalTotal;
     
+    const orderId = 'INV' + Date.now();
+    
     // Buat data transaksi untuk Midtrans
     const transactionData = {
       transaction_details: {
-        order_id: 'INV' + Date.now(),
+        order_id: orderId,
         gross_amount: total
       },
       item_details: cart.map(item => ({
@@ -2304,33 +2309,22 @@ function confirmPayment(){
       }
     };
     
-    // Ganti dengan URL backend Anda
+    // ✅ PERBAIKAN: Gunakan URL backend yang benar
     const backendUrl = 'https://oleh2inpos-backend.onrender.com/get-snap-token';
     
-    // Tambahkan loading state
     const btn = document.getElementById('confirmPayBtn');
     btn.disabled = true;
     btn.textContent = "Menghubungkan server...";
 
     console.log("🧩 DEBUG transactionData:", transactionData);
-    console.log("🧩 DEBUG body yang dikirim:", {
-      transaction_details: transactionData.transaction_details,
-      item_details: transactionData.item_details,
-      customer_details: transactionData.customer_details
-    });
     
+    // ✅ PERBAIKAN: Kirim data yang benar
     fetch(backendUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      // KODE YANG BENAR
-      body: JSON.stringify({
-      order_id: transactionData.transaction_details.order_id,
-      gross_amount: transactionData.transaction_details.gross_amount,
-      item_details: transactionData.item_details,
-      customer_details: transactionData.customer_details
-        })
+      body: JSON.stringify(transactionData) // Kirim object lengkap
     })
     .then(response => {
       console.log('🔍 DEBUG: Response status:', response.status);
@@ -2341,69 +2335,90 @@ function confirmPayment(){
       return response.json();
     })
     .then(data => {
-  console.log('🔍 DEBUG: Response data:', data);
-  
-  if (data.success) {
-    console.log('🔍 DEBUG: Got token, checking for Snap library...');
-    console.log("🎟 Token yang diterima:", data.token);
-    
-    // ✅ TAMBAHKAN PEMERIKSAAN INI
-    if (typeof window.snap !== 'undefined' && window.snap.pay) {
-      console.log('🔍 DEBUG: Snap library is ready, opening popup.');
+      console.log('🔍 DEBUG: Response data:', data);
       
-      // Buka popup pembayaran Midtrans
-      window.snap.pay(data.token, {
-        onSuccess: function(result) {
-          console.log('🔍 DEBUG: Payment success:', result);
-          processSuccessfulPayment(result, transactionData);
-        },
-        onPending: function(result) {
-          console.log('🔍 DEBUG: Payment pending:', result);
-          showToast("Pembayaran sedang diproses");
-        },
-        onError: function(result) {
-          console.log('🔍 DEBUG: Payment error:', result);
-          showToast("Pembayaran gagal: " + result.status_message);
-        },
-        onClose: function() {
-          console.log('🔍 DEBUG: Payment popup closed');
-          showToast("Pembayaran dibatalkan");
+      if (data.success) {
+        console.log('🔍 DEBUG: Got token, checking for Snap library...');
+        console.log("🎟 Token yang diterima:", data.token);
+        
+        // ✅ PERBAIKAN: Tunggu Snap library terload
+        if (typeof window.snap !== 'undefined' && window.snap.pay) {
+          console.log('🔍 DEBUG: Snap library is ready, opening popup.');
+          
+          // Buka popup pembayaran Midtrans
+          window.snap.pay(data.token, {
+            onSuccess: function(result) {
+              console.log('🔍 DEBUG: Payment success:', result);
+              processSuccessfulPayment(result, transactionData);
+            },
+            onPending: function(result) {
+              console.log('🔍 DEBUG: Payment pending:', result);
+              showToast("Pembayaran sedang diproses");
+            },
+            onError: function(result) {
+              console.log('🔍 DEBUG: Payment error:', result);
+              showToast("Pembayaran gagal: " + result.status_message);
+            },
+            onClose: function() {
+              console.log('🔍 DEBUG: Payment popup closed');
+              showToast("Pembayaran dibatalkan");
+            }
+          });
+        } else {
+          console.error('❌ ERROR: Midtrans Snap.js is not loaded!');
+          alert('Error: Library pembayaran Midtrans tidak dimuat. Silakan refresh halaman dan coba lagi.');
         }
-      });
-    } else {
-      // ✅ TAMPILKAN ERROR JIKA LIBRARY TIDAK TERDEFINISI
-      console.error('❌ ERROR: Midtrans Snap.js is not loaded!');
-      alert('Error: Library pembayaran Midtrans tidak dimuat. Silakan refresh halaman dan coba lagi.');
-      
-      // Kembalikan tombol ke keadaan semula
-      const btn = document.getElementById('confirmPayBtn');
-      btn.disabled = false;
-      btn.textContent = "Konfirmasi Pembayaran";
-    }
-  } else {
-    console.error('🔍 DEBUG: Backend returned error:', data);
-    throw new Error(data.error || 'Failed to get token');
-  }
-})
+      } else {
+        console.error('🔍 DEBUG: Backend returned error:', data);
+        throw new Error(data.error || 'Failed to get token');
+      }
+    })
     .catch(error => {
       console.error('🔍 DEBUG: Fetch error:', error);
       showToast("Terjadi kesalahan: " + error.message);
-      
-      // Fallback ke metode pembayaran manual
-      closePaymentModal();
-      selectedPaymentMethod = null;
     })
     .finally(() => {
-      // Restore button state
       isProcessingPayment = false;
       btn.disabled = false;
       btn.textContent = "Konfirmasi Pembayaran";
     });
   } else {
-    // Proses pembayaran tunai seperti biasa
     processCashPayment();
   }
 }
+function testMidtransConnection() {
+  console.log('🔍 Testing Midtrans connection...');
+  
+  // Test backend connection
+  fetch('https://oleh2inpos-backend.onrender.com/test')
+    .then(res => res.json())
+    .then(data => {
+      console.log('✅ Backend connection OK:', data);
+    })
+    .catch(error => {
+      console.error('❌ Backend connection failed:', error);
+    });
+}
+
+// Test Midtrans API
+function testMidtransAPI() {
+  fetch('https://oleh2inpos-backend.onrender.com/test-midtrans')
+    .then(res => res.json())
+    .then(data => {
+      console.log('✅ Midtrans API OK:', data);
+    })
+    .catch(error => {
+      console.error('❌ Midtrans API failed:', error);
+    });
+}
+
+// Panggil fungsi test saat halaman dimuat
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(() => {
+    testMidtransConnection();
+    testMidtransAPI();
+  }, 2000);
+});
 
 // Fungsi untuk memproses pembayaran tunai
 function processCashPayment() {

@@ -2523,6 +2523,8 @@ function processCashPayment() {
 
     openReceiptPreview(invoice)
     showToast("Pembayaran tercatat. Cetak struk atau selesaikan penjualan untuk memasukkan laporan.")
+
+    isProcessingPayment = false;
   }, 700)
 }
 

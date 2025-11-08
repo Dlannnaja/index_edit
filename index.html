@@ -994,6 +994,44 @@
   #tbl th:nth-child(5), #tbl td:nth-child(5) { width: 20%; }
   #tbl th:nth-child(6), #tbl td:nth-child(6) { width: 15%; }
 
+  /* Style untuk input uang tunai dan kembalian */
+  .cash-input-container {
+    display: none;
+    margin-top: 12px;
+    padding: 12px;
+    background: #f5f7fb;
+    border-radius: 8px;
+  }
+  
+  .cash-input-container.active {
+    display: block;
+  }
+  
+  .cash-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  
+  .cash-label {
+    flex: 0 0 120px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  
+  .cash-value {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 600;
+    color: #0b74da;
+  }
+  
+  .change-amount {
+    color: #16a34a;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
   </style>
 
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -1295,6 +1333,22 @@
     </div>
 
     <div id="paymentInfoBox" class="pay-instr">Total: <strong id="payTotal">Rp 0</strong></div>
+
+    <!-- Cash payment input -->
+    <div id="cashInputContainer" class="cash-input-container">
+      <div class="cash-row">
+        <div class="cash-label">Total Belanja:</div>
+        <div class="cash-value" id="cashTotalDisplay">Rp 0</div>
+      </div>
+      <div class="cash-row">
+        <div class="cash-label">Uang Tunai:</div>
+        <input type="number" id="cashAmount" placeholder="Masukkan jumlah uang tunai" min="0" oninput="calculateChange()" style="flex:1; padding:8px; border-radius:6px; border:1px solid #dee2e6;">
+      </div>
+      <div class="cash-row">
+        <div class="cash-label">Kembalian:</div>
+        <div class="cash-value change-amount" id="changeAmount">Rp 0</div>
+      </div>
+    </div>
 
     <div style="display:flex;gap:8px">
       <button id="confirmPayBtn" onclick="confirmPayment()">Konfirmasi Pembayaran</button>
@@ -2254,6 +2308,10 @@ function checkout(){
 function closePaymentModal(){
   document.getElementById('paymentModal').style.display = 'none'
   selectedPaymentMethod = null
+  // Reset cash input when closing modal
+  document.getElementById('cashInputContainer').classList.remove('active');
+  document.getElementById('cashAmount').value = '';
+  document.getElementById('changeAmount').textContent = 'Rp 0';
 }
 
 /* select payment method */
@@ -2262,13 +2320,39 @@ function selectPaymentMethod(method, el){
   document.querySelectorAll('.pm-btn').forEach(b=>b.classList.remove('active'))
   if(el) el.classList.add('active')
   let info = ''
-  if(method === 'cash') info = 'Pembayaran tunai: Terima uang tunai dari pelanggan dan kembalikan jika perlu.'
+  if(method === 'cash') {
+    info = 'Pembayaran tunai: Terima uang tunai dari pelanggan dan kembalikan jika perlu.'
+    // Show cash input when cash is selected
+    document.getElementById('cashInputContainer').classList.add('active');
+    const totals = computeCartTotals();
+    document.getElementById('cashTotalDisplay').textContent = "Rp " + totals.finalTotal.toLocaleString();
+    document.getElementById('changeAmount').textContent = 'Rp 0';
+  } else {
+    // Hide cash input for other payment methods
+    document.getElementById('cashInputContainer').classList.remove('active');
+  }
   if(method === 'transfer') info = 'Transfer bank: Tunjukkan nomor VA / rekening ke pembeli. Konfirmasi manual atau otomatis melalui gateway.'
   if(method === 'card') info = 'Kartu/EDC: Lakukan pembayaran melalui mesin EDC (fisik).'
   if(method === 'qris') info = 'QRIS / e-wallet: Tampilkan QR untuk dipindai pembeli. Setelah terbayar, konfirmasi.'
   if(method === 'midtrans') info = 'Pembayaran online: Proses pembayaran melalui berbagai metode digital (kartu kredit, e-wallet, dll).'
   const totals = computeCartTotals();
   document.getElementById('paymentInfoBox').innerHTML = `<div class="pay-instr">${info}</div><div>Total: <strong id="payTotal">Rp ${totals.finalTotal.toLocaleString()}</strong></div>`
+}
+
+/* Function to calculate change when cash amount is entered */
+function calculateChange() {
+  const cashAmount = parseInt(document.getElementById('cashAmount').value) || 0;
+  const totals = computeCartTotals();
+  const total = totals.finalTotal;
+  
+  if (cashAmount >= total) {
+    const change = cashAmount - total;
+    document.getElementById('changeAmount').textContent = "Rp " + change.toLocaleString();
+    document.getElementById('changeAmount').style.color = "#16a34a";
+  } else {
+    document.getElementById('changeAmount').textContent = "Rp 0";
+    document.getElementById('changeAmount').style.color = "#e74c3c";
+  }
 }
 
 let isProcessingPayment = false; // 🔒 mencegah klik ganda
@@ -2283,6 +2367,18 @@ function confirmPayment(){
 
   if (!selectedPaymentMethod) return alert("Pilih metode pembayaran terlebih dahulu");
   if (cart.length === 0) return alert("Keranjang kosong");
+  
+  // Validasi khusus untuk pembayaran tunai
+  if (selectedPaymentMethod === 'cash') {
+    const cashAmount = parseInt(document.getElementById('cashAmount').value) || 0;
+    const totals = computeCartTotals();
+    const total = totals.finalTotal;
+    
+    if (cashAmount < total) {
+      isProcessingPayment = false;
+      return alert("Uang tunai tidak mencukupi untuk pembayaran ini!");
+    }
+  }
   
   if(selectedPaymentMethod === 'midtrans') {
   const totals = computeCartTotals();
@@ -2480,6 +2576,8 @@ function processCashPayment() {
     const dateDisplay = now.toLocaleString()
     const totals = computeCartTotals();
     const total = totals.finalTotal
+    const cashAmount = parseInt(document.getElementById('cashAmount').value) || 0;
+    const changeAmount = cashAmount >= total ? cashAmount - total : 0;
 
     const transaction = {
       invoice,
@@ -2497,7 +2595,9 @@ function processCashPayment() {
       method: selectedPaymentMethod,
       status: 'paid',
       finalized: false,
-      completedAt: null
+      completedAt: null,
+      cashAmount: cashAmount,
+      changeAmount: changeAmount
     }
 
     // Kurangi stok
@@ -2609,6 +2709,14 @@ function openReceiptPreview(invoice){
     summaryHtml += `<div style="text-align:right;color:#16a34a">Diskon total belanja (${tx.discountTotalPercent}%): -${formatRupiahNumber(tx.totalsBreakdown.percentDiscountAmount)}</div>`;
   }
   summaryHtml += `<div style="text-align:right;margin-top:6px;font-size:1.1rem">Total akhir: Rp ${tx.totalsBreakdown.finalTotal.toLocaleString()}</div>`;
+  
+  // Tambahkan informasi tunai dan kembalian jika metode pembayaran tunai
+  if(tx.method === 'cash' && tx.cashAmount) {
+    summaryHtml += `<div style="text-align:right;margin-top:4px;font-weight:600">Uang Tunai: Rp ${tx.cashAmount.toLocaleString()}</div>`;
+    if(tx.changeAmount > 0) {
+      summaryHtml += `<div style="text-align:right;margin-top:4px;color:#16a34a;font-weight:700;font-size:1.2rem">Kembalian: Rp ${tx.changeAmount.toLocaleString()}</div>`;
+    }
+  }
 
   content.innerHTML = `<div class="muted">Invoice: <strong>${tx.invoice}</strong></div>
     <div class="muted">Tanggal: ${tx.dateDisplay || tx.date}</div>
@@ -2725,6 +2833,15 @@ function printReceipt(t){
     html += `<div style="text-align:right;color:#16a34a">Diskon total belanja (${t.discountTotalPercent}%): -${formatRupiahNumber(t.totalsBreakdown.percentDiscountAmount)}</div>`
   }
   html += `<h4 style="text-align:right;margin:6px 0">Total akhir: Rp ${t.totalsBreakdown.finalTotal.toLocaleString()}</h4>`
+  
+  // Tambahkan informasi tunai dan kembalian pada struk cetak
+  if(t.method === 'cash' && t.cashAmount) {
+    html += `<div style="text-align:right;font-weight:600">Uang Tunai: Rp ${t.cashAmount.toLocaleString()}</div>`
+    if(t.changeAmount > 0) {
+      html += `<div style="text-align:right;color:#16a34a;font-weight:700;font-size:1.1rem">Kembalian: Rp ${t.changeAmount.toLocaleString()}</div>`
+    }
+  }
+  
   html += `</div>`
 
   const w = window.open("","_blank","width=400,height=600")
@@ -2761,7 +2878,7 @@ function printSales() {
           table { border-collapse: collapse; width: 100%; }
           th, td { border: 1px solid #444; padding: 8px 10px; text-align: left; }
           th { background: #f2f2f2; }
-          h2 { text-align: center; margin-bottom: 20px; }
+          h2 { text-align: center; }
           @media print {
             body { margin: 0; }
           }
@@ -3456,7 +3573,7 @@ function openTab(id){
   document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
   document.querySelectorAll(".tab-content").forEach(c=>c.classList.remove("active"));
 
-  // set active on the button (robust selector)
+  // set active on button (robust selector)
   let btn = document.querySelector(`.tab-btn[onclick*="openTab('${id}')"]`);
   if(!btn){
     // fallback: match double quotes variant

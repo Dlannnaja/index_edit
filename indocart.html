@@ -2957,6 +2957,7 @@ function confirmPayment(){
             },
             onClose: function() {
               console.log('Popup Midtrans ditutup oleh user');
+              showToast("❌ Pesanan dibatalkan oleh pengguna.");
               // PERBAIKAN 4: Aktifkan kembali field diskon jika ditutup
               document.getElementById('discountTotalPercent').disabled = false;
             }

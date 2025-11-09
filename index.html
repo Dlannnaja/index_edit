@@ -1,1 +1,436 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login - INDOCART</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f9fc;
+      --card: #ffffff;
+      --accent: #0b74da;
+      --accent-dark: #094fa1;
+      --muted: #6b7280;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      --radius: 10px;
+      --font: "Poppins", system-ui, sans-serif;
+    }
 
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: linear-gradient(135deg, #0b74da, #094fa1);
+      color: #fff;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 30px;
+      box-shadow: var(--shadow);
+      color: #333;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo h1 {
+      margin: 0;
+      font-size: 2rem;
+      color: var(--accent);
+    }
+
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: var(--radius);
+      font-size: 16px;
+      transition: border-color 0.3s ease;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(11, 116, 218, 0.2);
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: var(--accent-dark);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .error-message {
+      background: #fee;
+      color: #c33;
+      padding: 10px;
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .success-message {
+      background: #efe;
+      color: #3c3;
+      padding: 10px;
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .forgot-password {
+      text-align: right;
+      margin-top: 10px;
+    }
+
+    .forgot-password a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .forgot-password a:hover {
+      text-decoration: underline;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border-left-color: var(--accent);
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="logo">
+        <h1>INDOCART</h1>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" id="loginTab" onclick="switchTab('login')">Login</div>
+        <div class="tab" id="signupTab" onclick="switchTab('signup')">Daftar</div>
+      </div>
+
+      <div id="error-message" class="error-message"></div>
+      <div id="success-message" class="success-message"></div>
+
+      <!-- Login Form -->
+      <div id="loginForm">
+        <form onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="loginEmail">Email</label>
+            <input type="email" id="loginEmail" required placeholder="email@example.com">
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" required placeholder="Password">
+          </div>
+          <button type="submit" id="loginButton">Masuk</button>
+          <div class="forgot-password">
+            <a href="#" onclick="resetPassword(event)">Lupa password?</a>
+          </div>
+        </form>
+      </div>
+
+      <!-- Signup Form -->
+      <div id="signupForm" style="display: none;">
+        <form onsubmit="handleSignup(event)">
+          <div class="form-group">
+            <label for="signupName">Nama Lengkap</label>
+            <input type="text" id="signupName" required placeholder="Nama Lengkap">
+          </div>
+          <div class="form-group">
+            <label for="signupEmail">Email</label>
+            <input type="email" id="signupEmail" required placeholder="email@example.com">
+          </div>
+          <div class="form-group">
+            <label for="signupPassword">Password</label>
+            <input type="password" id="signupPassword" required placeholder="Password (minimal 6 karakter)">
+          </div>
+          <div class="form-group">
+            <label for="signupConfirmPassword">Konfirmasi Password</label>
+            <input type="password" id="signupConfirmPassword" required placeholder="Konfirmasi Password">
+          </div>
+          <button type="submit" id="signupButton">Daftar</button>
+        </form>
+      </div>
+
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Memproses...</p>
+      </div>
+    </div>
+    <div class="footer">
+      &copy; 2023 INDOCART - Sistem Kasir Modern
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBlK7yXuLNK2Ms1iUBnvXIvr6rGHJ3UoTA",
+      authDomain: "oleh2in-pos-v2.firebaseapp.com",
+      databaseURL: "https://oleh2in-pos-v2-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "oleh2in-pos-v2",
+      storageBucket: "oleh2in-pos-v2.firebasestorage.app",
+      messagingSenderId: "878660961111",
+      appId: "1:878660961111:web:d02e32193ca1539d3e3412",
+      measurementId: "G-T6F0L6QE03"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+
+    // DOM elements
+    const loginTab = document.getElementById('loginTab');
+    const signupTab = document.getElementById('signupTab');
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+    const errorMessage = document.getElementById('error-message');
+    const successMessage = document.getElementById('success-message');
+    const loading = document.getElementById('loading');
+
+    // Switch between login and signup tabs
+    function switchTab(tab) {
+      errorMessage.style.display = 'none';
+      successMessage.style.display = 'none';
+      
+      if (tab === 'login') {
+        loginTab.classList.add('active');
+        signupTab.classList.remove('active');
+        loginForm.style.display = 'block';
+        signupForm.style.display = 'none';
+      } else {
+        loginTab.classList.remove('active');
+        signupTab.classList.add('active');
+        loginForm.style.display = 'none';
+        signupForm.style.display = 'block';
+      }
+    }
+
+    // Show error message
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = 'block';
+      successMessage.style.display = 'none';
+      loading.style.display = 'none';
+    }
+
+    // Show success message
+    function showSuccess(message) {
+      successMessage.textContent = message;
+      successMessage.style.display = 'block';
+      errorMessage.style.display = 'none';
+      loading.style.display = 'none';
+    }
+
+    // Show loading indicator
+    function showLoading() {
+      loading.style.display = 'block';
+      errorMessage.style.display = 'none';
+      successMessage.style.display = 'none';
+    }
+
+    // Handle login
+    function handleLogin(event) {
+      event.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      
+      showLoading();
+      
+      auth.signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          // Login successful
+          const user = userCredential.user;
+          
+          // Store user session
+          sessionStorage.setItem('user', JSON.stringify({
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName
+          }));
+          
+          // Redirect to indocart
+          window.location.href = 'indocart.html';
+        })
+        .catch((error) => {
+          showError('Login gagal: ' + error.message);
+        });
+    }
+
+    // Handle signup
+    function handleSignup(event) {
+      event.preventDefault();
+      const name = document.getElementById('signupName').value;
+      const email = document.getElementById('signupEmail').value;
+      const password = document.getElementById('signupPassword').value;
+      const confirmPassword = document.getElementById('signupConfirmPassword').value;
+      
+      // Validate passwords match
+      if (password !== confirmPassword) {
+        showError('Password tidak cocok!');
+        return;
+      }
+      
+      // Validate password length
+      if (password.length < 6) {
+        showError('Password harus minimal 6 karakter!');
+        return;
+      }
+      
+      showLoading();
+      
+      auth.createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          // Signup successful
+          const user = userCredential.user;
+          
+          // Update user profile with name
+          return user.updateProfile({ displayName: name });
+        })
+        .then(() => {
+          showSuccess('Pendaftaran berhasil! Silakan login dengan akun Anda.');
+          
+          // Switch to login tab
+          setTimeout(() => {
+            switchTab('login');
+            // Pre-fill email
+            document.getElementById('loginEmail').value = email;
+          }, 1500);
+        })
+        .catch((error) => {
+          showError('Pendaftaran gagal: ' + error.message);
+        });
+    }
+
+    // Reset password
+    function resetPassword(event) {
+      event.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      
+      if (!email) {
+        showError('Masukkan email Anda terlebih dahulu!');
+        return;
+      }
+      
+      showLoading();
+      
+      auth.sendPasswordResetEmail(email)
+        .then(() => {
+          showSuccess('Email reset password telah dikirim! Periksa inbox Anda.');
+        })
+        .catch((error) => {
+          showError('Gagal mengirim email reset: ' + error.message);
+        });
+    }
+
+    // Check if user is already logged in
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        // User is signed in, redirect to indocart
+        window.location.href = 'indocart.html';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Login - INDOCART</title>
+  <title>Login - Oleh2inPOS</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -147,6 +147,15 @@
       display: none;
     }
 
+    .info-message {
+      background: #e3f2fd;
+      color: #1976d2;
+      padding: 10px;
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      display: none;
+    }
+
     .forgot-password {
       text-align: right;
       margin-top: 10px;
@@ -189,13 +198,100 @@
       font-size: 14px;
       color: rgba(255, 255, 255, 0.8);
     }
+
+    .verification-info {
+      background: #f0f7ff;
+      border: 1px solid #b3d9ff;
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .verification-steps {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: var(--radius);
+      padding: 15px;
+      margin: 15px 0;
+    }
+
+    .verification-steps ol {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .verification-steps li {
+      margin-bottom: 8px;
+    }
+
+    .verification-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .verification-actions button {
+      flex: 1;
+      padding: 12px;
+      font-size: 14px;
+    }
+
+    .verification-actions button.secondary {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+
+    .verification-actions button.secondary:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .email-preview {
+      background: #f8f9fa;
+      border: 1px dashed #dee2e6;
+      border-radius: var(--radius);
+      padding: 15px;
+      margin: 15px 0;
+      font-family: monospace;
+      font-size: 12px;
+      color: #495057;
+    }
+
+    .check-status {
+      text-align: center;
+      padding: 10px;
+      margin: 15px 0;
+      border-radius: var(--radius);
+      font-weight: 600;
+    }
+
+    .check-status.checking {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+
+    .check-status.verified {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .check-status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
   </style>
 </head>
 <body>
   <div class="login-container">
     <div class="login-card">
       <div class="logo">
-        <h1>INDOCART</h1>
+        <h1>Oleh2inPOS</h1>
       </div>
 
       <div class="tabs">
@@ -205,6 +301,7 @@
 
       <div id="error-message" class="error-message"></div>
       <div id="success-message" class="success-message"></div>
+      <div id="info-message" class="info-message"></div>
 
       <!-- Login Form -->
       <div id="loginForm">
@@ -247,13 +344,46 @@
         </form>
       </div>
 
+      <!-- Verification Form (FIXED - No Code Input) -->
+      <div id="verifyForm" style="display: none;">
+        <div class="verification-info">
+          <h3>📧 Verifikasi Email Anda</h3>
+          <p>Kami telah mengirim email verifikasi ke:</p>
+          <div class="email-preview" id="verifyEmail"></div>
+          
+          <div class="verification-steps">
+            <h4>📋 Langkah-langkah:</h4>
+            <ol>
+              <li>Buka aplikasi email Anda (Gmail, Yahoo, Outlook, dll)</li>
+              <li>Cari email dari <strong>"Firebase"</strong> atau <strong>"noreply@oleh2in-pos-v2.firebaseapp.com"</strong></li>
+              <li>Buka email dan <strong>klik link verifikasi</strong> di dalamnya</li>
+              <li>Kembali ke halaman ini dan klik tombol <strong>"Sudah Verifikasi"</strong></li>
+            </ol>
+          </div>
+          
+          <p><strong>⚠️ Catatan Penting:</strong></p>
+          <ul style="color: #666; font-size: 13px;">
+            <li>Link verifikasi kadaluarsa dalam 24 jam</li>
+            <li>Cek folder <strong>Spam/Junk</strong> jika tidak menemukan email</li>
+            <li>Jangan bagikan link verifikasi kepada siapapun</li>
+          </ul>
+        </div>
+        
+        <div id="checkStatus" class="check-status" style="display: none;"></div>
+        
+        <div class="verification-actions">
+          <button type="button" id="checkButton" onclick="checkEmailVerification()">✅ Sudah Verifikasi</button>
+          <button type="button" class="secondary" id="resendButton" onclick="resendVerificationEmail()">📧 Kirim Ulang Email</button>
+        </div>
+      </div>
+
       <div class="loading" id="loading">
         <div class="spinner"></div>
         <p>Memproses...</p>
       </div>
     </div>
     <div class="footer">
-      &copy; 2023 INDOCART - Sistem Kasir Modern
+      &copy; 2025 Oleh2in - Oleh2inPOS
     </div>
   </div>
 
@@ -280,29 +410,45 @@
     const auth = firebase.auth();
     const database = firebase.database();
 
+    // Global variables
+    let pendingUser = null;
+    let verificationEmail = '';
+    let verificationCheckInterval = null;
+
     // DOM elements
     const loginTab = document.getElementById('loginTab');
     const signupTab = document.getElementById('signupTab');
     const loginForm = document.getElementById('loginForm');
     const signupForm = document.getElementById('signupForm');
+    const verifyForm = document.getElementById('verifyForm');
     const errorMessage = document.getElementById('error-message');
     const successMessage = document.getElementById('success-message');
+    const infoMessage = document.getElementById('info-message');
     const loading = document.getElementById('loading');
+    const checkStatus = document.getElementById('checkStatus');
 
-    // Switch between login and signup tabs
+    // Switch between tabs
     function switchTab(tab) {
       errorMessage.style.display = 'none';
       successMessage.style.display = 'none';
+      infoMessage.style.display = 'none';
+      checkStatus.style.display = 'none';
       
+      // Hide all forms
+      loginForm.style.display = 'none';
+      signupForm.style.display = 'none';
+      verifyForm.style.display = 'none';
+      
+      // Remove active class from all tabs
+      loginTab.classList.remove('active');
+      signupTab.classList.remove('active');
+      
+      // Show selected tab and form
       if (tab === 'login') {
         loginTab.classList.add('active');
-        signupTab.classList.remove('active');
         loginForm.style.display = 'block';
-        signupForm.style.display = 'none';
-      } else {
-        loginTab.classList.remove('active');
+      } else if (tab === 'signup') {
         signupTab.classList.add('active');
-        loginForm.style.display = 'none';
         signupForm.style.display = 'block';
       }
     }
@@ -312,7 +458,9 @@
       errorMessage.textContent = message;
       errorMessage.style.display = 'block';
       successMessage.style.display = 'none';
+      infoMessage.style.display = 'none';
       loading.style.display = 'none';
+      checkStatus.style.display = 'none';
     }
 
     // Show success message
@@ -320,7 +468,19 @@
       successMessage.textContent = message;
       successMessage.style.display = 'block';
       errorMessage.style.display = 'none';
+      infoMessage.style.display = 'none';
       loading.style.display = 'none';
+      checkStatus.style.display = 'none';
+    }
+
+    // Show info message
+    function showInfo(message) {
+      infoMessage.textContent = message;
+      infoMessage.style.display = 'block';
+      errorMessage.style.display = 'none';
+      successMessage.style.display = 'none';
+      loading.style.display = 'none';
+      checkStatus.style.display = 'none';
     }
 
     // Show loading indicator
@@ -328,6 +488,19 @@
       loading.style.display = 'block';
       errorMessage.style.display = 'none';
       successMessage.style.display = 'none';
+      infoMessage.style.display = 'none';
+      checkStatus.style.display = 'none';
+    }
+
+    // Show check status
+    function showCheckStatus(message, type) {
+      checkStatus.textContent = message;
+      checkStatus.className = 'check-status ' + type;
+      checkStatus.style.display = 'block';
+      errorMessage.style.display = 'none';
+      successMessage.style.display = 'none';
+      infoMessage.style.display = 'none';
+      loading.style.display = 'none';
     }
 
     // Handle login
@@ -340,18 +513,38 @@
       
       auth.signInWithEmailAndPassword(email, password)
         .then((userCredential) => {
-          // Login successful
           const user = userCredential.user;
           
-          // Store user session
-          sessionStorage.setItem('user', JSON.stringify({
-            uid: user.uid,
-            email: user.email,
-            displayName: user.displayName
-          }));
-          
-          // Redirect to indocart
-          window.location.href = 'indocart.html';
+          // Check if email is verified
+          if (user.emailVerified) {
+            // Store user session
+            sessionStorage.setItem('user', JSON.stringify({
+              uid: user.uid,
+              email: user.email,
+              displayName: user.displayName
+            }));
+            
+            // Redirect to indocart
+            window.location.href = 'indocart.html';
+          } else {
+            // Email not verified, show verification form
+            pendingUser = user;
+            verificationEmail = email;
+            
+            showInfo('Email Anda belum diverifikasi. Kami akan mengirim email verifikasi.');
+            
+            // Send verification email
+            user.sendEmailVerification()
+              .then(() => {
+                showSuccess('Email verifikasi telah dikirim! Silakan ikuti instruksi.');
+                setTimeout(() => {
+                  switchToVerificationTab();
+                }, 2000);
+              })
+              .catch((error) => {
+                showError('Gagal mengirim email verifikasi: ' + error.message);
+              });
+          }
         })
         .catch((error) => {
           showError('Login gagal: ' + error.message);
@@ -382,25 +575,140 @@
       
       auth.createUserWithEmailAndPassword(email, password)
         .then((userCredential) => {
-          // Signup successful
           const user = userCredential.user;
           
           // Update user profile with name
-          return user.updateProfile({ displayName: name });
-        })
-        .then(() => {
-          showSuccess('Pendaftaran berhasil! Silakan login dengan akun Anda.');
-          
-          // Switch to login tab
-          setTimeout(() => {
-            switchTab('login');
-            // Pre-fill email
-            document.getElementById('loginEmail').value = email;
-          }, 1500);
+          return user.updateProfile({ displayName: name })
+            .then(() => {
+              // Send verification email
+              return user.sendEmailVerification();
+            })
+            .then(() => {
+              pendingUser = user;
+              verificationEmail = email;
+              
+              showSuccess('Pendaftaran berhasil! Email verifikasi telah dikirim.');
+              
+              // Switch to verification tab after 2 seconds
+              setTimeout(() => {
+                switchToVerificationTab();
+              }, 2000);
+            });
         })
         .catch((error) => {
           showError('Pendaftaran gagal: ' + error.message);
         });
+    }
+
+    // Switch to verification tab
+    function switchToVerificationTab() {
+      // Hide all tabs
+      loginTab.classList.remove('active');
+      signupTab.classList.remove('active');
+      
+      // Hide all forms
+      loginForm.style.display = 'none';
+      signupForm.style.display = 'none';
+      
+      // Show verification form
+      verifyForm.style.display = 'block';
+      document.getElementById('verifyEmail').textContent = verificationEmail;
+      
+      // Start checking email verification periodically
+      startVerificationCheck();
+    }
+
+    // Check if email is verified (FIXED - No Code Input)
+    function checkEmailVerification() {
+      if (!pendingUser) {
+        showError('Tidak ada user yang pending verifikasi.');
+        return;
+      }
+      
+      showCheckStatus('🔍 Memeriksa status verifikasi...', 'checking');
+      
+      // Reload user to check if email is verified
+      pendingUser.reload()
+        .then(() => {
+          if (pendingUser.emailVerified) {
+            showCheckStatus('✅ Email berhasil diverifikasi! Mengalihkan...', 'verified');
+            
+            // Stop checking
+            stopVerificationCheck();
+            
+            // Store user session
+            sessionStorage.setItem('user', JSON.stringify({
+              uid: pendingUser.uid,
+              email: pendingUser.email,
+              displayName: pendingUser.displayName
+            }));
+            
+            // Redirect to indocart after 2 seconds
+            setTimeout(() => {
+              window.location.href = 'indocart.html';
+            }, 2000);
+          } else {
+            showCheckStatus('❌ Email belum diverifikasi. Silakan periksa email Anda dan klik link verifikasi.', 'error');
+          }
+        })
+        .catch((error) => {
+          showError('Gagal memeriksa verifikasi: ' + error.message);
+        });
+    }
+
+    // Resend verification email
+    function resendVerificationEmail() {
+      if (!pendingUser) {
+        showError('Tidak ada user yang pending verifikasi.');
+        return;
+      }
+      
+      showLoading();
+      
+      pendingUser.sendEmailVerification()
+        .then(() => {
+          showSuccess('Email verifikasi telah dikirim ulang! Silakan periksa inbox Anda.');
+        })
+        .catch((error) => {
+          showError('Gagal mengirim ulang email: ' + error.message);
+        });
+    }
+
+    // Start checking email verification periodically
+    function startVerificationCheck() {
+      // Check every 10 seconds
+      verificationCheckInterval = setInterval(() => {
+        if (pendingUser) {
+          pendingUser.reload()
+            .then(() => {
+              if (pendingUser.emailVerified) {
+                stopVerificationCheck();
+                showCheckStatus('✅ Email berhasil diverifikasi! Mengalihkan...', 'verified');
+                
+                sessionStorage.setItem('user', JSON.stringify({
+                  uid: pendingUser.uid,
+                  email: pendingUser.email,
+                  displayName: pendingUser.displayName
+                }));
+                
+                setTimeout(() => {
+                  window.location.href = 'indocart.html';
+                }, 2000);
+              }
+            })
+            .catch(() => {
+              // Ignore errors during periodic check
+            });
+        }
+      }, 10000); // Check every 10 seconds
+    }
+
+    // Stop checking email verification
+    function stopVerificationCheck() {
+      if (verificationCheckInterval) {
+        clearInterval(verificationCheckInterval);
+        verificationCheckInterval = null;
+      }
     }
 
     // Reset password
@@ -424,12 +732,17 @@
         });
     }
 
-    // Check if user is already logged in
+    // Check if user is already logged in and verified
     auth.onAuthStateChanged((user) => {
-      if (user) {
-        // User is signed in, redirect to indocart
+      if (user && user.emailVerified) {
+        // User is signed in and email is verified, redirect to indocart
         window.location.href = 'indocart.html';
       }
+    });
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      stopVerificationCheck();
     });
   </script>
 </body>

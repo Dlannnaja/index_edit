@@ -1807,21 +1807,75 @@ function checkAuthentication() {
   // Check if user is logged in
   auth.onAuthStateChanged((user) => {
     if (user) {
-      // User is signed in
-      currentUser = user;
-      updateUserInfo(user);
-      document.getElementById('authOverlay').style.display = 'none';
-      
-      // Initialize the app after authentication is confirmed
-      if (!window.appInitialized) {
-        window.appInitialized = true;
-        init();
+      // Check if email is verified
+      if (user.emailVerified) {
+        // User is signed in and email is verified
+        currentUser = user;
+        updateUserInfo(user);
+        document.getElementById('authOverlay').style.display = 'none';
+        
+        // Initialize app after authentication is confirmed
+        if (!window.appInitialized) {
+          window.appInitialized = true;
+          init();
+        }
+      } else {
+        // Email not verified, redirect to login
+        showAuthError('Email Anda belum diverifikasi. Silakan verifikasi email terlebih dahulu.');
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 3000);
       }
     } else {
       // User is not signed in, redirect to login page
       window.location.href = 'index.html';
     }
   });
+}
+
+  // Fungsi untuk menampilkan error auth
+function showAuthError(message) {
+  const authOverlay = document.getElementById('authOverlay');
+  authOverlay.innerHTML = `
+    <div class="auth-message">
+      <h3>⚠️ Akses Ditolak</h3>
+      <p>${message}</p>
+      <p>Anda akan dialihkan ke halaman login...</p>
+      <div class="spinner"></div>
+    </div>
+  `;
+  authOverlay.style.display = 'flex';
+}
+
+  // Di indocart.html, tambahkan validasi session
+function validateSession() {
+  const user = auth.currentUser;
+  
+  if (!user) {
+    window.location.href = 'index.html';
+    return false;
+  }
+  
+  if (!user.emailVerified) {
+    showAuthError('Sesi Anda tidak valid. Email belum diverifikasi.');
+    setTimeout(() => {
+      window.location.href = 'index.html';
+    }, 3000);
+    return false;
+  }
+  
+  return true;
+}
+
+// Check setiap 5 menit
+setInterval(validateSession, 300000);
+
+// Check sebelum setiap operasi penting
+function secureOperation(operation) {
+  if (validateSession()) {
+    return operation();
+  }
+  return null;
 }
 
 // Update user info in header

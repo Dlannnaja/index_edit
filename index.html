@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Login - Oleh².in</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
-  <!-- Tambahkan ini di bagian head, sebelum script lainnya -->
-  <script src="firebase-config.js"></script>
-  
   <style>
     :root {
       --bg: #f7f9fc;
@@ -231,7 +228,7 @@
       height: 36px;
       border-radius: 50%;
       border-left-color: var(--accent);
-      animation: spin 1s linear infinite;
+      animation: spin 1s linear infe;
       margin: 0 auto;
     }
 
@@ -445,9 +442,10 @@
   <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
 
-
+  <!-- Tambahkan ini di bagian head, sebelum script lainnya -->
+  <script src="firebase-config.js"></script>
+  <script>
     // Initialize Firebase
-    const firebaseConfig = getFirebaseConfig();
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const database = firebase.database();

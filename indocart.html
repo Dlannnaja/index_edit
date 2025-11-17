@@ -3442,17 +3442,27 @@ function confirmPayment(){
     .then(data => {
       if (data.success) {
     
+        // ★ Reset token lama supaya ga kepakai
+        currentSnapToken = null;
+    
+        // ★ Ambil token baru dari backend
+        const newToken = data.token;
+        currentSnapToken = newToken;
+    
         closePaymentModal();
     
-        // PC? tampilkan QR
+        // ★ Jika komputer → tampilkan QR
         if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-            showQRPayment(data.token);
-            return; // stop di sini agar snap.pay tidak jalan
+    
+            // generate QR BARU
+            showQRPayment(newToken);
+    
+            return; // stop supaya snap.pay tidak dijalankan di PC
         }
     
-        // HP? langsung snap seperti biasa
+        // ★ Jika HP → langsung snap.pay
         if (typeof window.snap !== 'undefined' && window.snap.pay) {
-          window.snap.pay(data.token, {
+          window.snap.pay(newToken, {
             onSuccess: function(result) {
               console.log('Pembayaran Midtrans berhasil:', result);
               currentTransactionInvoice = orderId;
@@ -3476,6 +3486,7 @@ function confirmPayment(){
         } else {
           throw new Error('Midtrans Snap.js is not loaded!');
         }
+    
       } else {
         throw new Error(data.error || 'Failed to get token');
       }
@@ -4813,10 +4824,12 @@ function debugMidtrans() {
 }
 /* --- TEST QR-nya ---*/
   function showQRPayment(token) {
-    const payUrl = "https://oleh2inpos.onrender.com/pay?token=" + token;
+    const payUrl = "https://oleh2inpos-backend.onrender.com/pay?token=" + token;
 
+    // BERSIHKAN QR LAMA
     document.getElementById("qrcode").innerHTML = "";
 
+    // Generate QR BARU
     new QRCode(document.getElementById("qrcode"), {
         text: payUrl,
         width: 220,
@@ -4828,9 +4841,9 @@ function debugMidtrans() {
 
 function closeQRModal() {
     document.getElementById("qrModal").style.display = "none";
+    currentSnapToken = null; // reset supaya token baru dibuat
 }
 
 </script>
 </body>
 </html>
-

@@ -3457,6 +3457,15 @@ function confirmPayment(){
             // generate QR BARU
             showQRPayment(newToken);
 
+            fetch("https://oleh2inpos-backend.onrender.com/save-qr-transaction", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              order_id: orderId,
+              token: data.token
+            })
+          });
+
             startCheckPaymentStatus(newToken, transactionData);
     
             return; // stop supaya snap.pay tidak dijalankan di PC
@@ -4803,18 +4812,6 @@ function testMidtransPayment() {
     })
     .catch(error => {
       console.error('❌ Backend connection failed:', error);
-    });
-}
-
-// Test Midtrans API
-function testMidtransAPI() {
-  fetch('https://oleh2inpos-backend.onrender.com/test-midtrans')
-    .then(res => res.json())
-    .then(data => {
-      console.log('✅ Midtrans API OK:', data);
-    })
-    .catch(error => {
-      console.error('❌ Midtrans API failed:', error);
     });
 }
 

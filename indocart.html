@@ -3507,6 +3507,28 @@ function confirmPayment(){
   }
 }
 
+  function startCheckPaymentStatus(token) {
+  const interval = setInterval(() => {
+
+    fetch(`https://oleh2inpos-backend.onrender.com/payment-status/${token}`)
+      .then(res => res.json())
+      .then(data => {
+
+        if (data.status === "closed") {
+          clearInterval(interval);
+
+          // Tutup QR modal
+          document.getElementById("qrModal").style.display = "none";
+
+          // Kasir kembali ke proses pembayaran
+          showToast("❌ Pembayaran dibatalkan oleh pengguna");
+        }
+      });
+
+  }, 2000);
+}
+
+
 // Fungsi untuk memproses pembayaran tunai
 function processCashPayment() {
   const btn = document.getElementById('confirmPayBtn')
@@ -4824,19 +4846,21 @@ function debugMidtrans() {
 }
 /* --- TEST QR-nya ---*/
   function showQRPayment(token) {
-    const payUrl = "https://oleh2inpos-backend.onrender.com/pay?token=" + token;
+  const payUrl = "https://oleh2inpos-backend.onrender.com/pay?token=" + token;
 
-    // BERSIHKAN QR LAMA
-    document.getElementById("qrcode").innerHTML = "";
+  // Bersihkan QR lama
+  document.getElementById("qrcode").innerHTML = "";
 
-    // Generate QR BARU
-    new QRCode(document.getElementById("qrcode"), {
-        text: payUrl,
-        width: 220,
-        height: 220
-    });
+  new QRCode(document.getElementById("qrcode"), {
+    text: payUrl,
+    width: 220,
+    height: 220
+  });
 
-    document.getElementById("qrModal").style.display = "flex";
+  document.getElementById("qrModal").style.display = "flex";
+
+  // Mulai cek status pembayaran
+  startCheckPaymentStatus(token);
 }
 
 function closeQRModal() {

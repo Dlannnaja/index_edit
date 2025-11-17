@@ -3457,7 +3457,7 @@ function confirmPayment(){
             // generate QR BARU
             showQRPayment(newToken);
 
-            startCheckPaymentStatus(newToken);
+            startCheckPaymentStatus(newToken, transactionData);
     
             return; // stop supaya snap.pay tidak dijalankan di PC
         }
@@ -3509,25 +3509,34 @@ function confirmPayment(){
   }
 }
 
-  function startCheckPaymentStatus(token) {
+  function startCheckPaymentStatus(token, transactionData) {
   const interval = setInterval(() => {
 
     fetch(`https://oleh2inpos-backend.onrender.com/payment-status/${token}`)
       .then(res => res.json())
       .then(data => {
 
+        // === STATUS CLOSED (HP menutup Snap) ======================
         if (data.status === "closed") {
           clearInterval(interval);
 
-          // Tutup QR modal
-          document.getElementById("qrModal").style.display = "none";
-
-          // Notifikasi kasir
+          closeQRModal(); // versi lebih rapi dari manual hide
           showToast("❌ Pembayaran dibatalkan.");
 
-          // Reset diskon atau form apa pun
           document.getElementById('discountTotalPercent').disabled = false;
         }
+
+        // === STATUS SUCCESS (HP selesai bayar) ====================
+        if (data.status === "success") {
+          clearInterval(interval);
+
+          closeQRModal();
+          showToast("✅ Pembayaran berhasil");
+
+          // Jalankan proses pembayaran normal di PC
+          processSuccessfulPayment(data.result, transactionData);
+        }
+
       });
 
   }, 2000);

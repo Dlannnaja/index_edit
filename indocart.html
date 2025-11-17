@@ -3456,6 +3456,8 @@ function confirmPayment(){
     
             // generate QR BARU
             showQRPayment(newToken);
+
+            startCheckPaymentStatus(newToken);
     
             return; // stop supaya snap.pay tidak dijalankan di PC
         }
@@ -3520,14 +3522,16 @@ function confirmPayment(){
           // Tutup QR modal
           document.getElementById("qrModal").style.display = "none";
 
-          // Kasir kembali ke proses pembayaran
-          showToast("❌ Pembayaran dibatalkan oleh pengguna");
+          // Notifikasi kasir
+          showToast("❌ Pembayaran dibatalkan.");
+
+          // Reset diskon atau form apa pun
+          document.getElementById('discountTotalPercent').disabled = false;
         }
       });
 
   }, 2000);
 }
-
 
 // Fungsi untuk memproses pembayaran tunai
 function processCashPayment() {

@@ -3475,10 +3475,22 @@ function confirmPayment(){
         if (typeof window.snap !== 'undefined' && window.snap.pay) {
           window.snap.pay(newToken, {
             onSuccess: function(result) {
-              console.log('Pembayaran Midtrans berhasil:', result);
-              currentTransactionInvoice = orderId;
-              processSuccessfulPayment(result, transactionData);
-            },
+            console.log('Pembayaran Midtrans berhasil:', result);
+          
+            currentTransactionInvoice = orderId;
+          
+            // SAFE RESULT (mencegah error ketika result tidak lengkap)
+            const safeResult = result && result.transaction_details
+              ? result
+              : {
+                  transaction_details: {
+                    order_id: transactionData.transaction_details.order_id,
+                    gross_amount: transactionData.transaction_details.gross_amount
+                  }
+                };
+          
+            processSuccessfulPayment(safeResult, transactionData);
+          },
             onPending: function(result) {
               console.log('Pembayaran Midtrans pending:', result);
               showToast("Pembayaran sedang diproses oleh pihak ketiga.");
@@ -3538,18 +3550,46 @@ function confirmPayment(){
         // === STATUS SUCCESS (HP selesai bayar) ====================
         if (data.status === "success") {
           clearInterval(interval);
-
+      
           closeQRModal();
           showToast("✅ Pembayaran berhasil");
-
-          // Jalankan proses pembayaran normal di PC
-          processSuccessfulPayment(data.result, transactionData);
-        }
-
-      });
-
-  }, 2000);
-}
+      
+          // Buat payload aman untuk processSuccessfulPayment
+          // Jika transactionData tidak ada (PC mode kadang undefined)
+            if (!transactionData || !transactionData.transaction_details) {
+                console.warn("⚠ transactionData hilang! Membuat data dummy untuk penyelesaian transaksi QR mode.");
+            
+                const dummyResult = {
+                    transaction_details: {
+                        order_id: "UNKNOWN_ORDER",
+                        gross_amount: 0
+                    }
+                };
+            
+                processSuccessfulPayment(dummyResult, { 
+                    transaction_details: {
+                        order_id: "UNKNOWN_ORDER",
+                        gross_amount: 0
+                    }
+                });
+            
+                return;
+            }
+            
+            // === transactionData lengkap ===
+            const safeResult = {
+                transaction_details: {
+                    order_id: transactionData.transaction_details.order_id,
+                    gross_amount: transactionData.transaction_details.gross_amount
+                }
+            };
+            
+            processSuccessfulPayment(safeResult, transactionData);
+          }
+        });
+  
+    }, 2000);
+  }
 
 // Fungsi untuk memproses pembayaran tunai
 function processCashPayment() {
@@ -3617,6 +3657,22 @@ function processCashPayment() {
 
 // Fungsi untuk memproses pembayaran Midtrans berhasil
 function processSuccessfulPayment(result, transactionData) {
+
+
+  if (!transactionData || !transactionData.transaction_details) {
+    console.error("❌ ERROR: transactionData hilang saat processSuccessfulPayment");
+    return;
+  }
+
+  // Jika result tidak lengkap → buat dummy
+  if (!result || !result.transaction_details) {
+    result = {
+      transaction_details: {
+        order_id: transactionData.transaction_details.order_id,
+        gross_amount: transactionData.transaction_details.gross_amount
+      }
+    };
+  }
   const invoice = transactionData.transaction_details.order_id;
   const now = new Date();
   const date = now.toISOString();

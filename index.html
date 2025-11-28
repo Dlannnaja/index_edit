@@ -1,1 +1,1173 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Login - Oleh².in</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f9fc;
+      --card: #ffffff;
+      --accent: #4CAF50; 
+      --accent-dark: #388E3C; 
+      --secondary: #FF9800; 
+      --accent-yellow: #FFC107; 
+      --accent-red: #F44336; 
+      --muted: #6b7280;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      --radius: 10px;
+      --font: "Poppins", system-ui, sans-serif;
+      --handwritten: "Kalam", cursive;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: #fff;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 30px;
+      box-shadow: var(--shadow);
+      color: #333;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 30px;
+      position: relative;
+    }
+
+    .logo h1 {
+      margin: 0;
+      font-size: 2.5rem;
+      font-family: var(--handwritten);
+      position: relative;
+      display: inline-block;
+    }
+
+    .logo .oleh {
+      color: var(--accent);
+    }
+
+    .logo .squared {
+      font-size: 1.2rem;
+      vertical-align: super;
+      position: relative;
+      top: -0.5em;
+    }
+
+    .logo .domain {
+      color: var(--secondary);
+    }
+
+    .logo .flower {
+      position: absolute;
+      top: -10px;
+      right: -15px;
+      color: var(--accent-red);
+      font-size: 1.2rem;
+    }
+
+    .logo .arc {
+      width: 80%;
+      height: 8px;
+      background: var(--accent-yellow);
+      border-radius: 50%;
+      margin: 5px auto 0;
+    }
+
+    .logo .tagline {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 5px;
+      font-style: italic;
+    }
+
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: var(--radius);
+      font-size: 16px;
+      transition: border-color 0.3s ease;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: var(--accent-dark);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .error-message {
+      background: #fee;
+      color: #c33;
+      padding: 10px;
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .success-message {
+      background: #efe;
+      color: #3c3;
+      padding: 10px;
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .info-message {
+      background: #e3f2fd;
+      color: #1976d2;
+      padding: 10px;
+      border-radius: var(--radius);
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .forgot-password {
+      text-align: right;
+      margin-top: 10px;
+    }
+
+    .forgot-password a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .forgot-password a:hover {
+      text-decoration: underline;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border-left-color: var(--accent);
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .verification-info {
+      background: #f0f7ff;
+      border: 1px solid #b3d9ff;
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .verification-steps {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: var(--radius);
+      padding: 15px;
+      margin: 15px 0;
+    }
+
+    .verification-steps ol {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .verification-steps li {
+      margin-bottom: 8px;
+    }
+
+    .verification-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .verification-actions button {
+      flex: 1;
+      padding: 12px;
+      font-size: 14px;
+    }
+
+    .verification-actions button.secondary {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+
+    .verification-actions button.secondary:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .email-preview {
+      background: #f8f9fa;
+      border: 1px dashed #dee2e6;
+      border-radius: var(--radius);
+      padding: 15px;
+      margin: 15px 0;
+      font-family: monospace;
+      font-size: 12px;
+      color: #495057;
+    }
+
+    .check-status {
+      text-align: center;
+      padding: 10px;
+      margin: 15px 0;
+      border-radius: var(--radius);
+      font-weight: 600;
+    }
+
+    .check-status.checking {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+
+    .check-status.verified {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .check-status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    #loadingScreen {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #4CAF50, #388E3C);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999999;
+      animation: loaderFadeOut 0.8s ease forwards;
+      animation-delay: 1.7s;
+    }
+    
+    /* Logo wrapper */
+    .loading-logo {
+      text-align: center;
+      opacity: 0;
+      animation: fadeIn 0.7s ease forwards, pulse 1.4s ease-in-out infinite;
+    }
+    
+    /* Main text: Oleh */
+    .loading-logo .oleh {
+      font-family: "Kalam", cursive;
+      font-size: 3.5rem;
+      color: #8de1d0;
+      text-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    }
+    
+    /* Superscript "²" */
+    .loading-logo .squared {
+      font-family: "Kalam", cursive;
+      font-size: 1.4rem;
+      vertical-align: super;
+      position: relative;
+      top: -12px;
+      color: #8de1d0;
+    }
+    
+    /* ".in" */
+    .loading-logo .domain {
+      font-family: "Kalam", cursive;
+      font-size: 3.5rem;
+      color: #f2a09b;
+      margin-left: 4px;
+    }
+    
+    /* Flower */
+    .loading-logo .flower {
+      color: #ffb6c1;
+      font-size: 1.5rem;
+      position: absolute;
+      margin-left: 6px;
+      margin-top: -18px;
+      animation: flowerSpin 2s linear infinite;
+    }
+    
+    /* Arc */
+    .loading-logo .arc {
+      width: 190px;
+      height: 16px;
+      background: #ffe299;
+      border-radius: 50%;
+      margin: 4px auto 0;
+      transform: scaleX(1.15);
+      opacity: 0.95;
+    }
+    
+    /* Tagline */
+    .loading-logo .tagline {
+      margin-top: 6px;
+      font-size: 0.9rem;
+      color: #d4fffa;
+      font-family: "Poppins", sans-serif;
+      font-weight: 600;
+    }
+    
+    /* ---------- Animations ---------- */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.85); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.07); }
+      100% { transform: scale(1); }
+    }
+    
+    @keyframes flowerSpin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes loaderFadeOut {
+      to { opacity: 0; visibility: hidden; }
+    }
+  </style>
+</head>
+<body>
+  <div id="loadingScreen">
+    <div class="loading-logo">
+      <div class="logo-text">
+        <span class="oleh">Oleh</span><span class="squared">²</span><span class="domain">.in</span>
+        <span class="flower">✿</span>
+      </div>
+      <div class="arc"></div>
+      <div class="tagline">Jawara-nya Oleh-oleh Nusantara</div>
+    </div>
+  </div>
+  
+  <div class="login-container">
+    <div class="login-card">
+      <div class="logo">
+        <h1>
+          <span class="oleh">Oleh</span><span class="squared">²</span><span class="domain">.in</span>
+          <span class="flower">✿</span>
+        </h1>
+        <div class="arc"></div>
+        <div class="tagline">Jawara - nya Oleh - oleh Nusantara</div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" id="loginTab" onclick="switchTab('login')">Login</div>
+        <div class="tab" id="signupTab" onclick="switchTab('signup')">Daftar</div>
+      </div>
+
+      <div id="error-message" class="error-message"></div>
+      <div id="success-message" class="success-message"></div>
+      <div id="info-message" class="info-message"></div>
+
+      
+      <div id="loginForm">
+        <form onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="loginEmail">Email</label>
+            <input type="email" id="loginEmail" required placeholder="email@example.com">
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" required placeholder="Password">
+          </div>
+          <button type="submit" id="loginButton">Masuk</button>
+          <div class="forgot-password">
+            <a href="#" onclick="resetPassword(event)">Lupa password?</a>
+          </div>
+        </form>
+      </div>
+
+      
+      <div id="signupForm" style="display: none;">
+        <form onsubmit="handleSignup(event)">
+          <div class="form-group">
+            <label for="signupName">Nama Lengkap</label>
+            <input type="text" id="signupName" required placeholder="Nama Lengkap">
+          </div>
+          <div class="form-group">
+            <label for="signupRole">Pilih Role Akun</label>
+              <select id="signupRole" required>
+                <option value="owner">Owner</option>
+                <option value="admin">Admin</option>
+                <option value="kasir">Kasir</option>
+              </select>
+          </div>
+          <div class="form-group">
+            <label for="signupEmail">Email</label>
+            <input type="email" id="signupEmail" required placeholder="email@example.com">
+          </div>
+          <div class="form-group">
+            <label for="signupPassword">Password</label>
+            <input type="password" id="signupPassword" required placeholder="Password (minimal 6 karakter)">
+          </div>
+          <div class="form-group">
+            <label for="signupPassword">Password</label>
+            <inpu type="password" id="signupPassword" required placeholder="Password (minimal 8 karakter, huruf besar, huruf kecil, angka)"
+              oninput="checkPasswordStrength(this.value)"
+            >
+            <small id="passwordStrength" style="font-weight:600; margin-top:6px; display:block;"></small>
+          
+            
+            <ul id="passwordChecklist" style="margin:8px 0 0 18px; padding:0; color:#666; font-size:13px;">
+              <li id="pc-length">• Minimal 8 karakter</li>
+              <li id="pc-lower">• Mengandung huruf kecil (a–z)</li>
+              <li id="pc-upper">• Mengandung huruf besar (A–Z)</li>
+              <li id="pc-number">• Mengandung angka (0–9)</li>
+            </ul>
+          </div>
+          <div class="form-group">
+            <label for="signupConfirmPassword">Konfirmasi Password</label>
+            <input type="password" id="signupConfirmPassword" required placeholder="Konfirmasi Password">
+          </div>
+          <button type="submit" id="signupButton">Daftar</button>
+        </form>
+      </div>
+
+      
+      <div id="verifyForm" style="display: none;">
+        <div class="verification-info">
+          <h3>📧 Verifikasi Email Anda</h3>
+          <p>Kami telah mengirim email verifikasi ke:</p>
+          <div class="email-preview" id="verifyEmail"></div>
+          
+          <div class="verification-steps">
+            <h4>📋 Langkah-langkah:</h4>
+            <ol>
+              <li>Buka aplikasi email Anda (Gmail, Yahoo, Outlook, dll)</li>
+              <li>Cari email dari <strong>"Firebase"</strong> atau <strong>"noreply@oleh2in-pos-v2.firebaseapp.com"</strong></li>
+              <li>Buka email dan <strong>klik link verifikasi</strong> di dalamnya</li>
+              <li>Kembali ke halaman ini dan klik tombol <strong>"Sudah Verifikasi"</strong></li>
+            </ol>
+          </div>
+          
+          <p><strong>⚠️ Catatan Penting:</strong></p>
+          <ul style="color: #666; font-size: 13px;">
+            <li>Link verifikasi kadaluarsa dalam 24 jam</li>
+            <li>Cek folder <strong>Spam/Junk</strong> jika tidak menemukan email</li>
+            <li>Jangan bagikan link verifikasi kepada siapapun</li>
+          </ul>
+        </div>
+        
+        <div id="checkStatus" class="check-status" style="display: none;"></div>
+
+        <div id="emailVerifyLoading" 
+           style="display:none;margin-top:10px;text-align:center;font-size:14px;color:#555;">
+        <div style="
+            width:22px;
+            height:22px;
+            margin:6px auto;
+            border:3px solid #ccc;
+            border-top-color:#1976d2;
+            border-radius:50%;
+            animation:spin 0.9s linear infinite;">
+        </div>
+        Memeriksa email...
+      </div>
+
+        
+        <div class="verification-actions">
+          <button type="button" id="checkButton" onclick="checkEmailVerification()">✅ Sudah Verifikasi</button>
+          <button type="button" class="secondary" id="resendButton" onclick="resendVerificationEmail()">📧 Kirim Ulang Email</button>
+        </div>
+      </div>
+
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Memproses...</p>
+      </div>
+    </div>
+    <div class="footer">
+      &copy; 2025 Oleh².in - Jawara - nya Oleh - oleh Nusantara
+    </div>
+  </div>
+
+  
+  <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+
+  
+  <script src="firebase-config.js"></script>
+  <script>
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+    sessionStorage.removeItem('indocartAccess');
+
+    // Global variables
+    let pendingUser = null;
+    let verificationEmail = '';
+    let verificationCheckInterval = null;
+
+    // DOM elements
+    const loginTab = document.getElementById('loginTab');
+    const signupTab = document.getElementById('signupTab');
+    const loginForm = document.getElementById('loginForm');
+    const signupForm = document.getElementById('signupForm');
+    const verifyForm = document.getElementById('verifyForm');
+    const errorMessage = document.getElementById('error-message');
+    const successMessage = document.getElementById('success-message');
+    const infoMessage = document.getElementById('info-message');
+    const loading = document.getElementById('loading');
+    const checkStatus = document.getElementById('checkStatus');
+
+    // Switch between tabs
+    function switchTab(tab) {
+      errorMessage.style.display = 'none';
+      successMessage.style.display = 'none';
+      infoMessage.style.display = 'none';
+      checkStatus.style.display = 'none';
+      
+      // Hide all forms
+      loginForm.style.display = 'none';
+      signupForm.style.display = 'none';
+      verifyForm.style.display = 'none';
+      
+      // Remove active class from all tabs
+      loginTab.classList.remove('active');
+      signupTab.classList.remove('active');
+      
+      // Show selected tab and form
+      if (tab === 'login') {
+        loginTab.classList.add('active');
+        loginForm.style.display = 'block';
+      } else if (tab === 'signup') {
+        signupTab.classList.add('active');
+        signupForm.style.display = 'block';
+      }
+    }
+
+    // Show error message
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = 'block';
+      successMessage.style.display = 'none';
+      infoMessage.style.display = 'none';
+      loading.style.display = 'none';
+      checkStatus.style.display = 'none';
+    }
+
+    // Show success message
+    function showSuccess(message) {
+      successMessage.textContent = message;
+      successMessage.style.display = 'block';
+      errorMessage.style.display = 'none';
+      infoMessage.style.display = 'none';
+      loading.style.display = 'none';
+      checkStatus.style.display = 'none';
+    }
+
+    // Show info message
+    function showInfo(message) {
+      infoMessage.textContent = message;
+      infoMessage.style.display = 'block';
+      errorMessage.style.display = 'none';
+      successMessage.style.display = 'none';
+      loading.style.display = 'none';
+      checkStatus.style.display = 'none';
+    }
+
+    // Show loading indicator
+    function showLoading() {
+      loading.style.display = 'block';
+      errorMessage.style.display = 'none';
+      successMessage.style.display = 'none';
+      infoMessage.style.display = 'none';
+      checkStatus.style.display = 'none';
+    }
+
+    // Show check status
+    function showCheckStatus(message, type) {
+      checkStatus.textContent = message;
+      checkStatus.className = 'check-status ' + type;
+      checkStatus.style.display = 'block';
+      errorMessage.style.display = 'none';
+      successMessage.style.display = 'none';
+      infoMessage.style.display = 'none';
+      loading.style.display = 'none';
+    }
+
+    // Handle login
+        function handleLogin(event) {
+      event.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      
+      showLoading();
+      
+      auth.signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          const user = userCredential.user;
+          
+          // Check if email is verified
+          if (user.emailVerified) {
+            // Store user session (client-side)
+            sessionStorage.setItem('user', JSON.stringify({
+              uid: user.uid,
+              email: user.email,
+              displayName: user.displayName
+            }));
+            
+            // HANYA DI SINI popup kode akses boleh muncul (user sudah login & terverifikasi)
+            promptForIndocartAccess(true);
+          } else {
+            // Email not verified, show verification form
+            pendingUser = user;
+            verificationEmail = email;
+            
+            showInfo('Email Anda belum diverifikasi. Kami akan mengirim email verifikasi.');
+            
+            // Send verification email
+            user.sendEmailVerification()
+              .then(() => {
+                showSuccess('Email verifikasi telah dikirim! Silakan ikuti instruksi.');
+                setTimeout(() => {
+                  switchToVerificationTab();
+                }, 1200);
+              })
+              .catch((error) => {
+                showError('Gagal mengirim email verifikasi: ' + error.message);
+              });
+          }
+        })
+        .catch((error) => {
+          showError('Login gagal: ' + error.message);
+        });
+    }
+
+    function checkPasswordStrength(value) {
+      const pwd = String(value || '');
+      const lengthOk = pwd.length >= 8;
+      const lowerOk = /[a-z]/.test(pwd);
+      const upperOk = /[A-Z]/.test(pwd);
+      const numberOk = /[0-9]/.test(pwd);
+    
+      const score = [lengthOk, lowerOk, upperOk, numberOk].reduce((s, v) => s + (v ? 1 : 0), 0);
+    
+      // Update small text
+      const strengthText = document.getElementById('passwordStrength');
+      const listLength = document.getElementById('pc-length');
+      const listLower = document.getElementById('pc-lower');
+      const listUpper = document.getElementById('pc-upper');
+      const listNumber = document.getElementById('pc-number');
+    
+      // checklist color helpers
+      const passStyle = (el, ok) => {
+        if (!el) return;
+        el.style.color = ok ? '#2e7d32' : '#666'; // hijau kalau pass, abu kalau belum
+        el.style.fontWeight = ok ? '700' : '400';
+      };
+    
+      passStyle(listLength, lengthOk);
+      passStyle(listLower, lowerOk);
+      passStyle(listUpper, upperOk);
+      passStyle(listNumber, numberOk);
+    
+      if (score <= 1) {
+        if (strengthText) {
+          strengthText.textContent = '❌ Password/kata sandi Lemah';
+          strengthText.style.color = '#F44336';
+        }
+      } else if (score === 2 || score === 3) {
+        if (strengthText) {
+          strengthText.textContent = '⚠️ Password sedang — perbaiki agar lebih kuat';
+          strengthText.style.color = '#FF9800';
+        }
+      } else if (score === 4) {
+        if (strengthText) {
+          strengthText.textContent = '✅ Password/kata sandi kuat, Lanjut Verifikasi email';
+          strengthText.style.color = '#4CAF50';
+        }
+      }
+    
+      return {
+        ok: score === 4,
+        score,
+        details: { lengthOk, lowerOk, upperOk, numberOk }
+      };
+    }
+
+    // Handle signup
+    function handleSignup(event) {
+        event.preventDefault();
+      
+        const name = document.getElementById('signupName').value;
+        const email = document.getElementById('signupEmail').value;
+        const password = document.getElementById('signupPassword').value;
+        const confirmPassword = document.getElementById('signupConfirmPassword').value;
+        const role = document.getElementById('signupRole').value; // <-- DITAMBAHKAN
+      
+        // Validate passwords match
+        if (password !== confirmPassword) {
+          showError('Password tidak cocok!');
+          return;
+        }
+      
+        // VALIDASI PASSWORD YANG BENAR
+        const pwdCheck = checkPasswordStrength(password);
+      
+        if (!pwdCheck.ok) {
+          showError('Password/kata sandi Lemah — minimal 8 karakter, ada huruf kecil, huruf besar, dan angka.');
+          return;
+        }
+      
+        // Jika lolos semua syarat
+        showInfo('Password kuat, melanjutkan pendaftaran...');
+      
+        showLoading();
+      
+        auth.createUserWithEmailAndPassword(email, password)
+          .then((userCredential) => {
+            const user = userCredential.user;
+      
+            return user.updateProfile({ displayName: name })
+              .then(() => user.sendEmailVerification())
+              .then(() => {
+      
+                // ============================
+                //  SIMPAN DATA ROLE KE DATABASE
+                // ============================
+                return firebase.database().ref("accounts/" + user.uid).set({
+                  name: name,
+                  email: email,
+                  role: role,
+                  createdAt: Date.now()
+                });
+              })
+              .then(() => {
+                pendingUser = user;
+                verificationEmail = email;
+      
+                showSuccess('Pendaftaran berhasil! Email verifikasi telah dikirim.');
+      
+                setTimeout(() => {
+                  switchToVerificationTab();
+                }, 2000);
+              });
+          })
+          .catch((error) => {
+            showError('Pendaftaran gagal: ' + error.message);
+          });
+      }
+
+    // Switch to verification tab
+    function switchToVerificationTab() {
+      // Hide all tabs
+      loginTab.classList.remove('active');
+      signupTab.classList.remove('active');
+      
+      // Hide all forms
+      loginForm.style.display = 'none';
+      signupForm.style.display = 'none';
+      
+      // Show verification form
+      verifyForm.style.display = 'block';
+      document.getElementById('verifyEmail').textContent = verificationEmail;
+      
+      // Start checking email verification periodically
+      startVerificationCheck();
+    }
+
+    // Check if email is verified (FIXED - No Code Input)
+    function checkEmailVerification() {
+      if (!pendingUser) {
+        showError('Tidak ada user yang pending verifikasi.');
+        return;
+      }
+    
+      showCheckStatus('🔍 Memeriksa status verifikasi...', 'checking');
+      document.getElementById("emailVerifyLoading").style.display = "block";
+    
+      // Delay lebih panjang biar tidak gercep
+      setTimeout(() => {
+        pendingUser.reload()
+          .then(() => {
+    
+            // delay kecil biar smooth pas close spinnernya
+            setTimeout(() => {
+              document.getElementById("emailVerifyLoading").style.display = "none";
+            }, 400);
+    
+            if (pendingUser.emailVerified) {
+              showCheckStatus('✅ Email berhasil diverifikasi! Mengalihkan...', 'verified');
+    
+              setTimeout(() => {
+                stopVerificationCheck();
+                sessionStorage.setItem('user', JSON.stringify({
+                  uid: pendingUser.uid,
+                  email: pendingUser.email,
+                  displayName: pendingUser.displayName
+                }));
+    
+                // Delay natural menuju popup kode akses
+                setTimeout(() => {
+                  promptForIndocartAccess(true);
+                }, 1000);
+    
+              }, 1300);
+    
+            } else {
+              showCheckStatus('❌ Email belum diverifikasi. Silakan cek inbox Anda.', 'error');
+            }
+          })
+          .catch((err) => {
+            document.getElementById("emailVerifyLoading").style.display = "none";
+            showError('Gagal memeriksa verifikasi: ' + err.message);
+          });
+      }, 1600);  // ⬅️ delay panjang
+    }
+    // Resend verification email
+    function resendVerificationEmail() {
+      if (!pendingUser) {
+        showError('Tidak ada user yang pending verifikasi.');
+        return;
+      }
+      
+      showLoading();
+      
+      pendingUser.sendEmailVerification()
+        .then(() => {
+          showSuccess('Email verifikasi telah dikirim ulang! Silakan periksa inbox Anda.');
+        })
+        .catch((error) => {
+          showError('Gagal mengirim ulang email: ' + error.message);
+        });
+    }
+
+    // Start checking email verification periodically
+      function startVerificationCheck() {
+      // Check every 10 seconds
+      verificationCheckInterval = setInterval(() => {
+        if (pendingUser) {
+          pendingUser.reload()
+            .then(() => {
+              if (pendingUser.emailVerified) {
+                stopVerificationCheck();
+                showCheckStatus('✅ Email berhasil diverifikasi! Silakan kembali ke halaman Login dan masuk untuk mengakses Indocart.', 'verified');
+                // ensure not auto-logged-in
+                auth.signOut().catch(()=>{ /* ignore */ });
+                setTimeout(() => {
+                  switchTab('login');
+                  showSuccess('Email terverifikasi. Silakan masuk menggunakan email dan password Anda.');
+                }, 1200);
+              }
+            })
+            .catch(() => {
+              // Ignore errors during periodic check
+            });
+        }
+      }, 12000); // Check every 10 seconds
+    }
+
+    // Stop checking email verification
+    function stopVerificationCheck() {
+      if (verificationCheckInterval) {
+        clearInterval(verificationCheckInterval);
+        verificationCheckInterval = null;
+      }
+    }
+
+    // Reset password
+    function resetPassword(event) {
+      event.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      
+      if (!email) {
+        showError('Masukkan email Anda terlebih dahulu!');
+        return;
+      }
+      
+      showLoading();
+      
+      auth.sendPasswordResetEmail(email)
+        .then(() => {
+          showSuccess('Email reset password telah dikirim! Periksa inbox Anda.');
+        })
+        .catch((error) => {
+          showError('Gagal mengirim email reset: ' + error.message);
+        });
+    }
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      stopVerificationCheck();
+    });
+
+      function checkPasswordStrength(value) {
+        const pwd = String(value || '');
+        const strengthText = document.getElementById('passwordStrength');
+      
+        // Checklist elements
+        const listLength = document.getElementById('pc-length');
+        const listLower = document.getElementById('pc-lower');
+        const listUpper = document.getElementById('pc-upper');
+        const listNumber = document.getElementById('pc-number');
+      
+        // Validation rules
+        const lengthOk = pwd.length >= 8;
+        const lowerOk = /[a-z]/.test(pwd);
+        const upperOk = /[A-Z]/.test(pwd);
+        const numberOk = /[0-9]/.test(pwd);
+      
+        // Apply checklist style
+        const updateChecklist = (el, ok) => {
+          if (!el) return;
+          el.style.color = ok ? "#2e7d32" : "#666";
+          el.style.fontWeight = ok ? "700" : "400";
+        };
+      
+        updateChecklist(listLength, lengthOk);
+        updateChecklist(listLower, lowerOk);
+        updateChecklist(listUpper, upperOk);
+        updateChecklist(listNumber, numberOk);
+      
+        // Score
+        const score = [lengthOk, lowerOk, upperOk, numberOk].filter(Boolean).length;
+      
+        // Text display (same like your old UI)
+        if (score <= 1) {
+          strengthText.textContent = "❌ Password/kata sandi Lemah";
+          strengthText.style.color = "#F44336";
+        } else if (score === 2 || score === 3) {
+          strengthText.textContent = "⚠️ Password sedang — perbaiki agar lebih kuat";
+          strengthText.style.color = "#FF9800";
+        } else if (score === 4) {
+          strengthText.textContent = "✅ Password/kata sandi kuat, Lanjut Verifikasi email";
+          strengthText.style.color = "#4CAF50";
+        }
+      
+        // FIX UTAMA: return object, bukan string
+        return {
+          ok: score === 4,
+          score,
+          details: { lengthOk, lowerOk, upperOk, numberOk }
+        };
+      }
+
+  </script>
+
+<!-- Access Code Modal (Firebase server verification) -->
+<div id="accessCodeModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:#fff;padding:18px;border-radius:10px;max-width:420px;width:92%;box-shadow:0 10px 30px rgba(0,0,0,0.25);text-align:left;">
+    <h3 style="margin:0 0 8px 0">Masukkan Kode Akses</h3>
+    <p style="margin:0 0 12px;color:#666;font-size:14px">Masukkan kode khusus yang Anda buat untuk mengakses Indocart.</p>
+    <input id="accessCodeInput" type="password" placeholder="Kode akses" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px;font-size:15px" />
+    <div style="display:flex;gap:8px;">
+      <button id="accessVerifyBtn" style="flex:1;padding:10px;border-radius:8px;border:none;background:#4caf50;color:#fff;font-weight:700">Verifikasi & Lanjut</button>
+      <button onclick="closeAccessModal()" style="flex:0;padding:10px 12px;border-radius:8px;border:1px solid #ddd;background:#fff">Batal</button>
+    </div>
+    <p id="accessCodeError" style="color:#c33;margin-top:8px;display:none;font-weight:600"></p>
+    <div id="accessLoading" 
+     style="display:none;margin-top:10px;text-align:center;font-size:14px;color:#555;">
+  <div style="
+      width:22px;
+      height:22px;
+      margin:6px auto;
+      border:3px solid #ccc;
+      border-top-color:#4caf50;
+      border-radius:50%;
+      animation:spin 0.9s linear infinite;">
+  </div>
+  Memverifikasi kode...
+</div>
+
+  </div>
+</div>
+
+<script>
+  // Opens/closes modal
+  function openAccessModal() {
+    document.getElementById('accessCodeInput').value = '';
+    document.getElementById('accessCodeError').style.display = 'none';
+    document.getElementById('accessCodeModal').style.display = 'flex';
+    document.getElementById('accessCodeInput').focus();
+  }
+  function closeAccessModal() {
+    document.getElementById('accessCodeModal').style.display = 'none';
+  }
+
+  // Called from login/signup flow to request code before redirecting to indocart
+  window._redirectAfterAccess = false;
+  function promptForIndocartAccess(redirectAfter = true) {
+    window._redirectAfterAccess = redirectAfter;
+    openAccessModal();
+  }
+
+  // verify code by reading from Firebase Realtime Database at path accessControl/indocartCode
+  async function verifyAccessCode() {
+  const input = document.getElementById('accessCodeInput').value.trim();
+  const errEl = document.getElementById('accessCodeError');
+  const loadingEl = document.getElementById('accessLoading');
+
+  errEl.style.display = 'none';
+
+  if (!input) {
+    errEl.textContent = "Isi kode akses terlebih dahulu.";
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // Tampilkan animasi loading
+  loadingEl.style.display = "block";
+
+  try {
+    // Delay tambahan biar terlihat realistis
+    await new Promise(r => setTimeout(r, 1700)); // ⬅️ Tambah delay panjang
+
+    const res = await fetch("https://oleh2inpos-backend.onrender.com/verify-access-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: input })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      sessionStorage.setItem("indocartAccess", "1");
+
+      // Tambah delay setelah backend sukses
+      setTimeout(() => {
+        loadingEl.style.display = "none";
+        closeAccessModal();
+
+        if (window._redirectAfterAccess) {
+          setTimeout(() => {
+            window.location.href = "indocart.html";
+          }, 600);
+        }
+      }, 900);
+
+    } else {
+      loadingEl.style.display = "none";
+      errEl.textContent = "Kode salah.";
+      errEl.style.display = "block";
+    }
+
+  } catch (e) {
+    loadingEl.style.display = "none";
+    errEl.textContent = "Gagal menghubungi server.";
+    errEl.style.display = "block";
+  }
+}
+
+  document.addEventListener('click', function(e){
+    if (e.target && e.target.id === 'accessVerifyBtn') {
+      verifyAccessCode();
+    }
+  });
+
+</script>
+  
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    setTimeout(() => {
+      document.getElementById("loadingScreen").style.display = "none";
+    }, 2100);
+  });
+</script>
+
+</body>
+</html>
+
 

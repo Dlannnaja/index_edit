@@ -19,6 +19,25 @@
     
   <script src="firebase-config.js"></script>
   
+  <script>
+  
+  if (typeof firebase !== 'undefined') {
+    try {
+      if (!firebase.apps || !firebase.apps.length) {
+        firebase.initializeApp(window.firebaseConfig);
+        console.log('✅ Firebase initialized');
+      } else {
+        console.log('ℹ️ Firebase already initialized');
+      }
+    } catch (err) {
+      console.error('Firebase init error:', err);
+    }
+  } else {
+    console.error('Firebase SDK belum diload. Pastikan <script src="https://www.gstatic.com/firebasejs/.../firebase-app-compat.js"> dipanggil sebelum ini.');
+  }
+</script>
+
+  
   
   <script src="rate-limiter.js"></script>
   <script src="security-monitor.js"></script>
@@ -1974,14 +1993,12 @@
   <main class="container">
     <div class="grid">
       <div>
-        <!-- TOMBOL UNTUK MUNCULKAN/SEMBUNYIKAN 4 BAGIAN -->
         <button id="toggleGroupBtn" onclick="toggleGroupSections()">Sembunyikan Dashboard + Produk</button>
         
-        <!-- WRAPPER UNTUK 4 SECTION -->
-        <div id="sectionGroupWrapper" class="group-collapsible open">
+        <div id="sectionGroupWrapper" class="group-collapsible open" data-role="owner admin kasir">
 
         
-        <div class="card" style="margin-bottom: var(--spacing-lg);">
+        <div class="card" style="margin-bottom: var(--spacing-lg);" data-role="owner admin">
           <h2 style="font-size:1.6rem; margin-bottom: var(--spacing-md)">📊 Dashboard Laporan</h2>
           <div class="tabs">
             <button class="tab-btn active" onclick="openTab('penjualan')">Penjualan</button>
@@ -2104,7 +2121,7 @@
         </div>
 
         
-        <div class="card" style="margin-bottom: var(--spacing-lg);">
+        <div class="card" style="margin-bottom: var(--spacing-lg);" data-role="owner admin">
           <section>
             <h3>Tambah Produk</h3>
             <form id="formProduct" onsubmit="submitProduct();return false" style="margin-bottom: var(--spacing-lg)">
@@ -2184,7 +2201,7 @@
       </div>
 
         
-        <div class="card">
+        <div class="card" data-role="owner admin kasir">
           <h3>Tambah Produk ke Keranjang</h3>
           <div class="product-grid-container">
             <div class="category-tabs">
@@ -2213,7 +2230,7 @@
       </div>
 
       
-      <div class="card compact-cart">
+      <div class="card compact-cart" data-role="owner admin kasir">
         <h3>Keranjang (<span id="cartCount2">0</span>)</h3>
         <div id="cart"><i class="muted">Keranjang kosong</i></div>
         
@@ -5530,56 +5547,66 @@ function toggleGroupSections() {
 <script>
 let USER_ROLE = null;
 
-
 firebase.auth().onAuthStateChanged(async user => {
-if (!user) return;
-const snap = await firebase.database().ref("accounts/" + user.uid).once("value");
-USER_ROLE = snap.val()?.role || null;
+  if (!user) {
+    USER_ROLE = null;
+    applyRoleRestrictions(); // hide everything safe
+    return;
+  }
 
+  try {
+    // Pastikan user sudah terautentikasi sebelum baca DB
+    const snap = await firebase.database().ref("accounts/" + user.uid).once("value");
+    const data = snap.val() || {};
+    USER_ROLE = String(data.role || '').toLowerCase() || null;
 
-applyRoleRestrictions();
+    // safety: jika role invalid, set null
+    if (!['owner','admin','kasir'].includes(USER_ROLE)) {
+      USER_ROLE = null;
+      console.warn('Role tidak valid untuk user:', data.role);
+    }
+
+  } catch (err) {
+    console.error('Gagal membaca role akun:', err);
+    // jika permission_denied: tampilkan pesan dan block akses sensitif
+    if (err && err.code === 'PERMISSION_DENIED' || /permission_denied/i.test(String(err))) {
+      alert("Akses database dibatasi. Mohon cek konfigurasi security rules Firebase.");
+    }
+    USER_ROLE = null;
+  }
+
+  // Terapkan pembatasan UI berdasarkan role
+  applyRoleRestrictions();
 });
 
-
 function applyRoleRestrictions() {
-if (!USER_ROLE) return;
+  // default: sembunyikan semua section sensitif
+  document.querySelectorAll('[data-role]').forEach(el => {
+    el.style.display = 'none';
+    // disable interactive children as extra safety
+    el.querySelectorAll('button, input, select, textarea').forEach(i => i.disabled = true);
+  });
 
+  if (!USER_ROLE) {
+    console.log('No role assigned or failed to read role — minimal access only');
+    // optional: tampilkan hanya pesan error / notifikasi
+    return;
+  }
 
-// =========================
-// ROLE OWNER
-// =========================
-if (USER_ROLE === "owner") {
-// full access, no need hide anything
+  // show allowed elements
+  document.querySelectorAll('[data-role]').forEach(el => {
+    const allowed = (el.getAttribute('data-role') || '').split(/\s+/).map(r=>r.trim().toLowerCase());
+    if (allowed.includes(USER_ROLE)) {
+      el.style.display = ''; // restore display
+      el.querySelectorAll('button, input, select, textarea').forEach(i => i.disabled = false);
+      el.style.pointerEvents = '';
+      el.style.opacity = '';
+    }
+  });
+
+  console.log('Role applied:', USER_ROLE);
 }
 
-
-// =========================
-// ROLE ADMIN
-// =========================
-if (USER_ROLE === "admin") {
-hideElement('#kasirSection'); // POS / kasir
-showElement('#productSection'); // tambah produk
-showElement('#restockSection'); // restock
-showElement('#editProductSection');
-}
-
-
-// =========================
-// ROLE KASIR
-// =========================
-if (USER_ROLE === "kasir") {
-hideElement('#productSection'); // tambah produk
-hideElement('#restockSection');
-hideElement('#editProductSection');
-
-
-showElement('#kasirSection');
-}
-}
-
-
-function hideElement(sel){ const el = document.querySelector(sel); if(el) el.style.display='none'; }
-function showElement(sel){ const el = document.querySelector(sel); if(el) el.style.display='block'; }
 </script>
 
   

@@ -1108,16 +1108,30 @@
     return;
   }
 
-  // Tampilkan animasi loading
   loadingEl.style.display = "block";
 
   try {
-    // Delay tambahan biar terlihat realistis
-    await new Promise(r => setTimeout(r, 1700)); // ⬅️ Tambah delay panjang
+    // Delay biar smooth
+    await new Promise(r => setTimeout(r, 1700));
 
+    // 🔥 Ambil Firebase ID Token
+    const user = firebase.auth().currentUser;
+    if (!user) {
+      loadingEl.style.display = "none";
+      errEl.textContent = "Sesi login habis. Silakan login ulang.";
+      errEl.style.display = "block";
+      return;
+    }
+
+    const idToken = await user.getIdToken();
+
+    // 🔥 Kirim kode + token ke backend
     const res = await fetch("https://oleh2inpos-backend.onrender.com/verify-access-code", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + idToken
+      },
       body: JSON.stringify({ code: input })
     });
 
@@ -1126,7 +1140,6 @@
     if (data.success) {
       sessionStorage.setItem("indocartAccess", "1");
 
-      // Tambah delay setelah backend sukses
       setTimeout(() => {
         loadingEl.style.display = "none";
         closeAccessModal();
@@ -1150,6 +1163,7 @@
     errEl.style.display = "block";
   }
 }
+
 
   document.addEventListener('click', function(e){
     if (e.target && e.target.id === 'accessVerifyBtn') {

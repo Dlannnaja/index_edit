@@ -498,11 +498,7 @@
           </div>
           <div class="form-group">
             <label for="signupPassword">Password</label>
-            <input type="password" id="signupPassword" required placeholder="Password (minimal 6 karakter)">
-          </div>
-          <div class="form-group">
-            <label for="signupPassword">Password</label>
-            <inpu type="password" id="signupPassword" required placeholder="Password (minimal 8 karakter, huruf besar, huruf kecil, angka)"
+            <input type="password" id="signupPassword" required placeholder="Password (minimal 8 karakter, huruf besar, huruf kecil, angka)"
               oninput="checkPasswordStrength(this.value)"
             >
             <small id="passwordStrength" style="font-weight:600; margin-top:6px; display:block;"></small>
@@ -677,6 +673,10 @@
       checkStatus.style.display = 'none';
     }
 
+    function hideLoading() {
+      loading.style.display = 'none';
+    }
+
     // Show check status
     function showCheckStatus(message, type) {
       checkStatus.textContent = message;
@@ -789,67 +789,58 @@
     }
 
     // Handle signup
-    function handleSignup(event) {
-        event.preventDefault();
-      
-        const name = document.getElementById('signupName').value;
-        const email = document.getElementById('signupEmail').value;
-        const password = document.getElementById('signupPassword').value;
-        const confirmPassword = document.getElementById('signupConfirmPassword').value;
-        const role = document.getElementById('signupRole').value; // <-- DITAMBAHKAN
-      
-        // Validate passwords match
-        if (password !== confirmPassword) {
-          showError('Password tidak cocok!');
-          return;
-        }
-      
-        // VALIDASI PASSWORD YANG BENAR
-        const pwdCheck = checkPasswordStrength(password);
-      
-        if (!pwdCheck.ok) {
-          showError('Password/kata sandi Lemah — minimal 8 karakter, ada huruf kecil, huruf besar, dan angka.');
-          return;
-        }
-      
-        // Jika lolos semua syarat
-        showInfo('Password kuat, melanjutkan pendaftaran...');
-      
-        showLoading();
-      
-        auth.createUserWithEmailAndPassword(email, password)
-          .then((userCredential) => {
-            const user = userCredential.user;
-      
-            return user.updateProfile({ displayName: name })
-              .then(() => user.sendEmailVerification())
-              .then(() => {
-      
-                // ============================
-                //  SIMPAN DATA ROLE KE DATABASE
-                // ============================
-                return firebase.database().ref("accounts/" + user.uid).set({
-                  name: name,
-                  email: email,
-                  role: role,
-                  createdAt: Date.now()
-                });
-              })
-              .then(() => {
-                pendingUser = user;
-                verificationEmail = email;
-      
-                showSuccess('Pendaftaran berhasil! Email verifikasi telah dikirim.');
-      
-                setTimeout(() => {
-                  switchToVerificationTab();
-                }, 2000);
-              });
-          })
-          .catch((error) => {
-            showError('Pendaftaran gagal: ' + error.message);
-          });
+    async function handleSignup(event) {
+      event.preventDefault();
+    
+      const name = document.getElementById('signupName').value;
+      const email = document.getElementById('signupEmail').value;
+      const password = document.getElementById('signupPassword').value;
+      const confirmPassword = document.getElementById('signupConfirmPassword').value;
+      const role = document.getElementById('signupRole').value;
+    
+      if (password !== confirmPassword) {
+        showError("Password tidak cocok!");
+        return;
       }
+    
+      const pwdCheck = checkPasswordStrength(password);
+      if (!pwdCheck.ok) {
+        showError("Password Lemah — minimal 8 karakter, ada huruf kecil, besar, angka.");
+        return;
+      }
+    
+      showLoading();
+    
+      try {
+        const res = await fetch("https://oleh2inpos-backend.onrender.com/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password, role })
+        });
+    
+        const data = await res.json();
+    
+        if (!data.success) {
+          hideLoading();
+          showError("Pendaftaran gagal: " + data.message);
+          return;
+        }
+    
+        // jika berhasil
+        hideLoading();
+        showSuccess("Pendaftaran berhasil! Silakan login.");
+    
+        // pindah ke tab login setelah 1–2 detik
+        setTimeout(() => {
+          switchToLoginTab();
+        }, 1500);
+    
+      } catch (err) {
+        hideLoading();
+        showError("Terjadi kesalahan: " + err.message);
+      }
+    }
+
 
     // Switch to verification tab
     function switchToVerificationTab() {

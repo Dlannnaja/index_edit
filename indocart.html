@@ -9,7 +9,7 @@
         data-client-key="SB-Mid-client-fvOCSkh7us8t74ZF"
         onload="console.log('✅ Snap.js loaded successfully')"
         onerror="console.error('❌ Failed to load Snap.js')">
-</script>
+  </script>
      
   <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
@@ -38,12 +38,12 @@
 </script>
 
   
-  
   <script src="rate-limiter.js"></script>
   <script src="security-monitor.js"></script>
   <script src="auth-validator.js"></script>
   
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
   :root {
@@ -1990,6 +1990,15 @@
   <main class="container">
     <div class="grid">
       <div>
+
+        <div class="card" data-role="owner admin">
+          <h3>Grafik Penjualan</h3>
+        
+          <canvas id="salesChart" style="max-height: 350px;"></canvas>
+        
+          <button id="downloadChart" style="margin-top:10px">Download Grafik</button>
+        </div>
+
         <div class="card" style="margin-bottom: var(--spacing-lg);" data-role="owner admin">
           <h2 style="font-size:1.6rem; margin-bottom: var(--spacing-md)">📊 Dashboard Laporan</h2>
           <div class="tabs">
@@ -2329,9 +2338,9 @@
     <div id="paymentMethods">
       <div class="pm-btn" data-method="cash" onclick="selectPaymentMethod('cash', this)">Tunai</div>
       <div class="pm-btn" data-method="transfer" onclick="selectPaymentMethod('transfer', this)">Transfer Bank</div>
-      <div class="pm-btn" data-method="card" onclick="selectPaymentMethod('card', this)">Kartu (EDC)</div>
-      <div class="pm-btn" data-method="qris" onclick="selectPaymentMethod('qris', this)">QRIS / e-Wallet</div>
-      <div class="pm-btn" data-method="midtrans" onclick="selectPaymentMethod('midtrans', this)">Pembayaran Online</div>
+      <div class="pm-btn" data-method="card" onclick="selectPaymentMethod('card', this)">EDC</div>
+      <div class="pm-btn" data-method="qris" onclick="selectPaymentMethod('qris', this)">QRIS</div>
+      <div class="pm-btn" data-method="midtrans" onclick="selectPaymentMethod('midtrans', this)">Midtrans</div>
     </div>
 
     <div id="paymentInfoBox" class="pay-instr">Total: <strong id="payTotal">Rp 0</strong></div>
@@ -5422,10 +5431,10 @@ function debugMidtrans() {
 }
 
 
-  function toggleRestockList(show = false) {
-    const list = document.getElementById("restockList");
-    list.style.display = show ? "block" : (list.style.display === "block" ? "none" : "block");
-  }
+    function toggleRestockList(show = false) {
+  const list = document.getElementById("restockList");
+  list.style.display = show ? "block" : (list.style.display === "block" ? "none" : "block");
+}
 
 function updateRestockDropdown() {
   const list = document.getElementById("restockList");
@@ -5588,6 +5597,99 @@ function applyRoleRestrictions() {
 }
 
 </script>
+
+  <script>
+let salesChart;
+
+// === Format Tanggal Harian ===
+function formatDate(date) {
+    const d = new Date(date);
+    return d.toISOString().split("T")[0]; 
+}
+
+// === Load dan Proses Data Penjualan Harian ===
+function loadDailySalesChart() {
+
+    const today = formatDate(new Date());
+    const db = firebase.database().ref("sales");
+
+    db.on("value", snap => {
+        const data = snap.val();
+        if (!data) return;
+
+        let productTotals = {};
+
+        Object.values(data).forEach(sale => {
+            const saleDate = formatDate(sale.date);
+
+            if (saleDate !== today) return; // hanya hari ini
+
+            if (Array.isArray(sale.items)) {
+                sale.items.forEach(item => {
+                    if (!productTotals[item.name]) {
+                        productTotals[item.name] = 0;
+                    }
+                    productTotals[item.name] += Number(item.qty);
+                });
+            }
+        });
+
+        const labels = Object.keys(productTotals);
+        const values = Object.values(productTotals);
+
+        renderSalesChart(labels, values);
+    });
+}
+
+// === Render Chart ===
+function renderSalesChart(labels, values) {
+    const ctx = document.getElementById("salesChart").getContext("2d");
+
+    if (salesChart) salesChart.destroy();
+
+    salesChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Jumlah Terjual (Hari Ini)",
+                data: values,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+}
+
+document.getElementById("downloadChart").onclick = function() {
+    const canvas = document.getElementById("salesChart");
+    const backgroundCanvas = document.createElement("canvas");
+
+    backgroundCanvas.width = canvas.width;
+    backgroundCanvas.height = canvas.height;
+
+    const ctx = backgroundCanvas.getContext("2d");
+
+    // Background putih agar hasil PNG tidak hitam/gelap
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
+
+    // Copy grafik original di atas background putih
+    ctx.drawImage(canvas, 0, 0);
+
+    // Download PNG
+    const link = document.createElement("a");
+    link.download = "grafik-penjualan.png";
+    link.href = backgroundCanvas.toDataURL("image/png");
+    link.click();
+};
+
+window.addEventListener("load", loadDailySalesChart);
+</script>
+
 
   
 </body>
